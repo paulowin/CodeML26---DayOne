@@ -11,7 +11,14 @@ class Settings(BaseSettings):
     # --- Base de données (SQLite par défaut, PostgreSQL via DATABASE_URL) ---
     database_url: str = "sqlite:///./data/dayone.db"
 
-    # --- WhatsApp Cloud API ---
+    # --- Transport : "simulateur" (page web locale, aucun service externe) ou "reel" (Meta) ---
+    whatsapp_mode: str = "reel"
+    # Code d'accès demandé par la page simulateur (réseau local)
+    sim_access_code: str = "dayone"
+    # Contact affiché sur la page /confidentialite (optionnel)
+    contact_email: str = ""
+
+    # --- WhatsApp Cloud API (mode "reel") ---
     whatsapp_verify_token: str = "change-me"          # jeton choisi par nous, saisi dans Meta
     whatsapp_app_secret: str = ""                     # App Secret Meta -> signature X-Hub-Signature-256
     whatsapp_access_token: str = ""                   # token (system user) pour Graph API

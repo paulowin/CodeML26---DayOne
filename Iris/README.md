@@ -1,4 +1,6 @@
-# DayOne – The Offline Midwife
+# Iris – The Offline Midwife
+
+> Projet de l'équipe Iris pour le défi **DayOne** (hackathon CodeML 2026).
 
 Agent WhatsApp qui transforme la photo d'un registre maternel papier en dossier
 numérique structuré, vérifié par la sage-femme et relié de visite en visite.

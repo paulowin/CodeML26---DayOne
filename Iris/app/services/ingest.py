@@ -15,7 +15,7 @@ from app.models import (InboundMessage, InboundStatus, Midwife, Page, Record, Re
                         RecordStatus)
 from app.services import outbox
 from app.storage import get_store
-from app.whatsapp import WhatsAppClient, buttons_message, text_message
+from app.whatsapp import WhatsAppClient, get_client, buttons_message, text_message
 
 log = logging.getLogger(__name__)
 MAX_INBOUND_ATTEMPTS = 5
@@ -123,7 +123,7 @@ def process_inbound(db: Session, inbound_id: int, client: WhatsAppClient | None 
     try:
         midwife = get_or_create_midwife(db, msg.wa_from)
         if msg.msg_type == "image":
-            _handle_image(db, msg, midwife, client or WhatsAppClient())
+            _handle_image(db, msg, midwife, client or get_client())
         elif msg.msg_type in ("text", "interactive", "button"):
             _handle_text(db, msg, midwife)
         else:

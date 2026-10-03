@@ -1,5 +1,16 @@
+# Secrets et données (ne JAMAIS committer)
 .env
 data/
+
+# Environnement Python
+.venv/
+venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

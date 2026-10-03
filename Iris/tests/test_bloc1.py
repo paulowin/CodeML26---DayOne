@@ -185,3 +185,29 @@ def test_liste_blanche_du_schema():
     })
     assert set(kept) == {"profil.age", "grossesse_en_cours.ta_systolique"}
     assert len(rejected) == 4
+
+
+def test_page_confidentialite_publique(client):
+    for path in ("/confidentialite", "/privacy"):
+        r = client.get(path)
+        assert r.status_code == 200 and "Politique de confidentialité" in r.text
+
+
+def test_erreur_definitive_ne_bloque_pas_la_file(client, fake_wa, monkeypatch):
+    """Un message refusé (403, mauvais numéro) ne doit pas bloquer les suivants."""
+    from app.services import outbox
+    from app.whatsapp import WhatsAppClient, WhatsAppError, text_message
+
+    def send(self, payload):
+        if payload["to"] == "faux":
+            raise WhatsAppError("send 403", 403)
+        return "wamid.ok"
+
+    monkeypatch.setattr(WhatsAppClient, "send", send)
+    with SessionLocal() as db:
+        outbox.enqueue(db, text_message("faux", "a"))
+        outbox.enqueue(db, text_message(MIDWIFE, "b"))
+        db.commit()
+        assert outbox.flush_pending(db) == 1
+        statuses = [m.status for m in db.scalars(select(OutboundMessage).order_by(OutboundMessage.id))]
+        assert statuses == [OutboundStatus.ECHEC, OutboundStatus.ENVOYE]

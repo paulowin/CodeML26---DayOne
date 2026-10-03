@@ -10,7 +10,15 @@ from app.config import get_settings
 
 
 class WhatsAppError(Exception):
-    pass
+    def __init__(self, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+    @property
+    def permanent(self) -> bool:
+        """Erreur définitive (mauvais jeton, numéro invalide...) : inutile de réessayer
+        indéfiniment. Les 429 (quota) et 5xx (panne Meta) restent temporaires."""
+        return self.status_code is not None and 400 <= self.status_code < 500 and self.status_code != 429
 
 
 class WhatsAppClient:
@@ -41,8 +49,16 @@ class WhatsAppClient:
         with httpx.Client(timeout=self._timeout) as c:
             r = c.post(f"{self.base}/{self.phone_number_id}/messages", headers=self._headers, json=payload)
         if r.status_code >= 300:
-            raise WhatsAppError(f"send {r.status_code}: {r.text[:300]}")
+            raise WhatsAppError(f"send {r.status_code}: {r.text[:300]}", r.status_code)
         return r.json()["messages"][0]["id"]
+
+
+def get_client():
+    """Retourne le transport configuré (simulateur local ou vrai WhatsApp)."""
+    if get_settings().whatsapp_mode == "simulateur":
+        from app.simulator import SimulatorClient
+        return SimulatorClient()
+    return WhatsAppClient()
 
 
 # ------------------------------------------------------------------ constructeurs de payloads

@@ -237,6 +237,15 @@ class OutboundMessage(Base):
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
+class SimMessage(Base):
+    """Messages sortants destinés à la page simulateur (mode WHATSAPP_MODE=simulateur)."""
+    __tablename__ = "sim_messages"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    wa_id: Mapped[str] = mapped_column(String(32), index=True)
+    payload_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
+
+
 # --------------------------------------------------------------------------- accès restreint
 class Staff(Base):
     __tablename__ = "staff"
