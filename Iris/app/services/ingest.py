@@ -11,9 +11,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import (InboundMessage, InboundStatus, Midwife, Page, Record, RecordEvent,
-                        RecordStatus)
+from app.models import InboundMessage, InboundStatus, Midwife, Page, Record, RecordStatus
 from app.services import outbox
+from app.state_machine import transition
 from app.storage import get_store
 from app.whatsapp import WhatsAppClient, get_client, buttons_message, text_message
 
@@ -89,13 +89,6 @@ def get_or_create_midwife(db: Session, wa_id: str) -> Midwife:
     return mw
 
 
-def set_status(db: Session, record: Record, new: RecordStatus, actor: str = "system", note: str | None = None):
-    """Changement d'état + audit. (Les règles de transition arrivent au bloc 2.)"""
-    old = record.status.value if record.status else None
-    record.status = new
-    db.add(RecordEvent(record=record, from_status=old, to_status=new.value, actor=actor, note=note))
-
-
 def _reply(db: Session, payload: dict):
     outbox.enqueue(db, payload)
 
@@ -112,7 +105,7 @@ def _open_session(db: Session, midwife: Midwife, at: datetime) -> Record | None:
 
 def close_session(db: Session, record: Record, actor: str):
     record.session_open = False
-    set_status(db, record, RecordStatus.EN_ATTENTE_IA, actor, f"{len(record.pages)} page(s)")
+    transition(db, record, RecordStatus.EN_ATTENTE_IA, actor, f"{len(record.pages)} page(s)")
 
 
 # ------------------------------------------------------------------ traitement
@@ -174,8 +167,9 @@ def _handle_image(db: Session, msg: InboundMessage, midwife: Midwife, client: Wh
     if record is None:
         record = Record(midwife_id=midwife.id, first_captured_at=at, last_page_at=at)
         db.add(record)
+        # status encore vide avant le flush : c'est la transition de création -> CAPTURE
+        transition(db, record, RecordStatus.CAPTURE, f"midwife:{midwife.id}", "nouvelle session de capture")
         db.flush()
-        set_status(db, record, RecordStatus.CAPTURE, f"midwife:{midwife.id}", "nouvelle session de capture")
 
     page_no = len(record.pages) + 1
     record.pages.append(Page(page_number=page_no, storage_key=storage_key, sha256=digest, mime_type=mime,
@@ -205,7 +199,7 @@ def _handle_text(db: Session, msg: InboundMessage, midwife: Midwife):
     elif cmd in CMD_ANNULER:
         if record:
             record.session_open = False
-            set_status(db, record, RecordStatus.ANNULE, f"midwife:{midwife.id}", "annulé par la sage-femme")
+            transition(db, record, RecordStatus.ANNULE, f"midwife:{midwife.id}", "annulé par la sage-femme")
         _reply(db, text_message(msg.wa_from, "Capture annulée. Les photos sont conservées mais ne seront pas traitées."))
     else:
         # Point d'extension : logique conversationnelle (bloc 4)

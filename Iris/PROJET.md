@@ -52,17 +52,22 @@ décision de correspondance patiente.
       worker de rattrapage, images chiffrées, API image à accès restreint, page de
       confidentialité, vérification du .env au démarrage. 15 tests verts. **Testé avec un vrai
       téléphone via WhatsApp Cloud API.**
-- [ ] **Bloc 2 – Machine à états** : `app/state_machine.py` avec table des transitions
-      autorisées ; remplacer `ingest.set_status` (qui n'applique aucune règle pour l'instant)
-      par une fonction qui lève une erreur sur transition interdite. États d'échec :
-      ECHEC_TRAITEMENT, ECHEC_SYNCHRO, DOUBLON_SUSPECT, REVISION_MANUELLE_REQUISE, ANNULE.
-      Tests : couper le « réseau » à chaque étape.
+- [x] **Bloc 2 – Machine à états** : `app/state_machine.py` (table `TRANSITIONS`,
+      `transition()` qui lève `InvalidTransition`, gardes : ≥ 1 page avant l'IA, VALIDE
+      réservé à `midwife:` sans champ A_REVISER/ILLISIBLE, PATIENTE_LIEE exige `patient_id`,
+      révision manuelle après 3 tentatives IA ; `find_duplicate`). `ingest.set_status`
+      supprimé. `Record.link_pending` (« Je ne sais pas », bloc 4). Serveur central simulé
+      (`CentralRecord`, payload anonymisé) + drapeau `reseau_central` ;
+      `services/sync.py` (ECHEC_SYNCHRO puis réessai) ; `services/processing.py` (reprise des
+      ECHEC_TRAITEMENT + message WhatsApp). API `POST /api/admin/reseau`, `GET /api/tableau`.
+      `scripts/reset_db.py` en cas de changement de schéma. 59 tests verts.
 - [ ] **Bloc 3 – Cerveau IA local** : script indépendant `ai/extract.py` (Ollama +
       modèle vision, ou PaddleOCR + LLM local) prenant des images → JSON
       `{ "section.champ": {value, status, confidence, raw_text, page} }` conforme à
       `registry_schema.SECTIONS`. Le worker prend les dossiers EN_ATTENTE_IA, appelle le
       script, passe `sanitize_extraction`, écrit les `ExtractedField`, puis TRAITE_IA →
-      A_REVISER ou VALIDE. Contrôles de plausibilité (`FieldDef.plausible`) → A_REVISER.
+      A_REVISER (l'IA ne valide jamais seule : seule la sage-femme fait passer en VALIDE) ;
+      en cas d'erreur → ECHEC_TRAITEMENT et `ai_attempts += 1`. Contrôles de plausibilité (`FieldDef.plausible`) → A_REVISER.
       Évaluer sur le jeu de données synthétique (CSV de référence).
 - [ ] **Bloc 4 – Conversation & liaison** : `Midwife.conversation_state` (JSON) ;
       point d'entrée : `ingest._handle_text` (branche `else`). Confirmer / Corriger /

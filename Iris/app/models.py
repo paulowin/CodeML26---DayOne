@@ -133,6 +133,8 @@ class Record(Base):
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     session_open: Mapped[bool] = mapped_column(Boolean, default=True)
     ai_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    # « Je ne sais pas » à la liaison patiente : reste VALIDE et non rattaché (bloc 4)
+    link_pending: Mapped[bool] = mapped_column(Boolean, default=False)
     extraction_model: Mapped[str | None] = mapped_column(String(80), nullable=True)
     first_captured_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
     last_page_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
@@ -244,6 +246,22 @@ class SimMessage(Base):
     wa_id: Mapped[str] = mapped_column(String(32), index=True)
     payload_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
+
+
+# --------------------------------------------------------------------------- synchronisation
+class SystemFlag(Base):
+    """Drapeaux système clé/valeur (ex. "reseau_central" = "on" / "off" pour la démo)."""
+    __tablename__ = "system_flags"
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[str] = mapped_column(String(80))
+
+
+class CentralRecord(Base):
+    """Serveur central SIMULÉ (ministère) : reçoit les dossiers anonymisés synchronisés."""
+    __tablename__ = "central_records"
+    record_id: Mapped[str] = mapped_column(String(36), primary_key=True)   # idempotent par dossier
+    payload_json: Mapped[str] = mapped_column(Text)
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
 
 
 # --------------------------------------------------------------------------- accès restreint

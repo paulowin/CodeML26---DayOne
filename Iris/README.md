@@ -70,10 +70,106 @@ expirées, renvoie l'outbox → aucun message perdu si le réseau tombe.
 | `app/routers/records.py` | API personnel : dossier + image, accès par rôle, journalisé |
 | `app/services/ingest.py` | Parsing, sessions multipages, doublons, commandes FIN/ANNULER |
 | `app/services/outbox.py` | File d'envoi persistante |
+| `app/state_machine.py` | Machine à états des dossiers (transitions, gardes, doublons) |
+| `app/services/sync.py` | Synchronisation vers le serveur central simulé |
+| `app/services/processing.py` | Reprise des échecs de lecture IA |
+| `app/routers/admin.py` | Bascule du réseau central + tableau de bord (ADMIN/SUPERVISEUR) |
 | `app/models.py` | Schéma BDD + énumérations d'états |
 | `app/registry_schema.py` | Schéma des champs du registre + liste blanche anti-identifiants |
 | `app/storage.py` | Stockage chiffré (Fernet) des images d'origine |
 | `app/whatsapp.py` | Client Graph API + constructeurs de messages (texte, boutons, liste) |
+
+## Cycle de vie des enregistrements (bloc 2)
+
+Chaque dossier (un registre photographié) suit une machine à états stricte
+(`app/state_machine.py`). Tout changement d'état passe par `transition()`, qui
+refuse les passages non prévus (`InvalidTransition`) et trace chaque étape dans
+`record_events` (avant, après, acteur, note).
+
+```
+            (création)
+                │
+                ▼
+            CAPTURE ──────────────────────────────────────────┐
+                │ FIN / fermeture auto (≥ 1 page)              │
+                ▼                                              │
+  ┌──────► EN_ATTENTE_IA ──────────► ECHEC_TRAITEMENT          │
+  │             │                    │   (< 3 essais : retour  │
+  │             ▼                    │    en file)             │
+  │         TRAITE_IA                │ (≥ 3 essais)            │
+  │             │                    ▼                         │
+  │             ▼              REVISION_MANUELLE_REQUISE ──┐   │
+  └─photo── A_REVISER ─────────────► │                     │   │
+   reprise      │ la sage-femme      │                     │   │
+                ▼ valide             ▼                     ▼   ▼
+              VALIDE ◄───────────────┘                   ANNULE
+                │ └────────► DOUBLON_SUSPECT ──────────────► ▲
+                ▼                    │                       │
+          PATIENTE_LIEE ◄────────────┘
+                │
+                ▼
+           ENREGISTRE ──► ECHEC_SYNCHRO (réseau central coupé)
+                │               │ réessai à chaque cycle
+                ▼               ▼
+           SYNCHRONISE ◄────────┘          (SYNCHRONISE et ANNULE sont finaux)
+```
+
+| Depuis | Vers (autorisé) | Garde |
+|---|---|---|
+| *(création)* | CAPTURE | |
+| CAPTURE | EN_ATTENTE_IA, ANNULE | au moins 1 page pour EN_ATTENTE_IA |
+| EN_ATTENTE_IA | TRAITE_IA, ECHEC_TRAITEMENT, ANNULE | |
+| ECHEC_TRAITEMENT | EN_ATTENTE_IA, REVISION_MANUELLE_REQUISE | révision manuelle seulement après 3 tentatives IA |
+| TRAITE_IA | A_REVISER | l'IA ne valide jamais seule |
+| A_REVISER | VALIDE, EN_ATTENTE_IA (photo reprise), REVISION_MANUELLE_REQUISE, ANNULE | |
+| REVISION_MANUELLE_REQUISE | VALIDE, ANNULE | |
+| VALIDE | PATIENTE_LIEE, DOUBLON_SUSPECT | |
+| DOUBLON_SUSPECT | PATIENTE_LIEE, ANNULE | |
+| PATIENTE_LIEE | ENREGISTRE | |
+| ENREGISTRE | SYNCHRONISE, ECHEC_SYNCHRO | |
+| ECHEC_SYNCHRO | SYNCHRONISE | |
+| SYNCHRONISE, ANNULE | — (finaux) | |
+
+Gardes transverses :
+- **→ VALIDE** : l'acteur doit être la sage-femme (`midwife:<id>`) et aucun champ
+  courant ne doit rester `A_REVISER` ou `ILLISIBLE`.
+- **→ PATIENTE_LIEE** : une patiente doit être rattachée (`patient_id`). « Je ne sais
+  pas » laisse le dossier VALIDE avec `link_pending = True` : pas de création automatique.
+- Les états d'échec (`ECHEC_*`, `DOUBLON_SUSPECT`, `REVISION_MANUELLE_REQUISE`)
+  renseignent `failure_reason`, qui est vidé dès que le dossier en sort.
+- `find_duplicate()` signale un autre dossier ENREGISTRE/SYNCHRONISE de la même
+  patiente avec la même `identification.date_visite`.
+
+Le worker (toutes les 20 s) remet en file les ECHEC_TRAITEMENT (< 3 essais) ou les passe
+en révision manuelle en prévenant la sage-femme, puis synchronise les dossiers ENREGISTRE /
+ECHEC_SYNCHRO vers le serveur central.
+
+### Démo hors ligne (serveur central simulé)
+
+Le « serveur du ministère » est simulé par la table `central_records`. Il ne reçoit
+que des données anonymisées : UUID du dossier et de la patiente, date de capture et
+champs courants. Il ne reçoit ni image ni numéro WhatsApp. Le drapeau `reseau_central`
+simule la coupure (clé API ADMIN ou SUPERVISEUR requise) :
+
+```bash
+# couper le réseau central
+curl -X POST http://localhost:8000/api/admin/reseau -H "X-API-Key: dk_..." \
+     -H "Content-Type: application/json" -d '{"en_ligne": false}'
+# observer : les dossiers ENREGISTRE passent en ECHEC_SYNCHRO
+curl -H "X-API-Key: dk_..." http://localhost:8000/api/tableau
+# rallumer : au cycle suivant (≤ 20 s), ils passent en SYNCHRONISE
+curl -X POST http://localhost:8000/api/admin/reseau -H "X-API-Key: dk_..." \
+     -H "Content-Type: application/json" -d '{"en_ligne": true}'
+```
+
+> Sous PowerShell, utiliser `curl.exe` et échapper les guillemets du JSON, ou
+> `Invoke-RestMethod -Method Post -Headers @{"X-API-Key"="dk_..."} -ContentType "application/json" -Body '{"en_ligne": false}' http://localhost:8000/api/admin/reseau`.
+
+### Changement de schéma
+
+SQLite `create_all` n'ajoute pas les nouvelles colonnes aux tables existantes. Après
+une mise à jour du schéma : `python -m scripts.reset_db` (option `--images` pour
+effacer aussi les images chiffrées), puis recréer les comptes avec `scripts.create_staff`.
 
 ## Choix de conception
 

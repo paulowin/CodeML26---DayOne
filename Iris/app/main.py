@@ -8,18 +8,21 @@ from fastapi import FastAPI
 
 from app.config import get_settings
 from app.db import SessionLocal, init_db
-from app.routers import privacy, records, webhook
-from app.services import ingest, outbox
+from app.routers import admin, privacy, records, webhook
+from app.services import ingest, outbox, processing, sync
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("iris")
 
 
 def run_maintenance_cycle():
-    """Rattrapage : messages entrants non traités, sessions expirées, outbox."""
+    """Rattrapage : messages entrants non traités, sessions expirées, échecs IA,
+    synchronisation centrale, outbox (en dernier : envoie aussi les messages des étapes précédentes)."""
     with SessionLocal() as db:
         ingest.retry_failed_inbound(db)
         ingest.auto_close_stale_sessions(db)
+        processing.retry_failed_processing(db)
+        sync.sync_pending(db)
         outbox.flush_pending(db)
 
 
@@ -71,6 +74,7 @@ app = FastAPI(title="Iris – The Offline Midwife (défi DayOne)", version="0.1.
 app.include_router(webhook.router)
 app.include_router(records.router)
 app.include_router(privacy.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")
