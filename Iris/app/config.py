@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     ai_model_main: str = "qwen2.5vl:3b"
     ai_model_verify: str = "qwen2.5vl:3b"      # 2e avis (« qwen2.5vl:7b » si la VRAM le permet ; vide = désactivé)
     ai_seuil_connu: float = 0.8                # confiance minimale pour le statut CONNU
+    ai_mode: str = "vlm"                       # "vlm" (Ollama lit tout) | "ocr" (OCR classique + 2e avis Ollama)
+    ai_ocr_engine: str = "paddle"              # mode ocr : "paddle" | "easyocr"
     ai_timeout_seconds: int = 600
     ai_num_ctx: int = 8192                     # contexte Ollama (4096 si la VRAM sature)
     ai_num_predict: int = 2048                 # plafond de tokens générés par appel (anti-boucle)

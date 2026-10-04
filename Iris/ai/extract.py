@@ -382,13 +382,15 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             if "libelle_recopie" in st.flags or st.interp.flags:
                 st.evidence.validation_failed = True
             conf = C.score(st.evidence)
-            if st.f.is_checkbox:
+            vlm_box = st.f.is_checkbox and "lecture_cv" not in st.flags
+            if vlm_box:
                 # mesuré : le VLM invente des cases cochées, même confirmées par un 2e avis du même
-                # modèle -> une case lue par l'IA est toujours à confirmer par la sage-femme
+                # modèle -> une case lue par le VLM est toujours à confirmer par la sage-femme
+                # (une case lue par vision classique — taux d'encre, mode OCR — n'est pas concernée)
                 conf = min(conf, C.CHECKBOX_CAP)
-            critical = st.f.critique or st.f.is_checkbox
+            critical = st.f.critique or vlm_box
             status = C.status(st.interp.status, conf, seuil, critical, st.evidence)
-            if st.f.is_checkbox and status == "CONNU":
+            if vlm_box and status == "CONNU":
                 status = "A_REVISER"                    # quel que soit le seuil
             raw = st.chosen.raw if isinstance(st.chosen.raw, str) else None
             out[k] = {"value": st.interp.value, "raw_text": raw, "status": status, "confidence": conf,

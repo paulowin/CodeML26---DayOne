@@ -78,6 +78,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--page-type", help="ne traiter qu'un type de page")
     ap.add_argument("--exclude", action="append", default=[], help="type de page à exclure (répétable)")
+    ap.add_argument("--mode", choices=("vlm", "ocr"), default=s.ai_mode,
+                    help="vlm : Ollama lit tout ; ocr : OCR classique + 2e avis Ollama sur les champs critiques")
+    ap.add_argument("--ocr-engine", choices=("paddle", "easyocr"), default=s.ai_ocr_engine)
+    ap.add_argument("--files", nargs="*", help="noms de fichiers du manifeste à traiter (sinon --limit)")
     ap.add_argument("--main", default=s.ai_model_main)
     ap.add_argument("--verify", default=s.ai_model_verify, help="'' = pas de 2e avis")
     ap.add_argument("--seuil", type=float, default=s.ai_seuil_connu)
@@ -87,22 +91,36 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-    run_id = args.run_id or f"{datetime.now():%Y%m%d-%H%M}_{args.main.replace(':', '-')}_{args.source}"
+    engine = f"ocr-{args.ocr_engine}" if args.mode == "ocr" else args.main.replace(":", "-")
+    run_id = args.run_id or f"{datetime.now():%Y%m%d-%H%M}_{engine}_{args.source}"
     out_dir = PREDS_DIR / run_id
     client = OllamaClient(s.ollama_url, timeout=s.ai_timeout_seconds, num_ctx=s.ai_num_ctx, num_predict=s.ai_num_predict,
                           cache_dir=None if args.no_cache else EVAL_DIR / "cache")
     try:
         client.ping()
     except OllamaUnavailable as e:
-        print(f"Ollama indisponible : {e}", file=sys.stderr)
-        return 3
+        if args.mode == "vlm" or args.verify:
+            print(f"Ollama indisponible : {e}", file=sys.stderr)
+            return 3
+        client = None
 
     images = select_images(args.source, args.limit, args.page_type, args.exclude)
-    print(f"{len(images)} image(s) -> {out_dir}  (principal {args.main}, 2e avis {args.verify or 'aucun'})")
+    if args.files:
+        wanted = set(args.files)
+        images = [e for e in load_manifest()["images"] if e["file"] in wanted]
+    print(f"{len(images)} image(s) -> {out_dir}  (mode {args.mode}"
+          f"{' ' + args.ocr_engine if args.mode == 'ocr' else ', principal ' + args.main}, "
+          f"2e avis {args.verify or 'aucun'})")
     t_all = time.monotonic()
     for i, e in enumerate(images, 1):
-        res = extract_pages([(DATA_DIR / e["file"]).read_bytes()], client=client, main_model=args.main,
-                            verify_model=args.verify, seuil=args.seuil, use_cache=not args.no_cache)[0]
+        data = (DATA_DIR / e["file"]).read_bytes()
+        if args.mode == "ocr":
+            from ai.ocr_classique import extract_pages_ocr
+            res = extract_pages_ocr([data], engine=args.ocr_engine, client=client, verify_model=args.verify or None,
+                                    seuil=args.seuil, use_cache=not args.no_cache)[0]
+        else:
+            res = extract_pages([data], client=client, main_model=args.main, verify_model=args.verify,
+                                seuil=args.seuil, use_cache=not args.no_cache)[0]
         doc = res.to_dict(e["file"])
         write_json(out_dir / f"{Path(e['file']).stem}.json", doc)
         st = {}

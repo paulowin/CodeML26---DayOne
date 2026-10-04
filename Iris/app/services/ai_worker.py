@@ -35,6 +35,17 @@ _lock = threading.Lock()
 
 
 def _default_extractor() -> Callable[[list[bytes]], list]:
+    s = get_settings()
+    if s.ai_mode == "ocr":                                   # OCR classique + 2e avis Ollama (étape 3d)
+        from ai.ocr_classique import extract_pages_ocr
+        from ai.ollama_client import OllamaClient
+
+        def run(images: list[bytes]):
+            client = OllamaClient(s.ollama_url, timeout=s.ai_timeout_seconds, num_ctx=s.ai_num_ctx,
+                                  num_predict=s.ai_num_predict) if s.ai_model_verify else None
+            return extract_pages_ocr(images, engine=s.ai_ocr_engine, client=client,
+                                     verify_model=s.ai_model_verify or None)
+        return run
     from ai.extract import extract_pages                    # import paresseux (opencv, numpy)
     return extract_pages
 
