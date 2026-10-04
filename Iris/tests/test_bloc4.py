@@ -112,25 +112,25 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
         if key == V + "T2V2.ta":                                              # 2 lectures concurrentes
             assert q["interactive"]["type"] == "list"
             titles = [r["title"] for r in q["interactive"]["action"]["sections"][0]["rows"]]
-            assert titles[:2] == ["106/77 mmHg", "166/77 mmHg"] and "Autre valeur" in titles
+            assert titles[:2] == ["138/89 mmHg", "198/89 mmHg"] and "Autre valeur" in titles
             descs = [r["description"] for r in q["interactive"]["action"]["sections"][0]["rows"]]
             assert descs[:2] == ["Lecture 1", "Lecture 2"]
             assert "les deux lectures diffèrent" in body_of(q)
             assert all(len(t) <= 24 for t in titles)
             press(client, next(i for i in ids(q) if i.startswith("CAND|") and i.split("|")[2].endswith("#0")))
-        elif key == V + "T1V2.hemoglobine":                # « illisible » mais une lecture existe
-            assert "J'ai lu : 11.8 g/dL" in body_of(q) and "→ —" not in body_of(q)
+        elif key == V + "T2V3.bcf":                        # « illisible » mais une lecture existe
+            assert "J'ai lu : 156" in body_of(q) and "→ —" not in body_of(q)
             assert "écriture peu lisible" in body_of(q)
             assert [i.split("|")[0] for i in ids(q)] == ["CONF", "CORR", "ILL"]   # la valeur reste proposée
             press(client, find_id(q, "ILL"))
         elif key == "grossesse_actuelle.ddr":                                 # corriger : invalide puis valide
-            assert "J'ai lu : 26/04/2025" in body_of(q) and "»" not in body_of(q)   # affiché une seule fois
+            assert "J'ai lu : 14/04/2025" in body_of(q) and "»" not in body_of(q)   # affiché une seule fois
             assert "incohérent avec la DPA" in body_of(q)
             press(client, find_id(q, "CORR"))
             assert "jj/mm/aaaa" in body_of(fake_wa.sent[-1])
             say(client, "31/02/2025")
             assert "Je n'ai pas compris" in body_of(fake_wa.sent[-1])
-            say(client, "27/04/2025")
+            say(client, "15/04/2025")
         else:
             press(client, find_id(q, "CONF"))
 
@@ -143,6 +143,10 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
 
     with SessionLocal() as db:
         assert db.get(Record, rid).status == S.VALIDE
+    alert = body_of(fake_wa.sent[-2])                     # ⚠️ alertes, sur valeurs confirmées
+    assert alert.startswith("⚠️ Signes d'alerte :") and alert.endswith("À évaluer selon le protocole.")
+    assert "pré-éclampsie" in alert and "œdèmes" in alert and "anémie (Hb 10,9 g/dL)" in alert
+    assert "HTA sévère, urgence (TA 164/98)" in alert and "TA en hausse" in alert
     link = fake_wa.sent[-1]
     assert link["interactive"]["type"] == "list"
     rows = link["interactive"]["action"]["sections"][0]["rows"]
@@ -158,17 +162,18 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
         assert rec.status == S.ENREGISTRE and db.get(Patient, rec.patient_id).code == "A64125"
         history = [x for x in rec.fields if x.section == "grossesse_actuelle" and x.field_key == "ddr"]
         assert len(history) == 2 and sum(x.is_current for x in history) == 1   # ancienne version gardée
-    assert json.loads(f["grossesse_actuelle.ddr"].value_json) == "2025-04-27"
+    assert json.loads(f["grossesse_actuelle.ddr"].value_json) == "2025-04-15"
     assert f["grossesse_actuelle.ddr"].source == FieldSource.SAGE_FEMME
-    assert json.loads(f[V + "T2V2.ta"].value_json) == {"sys": 106, "dia": 77}
-    assert f[V + "T1V2.hemoglobine"].status == FieldStatus.ILLISIBLE
+    assert json.loads(f[V + "T2V2.ta"].value_json) == {"sys": 138, "dia": 89}
+    assert f[V + "T2V3.bcf"].status == FieldStatus.ILLISIBLE
     assert all(x.source != FieldSource.IA for x in f.values())                # tout a été confirmé
 
-    # confidentialité : aucun identifiant de la patiente fictive 1 (toutes pages) dans les messages
+    # confidentialité : aucun identifiant de la patiente fictive 9 (toutes pages) dans les messages
     idents = set()
-    for p in GT_DIR.glob("specimen_p0[1-8].json"):
+    for n in range(65, 73):
+        p = GT_DIR / f"specimen_p{n:02d}.json"
         idents |= {v for v in json.loads(p.read_text(encoding="utf-8"))["_identifiants"].values() if v}
-    assert "Tazi Meryem" in idents
+    assert idents
     assert find_leaks({"fields": {}, "messages": all_out(fake_wa)}, idents) == []
 
 

@@ -389,12 +389,34 @@ python -m scripts.demo_seed 2126XXXXXXXX    # numéro WhatsApp de la sage-femme 
 ```
 
 `demo_seed` crée 2 patientes (A64125 : 3 visites synchronisées ; A64128 : 1 visite) et un
-dossier A_REVISER construit depuis la vérité terrain de la page spécimen 3 (données
-fictives), avec 5 champs douteux dont une TA à 2 lectures : la démo ne dépend pas des
+dossier A_REVISER construit depuis la vérité terrain de la page spécimen 67 (patiente fictive 9),
+avec 5 champs douteux dont une TA à 2 lectures : la démo ne dépend pas des
 minutes de lecture IA. Scénario : couper le réseau central (`/api/admin/reseau`) → vérifier
-sur le téléphone (corriger la DDR, choisir la TA, déclarer l'hémoglobine illisible) → Tout
-confirmer → choisir « Patiente 1 » (A64128 est aussi proposée, code proche) → dossier
+sur le téléphone (corriger la DDR, choisir la TA, déclarer le BCF illisible) → Tout
+confirmer → « ⚠️ Signes d'alerte » (pré-éclampsie, anémie… voir Alertes cliniques) → choisir « Patiente 1 » (A64128 est aussi proposée, code proche) → dossier
 ENREGISTRE en ECHEC_SYNCHRO → rallumer le réseau → SYNCHRONISE.
+
+## Alertes cliniques
+
+> ⚠️ **Aide à la décision, pas un diagnostic.** Une alerte signale une valeur à évaluer par la
+> sage-femme selon le protocole national ; elle ne remplace jamais son jugement clinique.
+
+`app/services/alerts.py` calcule des règles simples **uniquement sur les valeurs confirmées par la
+sage-femme** (statut CONNU, source SAGE_FEMME) : une lecture à vérifier (A_REVISER) ou lue par l'IA
+seule ne déclenche jamais d'alerte. Seuils et sources (OMS) dans un seul fichier commenté :
+`app/templates/seuils_cliniques.py`.
+
+| Règle | Alerte |
+|---|---|
+| TA ≥ 140/90 (≥ 160/110) | « HTA gravidique possible » (« HTA sévère, urgence ») |
+| TA ≥ 140/90 + albuminurie positive après 20 SA (+ œdèmes) | « signes pouvant évoquer une pré-éclampsie » |
+| TAS en hausse sur 3 visites consécutives | « TA en hausse » |
+| Hb < 11 g/dL (< 7) | « anémie » (« anémie sévère ») |
+| BCF < 110 ou > 160 | « BCF hors norme » |
+| > 41 SA sans accouchement enregistré | « dépassement de terme » |
+
+Après validation, la sage-femme reçoit : « ⚠️ Signes d'alerte : … À évaluer selon le protocole. » ;
+les mêmes alertes s'affichent en bandeau rouge sur `/verif/{id}`.
 
 ## Fiabilité des envois
 

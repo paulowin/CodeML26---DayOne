@@ -24,9 +24,9 @@ Ouvrir dans le navigateur du poste : `http://127.0.0.1:8000/verif` (deuxième é
 | 0:30 | Terminal | `POST /api/admin/reseau {"en_ligne": false}` | Le centre de santé perd le réseau central. |
 | 0:40 | Téléphone | [Terminé] → « ⏳ Je lis votre registre… (environ 1 minute) » | Tout est lu sur ce PC : OCR local, cases par vision, aucun service tiers. |
 | 1:30 | Téléphone | « Voici ce que j'ai lu (page 1 – …) » : ✅ lignes sûres, 🟠 à vérifier, 🔒 « Non enregistré : nom de la patiente » | L'IA ne cache jamais ses doutes ; le nom n'est jamais stocké. |
-| 2:00 | Téléphone | Dossier de démo : question « 🟠 TA : 106/77 mmHg ou 166/77 mmHg ? » + aperçu de la zone (identités masquées) → choisir 106/77 | Deux lectures différentes : c'est la sage-femme qui tranche, en un geste. |
+| 2:00 | Téléphone | Dossier de démo : question « 🟠 TA : 138/89 mmHg ou 198/89 mmHg ? » + aperçu de la zone (identités masquées) → choisir 138/89 | Deux lectures différentes : c'est la sage-femme qui tranche, en un geste. |
 | 2:40 | Téléphone | DDR « incohérente avec la DPA » → [Corriger] → taper `31/02/2025` (refusé, format réexpliqué) → `27/04/2025` | Les corrections passent par les mêmes contrôles que l'IA. |
-| 3:20 | Téléphone | [✅ Tout est juste] → liste « Patiente 1 – code A64125 – 3 visites » / « Patiente 2 – A64128 (code proche) » / Aucune / Je ne sais pas → Patiente 1 | Jamais de création automatique : la correspondance est toujours une décision humaine. |
+| 3:20 | Téléphone | [✅ Tout est juste] → « ⚠️ Signes d'alerte : HTA sévère, pré-éclampsie possible, TA en hausse, anémie (Hb 10,9)… À évaluer selon le protocole. » → liste « Patiente 1 – code A64125 – 3 visites » / « Patiente 2 – A64128 (code proche) » / Aucune / Je ne sais pas → Patiente 1 | Jamais de création automatique : la correspondance est toujours une décision humaine. |
 | 3:50 | Navigateur | `/verif/<dossier>` : image à gauche, champs, sources (ocr / case / sage-femme) | Traçabilité : chaque valeur, sa source et son historique. |
 | 4:20 | Terminal + tableau | Dossier ENREGISTRE → ECHEC_SYNCHRO ; `{"en_ligne": true}` → SYNCHRONISE (≤ 20 s) | Hors ligne d'abord : rien n'est perdu, tout part au retour du réseau, sans doublon. |
 | 4:50 | Téléphone | « ✅ Dossier validé et relié à la patiente A64125. Merci 🙏 » | Fin. |

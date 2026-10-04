@@ -86,3 +86,17 @@ def test_image_dechiffree_et_tracee(local):
     with SessionLocal() as db:
         actions = [a.action for a in db.scalars(select(AccessLog).where(AccessLog.record_id == rid))]
     assert actions == ["verif_image"]                                # chaque image affichée est tracée
+
+
+def test_bandeau_rouge_des_alertes_sur_valeurs_confirmees(local):
+    rid = _record_p04()
+    assert "Signes d'alerte" not in local.get(f"/verif/{rid}").text
+    with SessionLocal() as db:
+        rec = db.get(Record, rid)
+        rec.fields.append(ExtractedField(section="grossesse_actuelle", field_key="visites.M8.hemoglobine",
+                                         value_json="10.9", status=FieldStatus.CONNU, confidence=1.0,
+                                         source=FieldSource.SAGE_FEMME, page_number=1, is_current=True))
+        db.commit()
+    page = local.get(f"/verif/{rid}").text
+    assert "background:#b3261e" in page and "anémie (Hb 10,9 g/dL)" in page
+    assert "Aide à la décision, pas un diagnostic" in page

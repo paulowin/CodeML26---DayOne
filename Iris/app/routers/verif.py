@@ -263,8 +263,13 @@ def verif_record(record_id: str, request: Request, staff: Staff = Depends(requir
                  f"<span>Couverture : <b>{100 * total['couverts'] / a:.1f} %</b></span>"
                  f"<span>Erreurs silencieuses (faux mais affiché sûr) : <b>{total['silencieuses']}</b></span></div>")
     c = _counts(rec)
+    from app.services import alerts
+    al = alerts.message(alerts.record_alerts(rec), "fr")
+    banner = (f"<div style='background:#b3261e;color:#fff;padding:10px 14px;border-radius:6px;margin:8px 0'>"
+              f"<b>{html.escape(al)}</b><br><small>Aide à la décision, pas un diagnostic : seules les valeurs "
+              f"confirmées par la sage-femme sont prises en compte.</small></div>") if al else ""
     body = (f"<p><a href='/verif'>← tous les dossiers</a> <button onclick='location.reload()'>Rafraîchir</button></p>"
-            f"<h1>Dossier {rec.id[:8]} – {rec.status.value}</h1>"
+            f"<h1>Dossier {rec.id[:8]} – {rec.status.value}</h1>{banner}"
             f"<p>Modèle : {html.escape(rec.extraction_model or '—')} · CONNU {c['CONNU']} · à réviser {c['A_REVISER']}"
             f" · illisibles {c['ILLISIBLE']} · non lus {c['non lus']}</p>{stats}" + "".join(blocks))
     return _page_html(f"Vérification – {rec.id[:8]}", body)

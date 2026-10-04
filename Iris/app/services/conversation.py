@@ -680,6 +680,7 @@ def _confirm_all(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> N
     if overflow:
         msg += "\n" + out.tr("overflow", n=plural(out.lang, len(overflow), "pl_field"))
     out.text(msg)
+    _send_alerts(rec, out)
     start_linking(db, mw, rec, st, out)
 
 
@@ -793,6 +794,14 @@ def manual_fields(rec: Record) -> list[str]:
     return [k for k in keys if k not in done]
 
 
+def _send_alerts(rec: Record, out: Out) -> None:
+    """⚠️ Signes d'alerte (aide à la décision) sur les valeurs que la sage-femme vient de confirmer."""
+    from app.services import alerts
+    msg = alerts.message(alerts.record_alerts(rec), out.lang)
+    if msg:
+        out.text(msg)
+
+
 def _manual_intro(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
     """Saisie guidée : introduction PUIS directement la première question (pas de bouton à presser)."""
     queue = manual_fields(rec)
@@ -807,6 +816,7 @@ def _manual_ask(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> No
         out.text(out.tr("manual_done"))
         transition(db, rec, RecordStatus.VALIDE, f"midwife:{mw.id}", "saisie guidée sur WhatsApp")
         out.text(out.tr("validated", rid=rec.id[:8]))
+        _send_alerts(rec, out)
         start_linking(db, mw, rec, st, out)
         return
     key = queue[st["idx"]]

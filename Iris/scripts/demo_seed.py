@@ -4,8 +4,9 @@
 
 Crée : la sage-femme, 2 patientes (codes A64125 avec 3 visites synchronisées et A64128
 avec 1 visite), et un dossier A_REVISER construit depuis la vérité terrain de la page
-spécimen 3 (grossesse actuelle, données FICTIVES) avec 5 champs volontairement douteux
-(dont une TA avec 2 lectures concurrentes). Le message résumé [Vérifier] est mis dans
+spécimen 67 (grossesse actuelle de la patiente fictive 9) avec 5 champs volontairement douteux
+(dont une TA avec 2 lectures concurrentes). Ses valeurs déclenchent À COUP SÛR les alertes
+cliniques à la validation : TA 138/89 -> 164/98, albuminurie positive + œdèmes, Hb 10,9. Le message résumé [Vérifier] est mis dans
 l'outbox et envoyé tout de suite si le réseau répond (sinon au prochain cycle du worker).
 Le code de registre lu est A64125 : à la liaison, A64125 (exact) et A64128 (proche) sont proposés.
 """
@@ -25,13 +26,13 @@ from app.templates.normalize import interpret
 from eval.common import DATA_DIR, GT_DIR
 
 T = get_template()
-DEMO_PAGE = 3                       # spécimen : grossesse actuelle, patiente fictive 1
+DEMO_PAGE = 67                      # spécimen : grossesse actuelle, patiente fictive 9 (alertes)
 CODE = "A64125"
 V = "grossesse_actuelle.visites."
 DOUBTS = {                          # clé -> (statut, confiance, candidats, drapeaux = raison du doute)
-    V + "T2V2.ta": (FieldStatus.A_REVISER, 0.5, [{"sys": 106, "dia": 77}, {"sys": 166, "dia": 77}], []),
+    V + "T2V2.ta": (FieldStatus.A_REVISER, 0.5, [{"sys": 138, "dia": 89}, {"sys": 198, "dia": 89}], []),
     V + "T2V3.poids_kg": (FieldStatus.A_REVISER, 0.55, [], []),
-    V + "T1V2.hemoglobine": (FieldStatus.ILLISIBLE, 0.3, [], []),
+    V + "T2V3.bcf": (FieldStatus.ILLISIBLE, 0.3, [], []),
     "grossesse_actuelle.ddr": (FieldStatus.A_REVISER, 0.6, [], ["dpa_incoherente_avec_ddr"]),
     V + "M8.age_probable_sa": (FieldStatus.A_REVISER, 0.45, [], ["age_gestationnel_incoherent_ddr"]),
 }
@@ -39,7 +40,7 @@ DOUBTS = {                          # clé -> (statut, confiance, candidats, dra
 
 # bandes (y0, y1) de la page spécimen grossesse où se trouvent les champs douteux (3 bandes, 15 %)
 BANDS = ((0.0, 0.3704), (0.3148, 0.6852), (0.6296, 1.0))
-DEMO_ZONES = {V + "T2V2.ta": BANDS[0], V + "T2V3.poids_kg": BANDS[0], V + "T1V2.hemoglobine": BANDS[2],
+DEMO_ZONES = {V + "T2V2.ta": BANDS[0], V + "T2V3.poids_kg": BANDS[0], V + "T2V3.bcf": BANDS[1],
               "grossesse_actuelle.ddr": BANDS[0], V + "M8.age_probable_sa": BANDS[0]}
 
 
