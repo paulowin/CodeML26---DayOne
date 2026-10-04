@@ -93,17 +93,54 @@ décision de correspondance patiente.
       `python -m eval.evaluate --pred <dossier>` (exactitude, cases P/R, couverture,
       calibration, NON_FOURNI, erreurs silencieuses, échec bloquant si fuite d'identifiant) ;
       `eval/dummy_predict.py` pour tester l'évaluateur. 72 tests verts.
-      À reprendre : `state_machine.find_duplicate` lit `identification.date_visite`, qui
-      n'existe plus dans le schéma réel (→ date de visite = `visites.<COL>.venue_le` ou
-      `date_consultation`, bloc 3b/4).
-- [ ] **Bloc 3b – Cerveau IA local** : script indépendant `ai/extract.py` (Ollama +
-      modèle vision, ou PaddleOCR + LLM local) prenant des images → JSON
-      `{"image": ..., "fields": {"section.champ": {value, status, confidence, raw_text, page}}}`
-      conforme au template (évaluable directement par `eval.evaluate`). Le worker prend les dossiers EN_ATTENTE_IA, appelle le
-      script, passe `sanitize_extraction`, écrit les `ExtractedField`, puis TRAITE_IA →
-      A_REVISER (l'IA ne valide jamais seule : seule la sage-femme fait passer en VALIDE) ;
-      en cas d'erreur → ECHEC_TRAITEMENT et `ai_attempts += 1`. Contrôles de plausibilité (`FieldDef.plausible`) → A_REVISER.
-      Évaluer avec `eval.evaluate` (spécimen puis photos réelles).
+      Ajustements : `find_duplicate` utilise `state_machine.date_reference(record)` (date de
+      consultation post-partum > date d'accouchement > « venue le » la plus récente) et compare
+      (type, date) ; comparaison de texte insensible aux accents dans les DEUX sens.
+- [x] **Bloc 3b – Cerveau IA local** (`ai/`, détails dans le README « Cerveau IA ») :
+      `ollama_client` (schéma JSON, temp. 0, num_ctx 8192, 2 tentatives puis sans format,
+      cache `eval/cache/` pour le CLI uniquement), `preprocess` (EXIF, qualité, redressement,
+      CLAHE, 3 bandes à 15 % de recouvrement), `classify`, `prompts` (générés depuis le
+      template, champs du type de page seulement), `validate` (contrôles croisés),
+      `confidence` (plafond 0.85, accord entre bandes, 2e avis, critiques jamais CONNU sur une
+      lecture), filtre téléphone/CIN. Normalisation étendue dans `app/templates/normalize.py`
+      (pas de doublon `ai/normalize.py`). CLI `python -m ai.extract`, évaluation
+      `python -m ai.run_eval` (→ `eval/preds/<run_id>/`, `--calibrate`).
+      Backend : `app/services/ai_worker.py` (thread à part, 1 dossier à la fois, pages en
+      mémoire, EN_ATTENTE_IA → TRAITE_IA → A_REVISER, Ollama coupé → ECHEC_TRAITEMENT,
+      message « photo floue » et « Lecture terminée »), config `AI_*` + `check_config`,
+      colonnes `pages.quality_json/page_type`, `extracted_fields.details_json` (candidats,
+      drapeaux ; ajoutées automatiquement par `init_db`).
+      Constats des tests manuels : RTX 2050 4 Go VRAM, 16 Go RAM ; qwen2.5vl:3b ≈ 25 s/appel,
+      qwen2.5vl:7b ≈ 45 s, qwen3-vl:4b ≈ 390 s (exclu). Les modèles lisent bien l'écriture
+      claire mais INVENTENT quand on demande un champ absent (DDR = « En milieu surveillé ») ;
+      le 7B a halluciné presque tout sur une vraie photo ; le 3B a renvoyé une réponse vide
+      (format json) sur une vraie photo → architecture anti-hallucination. Mesuré pendant le
+      3b : un objet {raw, etat, confiance} par champ fait dégénérer le 3B (ILLISIBLE partout)
+      → format compact ; si toutes les clés sont optionnelles, le 3B répond
+      `{"confiance": 0.9}` seul → conteneurs obligatoires ; avec un champ par groupe de
+      cases, le 3B coche une option au hasard dans chaque groupe → liste plate des cases
+      cochées, jamais CONNU sur une lecture ; num_ctx 4096 ou 8192 : même vitesse (≈ 24 s
+      par bande, le temps est dans l'encodage de l'image).
+      **Dernière évaluation** (`python -m ai.run_eval --source specimen --limit 8 --calibrate`,
+      patiente 1, qwen2.5vl:3b + 2e avis 3b, rapports `eval/reports/3b_*.md`) :
+      - passage 1 (avant corrections) : exactitude 25 %, **10 erreurs silencieuses** (toutes des
+        cases cochées confirmées à 0.99 par le 2e avis du même modèle), 409 s/page en moyenne
+        (couverture 333 s, grossesse 1428 s pour seulement 4 champs : délai dépassé puis plantage
+        de grammaire llama.cpp « Unexpected empty grammar stack » sur le tableau), confidentialité OK ;
+      - passage 2 (rejoué depuis le cache, 6 pages sans tableau) : exactitude 35 %, **0 erreur
+        silencieuse**, champs ≥ 0.8 justes à 100 % (9/9), couverture 79 % ; cases cochées :
+        précision 26 %, rappel 60 % (le 3B coche presque toutes les options visibles) ;
+        `--calibrate` propose SEUIL_CONNU = 0.61 (13 CONNU, 0 silencieuse) : on garde 0.8 (prudence).
+      - Corrections issues de ces mesures : case lue par l'IA jamais CONNU (plafond 0.6) ; libellé
+        recopié en tête de valeur retiré ; plafond de sortie par requête (`output_budget`) ;
+        500 avec schéma -> repli direct sans schéma ; tableaux découpés en requêtes de 8 lignes.
+      - Constats qualitatifs : le 3B lit bien les textes isolés (dates, région, établissement,
+        poids, sexe) mais invente des valeurs « typiques » quand il lit mal (pouls 80, T° 36.5,
+        TA 110/70, taille 50) -> attrapées en A_REVISER (lectures divergentes) ; dans le tableau
+        de visites, il décale les colonnes d'un cran.
+      **Pistes** : cases à cocher par vision classique (densité de pixels dans les carrés
+      détectés, sans IA générative) ; découpe du tableau par colonnes (une image par visite) ;
+      essayer qwen2.5vl:7b en 2e avis sur machine ≥ 6 Go VRAM.
 - [ ] **Bloc 4 – Conversation & liaison** : `Midwife.conversation_state` (JSON) ;
       point d'entrée : `ingest._handle_text` (branche `else`). Confirmer / Corriger /
       Reprendre la photo pour chaque champ A_REVISER/ILLISIBLE ; saisie manuelle si IA

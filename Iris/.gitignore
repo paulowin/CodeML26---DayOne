@@ -21,4 +21,5 @@ data_defi/
 
 # Évaluation : prédictions générées et identifiants lus sur les vraies photos
 eval/preds/
+eval/cache/
 eval/ground_truth/*.local.json

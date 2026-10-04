@@ -164,6 +164,9 @@ class Page(Base):
     wa_message_id: Mapped[str] = mapped_column(String(128), unique=True)
     captured_at: Mapped[datetime] = mapped_column(UTCDateTime())  # horodatage WhatsApp (heure de prise)
     received_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
+    # contrôle qualité de l'IA (JSON : {"ok", "raisons", "flou", "luminosite"...}) ; None = pas encore lue
+    quality_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    page_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
     record: Mapped[Record] = relationship(back_populates="pages")
 
@@ -178,6 +181,8 @@ class ExtractedField(Base):
     field_key: Mapped[str] = mapped_column(String(80))
     value_json: Mapped[str | None] = mapped_column(Text, nullable=True)   # JSON (nombre, texte, liste...)
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)     # ce que l'IA a lu
+    # JSON {"candidates": [...], "flags": [...]} : lectures concurrentes et contrôles échoués (bloc 4)
+    details_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[FieldStatus] = mapped_column(_enum(FieldStatus))
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
     source: Mapped[FieldSource] = mapped_column(_enum(FieldSource))

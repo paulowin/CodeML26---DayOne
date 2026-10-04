@@ -8,7 +8,7 @@
   ],
   "fields": {
     "accouchement.age_gestationnel_sa": 39.0,
-    "accouchement.anomalie": "Aucune",
+    "accouchement.anomalie": "RAS",
     "accouchement.complications": true,
     "accouchement.complications_moment": [
       "au_moment_de_l_accouchement"

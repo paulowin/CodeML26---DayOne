@@ -61,6 +61,8 @@ class FieldDef:
     plausible: tuple[float, float] | None = None
     csv_column: str | tuple[str, ...] | None = None   # colonne(s) de maternal_registry_synthetic.csv
     identifiant: bool = False                  # identifiant direct : jamais extrait, jamais stocké
+    critique: bool = False                     # jamais CONNU sur une seule lecture (bloc 3b)
+    ecrit: bool = False                        # choix fermé mais ÉCRIT à la main (pas de cases), ex. « Sexe : F »
     longitudinal: bool = False                 # varie d'une visite à l'autre
     context: str | None = None                 # libellé voisin qui lève l'ambiguïté (« Le » rubéole / hépatite)
     aliases: tuple[str, ...] = ()
@@ -75,6 +77,11 @@ class FieldDef:
     @property
     def labels(self) -> tuple[str, ...]:
         return (self.label_fr, *self.aliases)
+
+    @property
+    def is_checkbox(self) -> bool:
+        """Saisi par cases à cocher (bool, groupe, ou choix unique non écrit)."""
+        return self.type in ("bool", "checkbox_group") or (self.type == "enum" and not self.ecrit)
 
     @property
     def choice_codes(self) -> tuple[str, ...]:
@@ -148,6 +155,8 @@ class PageType:
     key: str
     title_markers: tuple[str, ...]             # textes imprimés qui identifient la page
     sections: tuple[str, ...]
+    keywords: tuple[str, ...] = ()             # mots-clés propres à la page (classification par texte lu)
+    label_fr: str = ""
 
 
 @dataclass

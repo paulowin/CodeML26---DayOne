@@ -19,7 +19,7 @@
     "pp_precoce_nne.premature": true,
     "pp_precoce_nne.prochaine_visite": "02/09/2026",
     "pp_precoce_nne.signes_graves": [],
-    "pp_precoce_nne.signes_graves_autre": "Néant",
+    "pp_precoce_nne.signes_graves_autre": "RAS",
     "pp_precoce_nne.taille_cm": 50.0,
     "pp_precoce_nne.temperature_c": 36.8,
     "pp_precoce_nne.traitement": "Vit. D 400 UI/j",

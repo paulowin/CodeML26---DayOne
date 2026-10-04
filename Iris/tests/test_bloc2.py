@@ -44,7 +44,7 @@ def _record(db, status: RecordStatus, *, patient: bool = True, attempts: int = M
                           mime_type="image/jpeg", size_bytes=10, wa_message_id=uuid.uuid4().hex,
                           captured_at=datetime.now(timezone.utc)))
     for key, st in (fields or {}).items():
-        section, field_key = key.split(".")
+        section, field_key = key.split(".", 1)
         rec.fields.append(ExtractedField(section=section, field_key=field_key, value_json=json.dumps("x"),
                                          status=st, confidence=0.5, source=FieldSource.IA))
     db.flush()
@@ -52,7 +52,7 @@ def _record(db, status: RecordStatus, *, patient: bool = True, attempts: int = M
 
 
 def _field(rec: Record, key: str, value, status=FieldStatus.CONNU):
-    section, field_key = key.split(".")
+    section, field_key = key.split(".", 1)
     rec.fields.append(ExtractedField(section=section, field_key=field_key, value_json=json.dumps(value),
                                      status=status, confidence=0.9, source=FieldSource.SAGE_FEMME))
 
@@ -225,12 +225,15 @@ def test_find_duplicate_meme_date_meme_patiente(client):
     from app.state_machine import find_duplicate
     with SessionLocal() as db:
         old = _record(db, S.SYNCHRONISE)
-        _field(old, "identification.date_visite", "2026-09-12")
+        _field(old, "accouchement.date", "03/02/2026")
         other_date = _record(db, S.ENREGISTRE)
         other_date.patient_id = old.patient_id
-        _field(other_date, "identification.date_visite", "2026-08-01")
+        _field(other_date, "accouchement.date", "01/08/2026")
+        same_date_other_type = _record(db, S.ENREGISTRE)
+        same_date_other_type.patient_id = old.patient_id
+        _field(same_date_other_type, "pp_precoce_mere.date_consultation", "03/02/2026")
         new = _record(db, S.VALIDE, patient=False)
-        _field(new, "identification.date_visite", "2026-09-12")
+        _field(new, "accouchement.date", "3/2/26")                 # même date, autre écriture
         db.commit()
 
         assert find_duplicate(db, new, old.patient_id).id == old.id
@@ -238,6 +241,29 @@ def test_find_duplicate_meme_date_meme_patiente(client):
         assert find_duplicate(db, new, other.patient_id) is None      # autre patiente
         no_date = _record(db, S.VALIDE, patient=False)
         assert find_duplicate(db, no_date, old.patient_id) is None    # date inconnue
+
+
+def test_date_reference_selon_le_type_de_page(client):
+    from app.state_machine import date_reference
+    with SessionLocal() as db:
+        # grossesse : « venue le » de la visite la plus récente (pas l'ordre des colonnes)
+        rec = _record(db, S.A_REVISER)
+        _field(rec, "grossesse_actuelle.visites.T1V2.venue_le", "20/07/2025")
+        _field(rec, "grossesse_actuelle.visites.M9.venue_le", "18/01/2026")
+        _field(rec, "grossesse_actuelle.visites.M8.venue_le", "29/12/2025")
+        _field(rec, "grossesse_actuelle.visites.T1V3.rendez_vous", "01/03/2026")   # rendez-vous : ignoré
+        _field(rec, "grossesse_actuelle.visites.T2V1.venue_le", "—")               # tiret : ignoré
+        assert date_reference(rec) == "18/01/2026"
+        # accouchement prioritaire sur le tableau de visites
+        _field(rec, "accouchement.date", "2026-02-03")
+        assert date_reference(rec) == "03/02/2026"
+        # post-partum prioritaire sur tout le reste
+        _field(rec, "pp_tardif_nne.date_consultation", "18/03/2026")
+        assert date_reference(rec) == "18/03/2026"
+        # une valeur corrigée (is_current=False) ne compte plus
+        rec.fields[-1].is_current = False
+        assert date_reference(rec) == "03/02/2026"
+        assert date_reference(_record(db, S.A_REVISER)) is None
 
 
 # ------------------------------------------------------------------ API admin

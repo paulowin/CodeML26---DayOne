@@ -11,7 +11,9 @@ source ; cases cochées (précision / rappel) ; couverture ; calibration par
 tranche de confiance ; statuts des champs vides (NON_FOURNI attendu) ;
 « erreurs silencieuses » (faux avec confiance > 0.9) ; CONFIDENTIALITÉ : échec
 bloquant si une valeur d'identifiant apparaît n'importe où dans une prédiction.
-Rapport markdown dans eval/reports/<date>.md + résumé console.
+Erreur silencieuse = valeur fausse avec le statut CONNU (à défaut de statut : confiance > 0.9).
+Rapport markdown dans eval/reports/<date>.md + résumé console (exactitude, erreurs silencieuses,
+temps moyen par page et top 15 des champs ratés en premier).
 """
 from __future__ import annotations
 
@@ -143,6 +145,7 @@ def evaluate(preds: list[dict], gts: dict[str, dict], source: str | None = None)
     calib: dict[str, list] = defaultdict(list)
     silent, leaks, skipped, details = [], [], [], []
     per_field: dict[str, Counter] = defaultdict(Counter)
+    durations: list[float] = []
 
     for pred in preds:
         img = pred.get("image")
@@ -158,6 +161,8 @@ def evaluate(preds: list[dict], gts: dict[str, dict], source: str | None = None)
             leaks.append(f"{img} : {leak}")
 
         pf = pred.get("fields", {})
+        if isinstance(pred.get("duration_s"), (int, float)):
+            durations.append(float(pred["duration_s"]))
         pvals = {k: (v.get("value") if isinstance(v, dict) else v) for k, v in pf.items()}
         axes = [("global", "tout"), ("source", gt.get("source", "?")), ("page", gt.get("page_type") or "?")]
 
@@ -194,10 +199,11 @@ def evaluate(preds: list[dict], gts: dict[str, dict], source: str | None = None)
             per_field[short]["ok"] += int(ok)
             calib[_bin(conf)].append((conf, ok))
             if not ok:
+                per_field[short]["err"] += 1
                 bump("statut_a_reviser_sur_erreur", int(status in ("A_REVISER", "ILLISIBLE", "INCONNU")))
                 details.append({"image": img, "champ": key, "verite": tv, "prediction": entry.get("value"),
                                 "statut": status, "confiance": conf})
-                if conf > SILENT_CONF:
+                if is_silent(status, conf):
                     bump("erreurs_silencieuses")
                     silent.append(details[-1])
 
@@ -222,7 +228,20 @@ def evaluate(preds: list[dict], gts: dict[str, dict], source: str | None = None)
 
     return {"groups": {f"{a}:{v}": dict(c) for (a, v), c in groups.items()}, "calibration": dict(calib),
             "silent": silent, "leaks": leaks, "skipped": skipped, "errors": details,
-            "per_field": {k: dict(v) for k, v in per_field.items()}}
+            "per_field": {k: dict(v) for k, v in per_field.items()},
+            "duree_moyenne_s": (sum(durations) / len(durations)) if durations else None}
+
+
+def is_silent(status: str | None, conf: float) -> bool:
+    """Erreur silencieuse : valeur fausse présentée comme sûre (statut CONNU ; à défaut de statut,
+    confiance > 0.9). C'est le pire cas : la sage-femme ne sera pas invitée à vérifier."""
+    return status == "CONNU" if status else conf > SILENT_CONF
+
+
+def top_missed(res: dict, n: int = 15) -> list[tuple[str, int, int]]:
+    """Champs les plus ratés : (champ, nb d'erreurs, nb de valeurs dans la vérité)."""
+    rows = [(k, v.get("err", 0), v.get("n", 0)) for k, v in res["per_field"].items() if v.get("err")]
+    return sorted(rows, key=lambda r: (-r[1], r[0]))[:n]
 
 
 # ------------------------------------------------------------------ métriques dérivées
@@ -290,12 +309,11 @@ def render_markdown(res: dict, pred_dir: str = "") -> str:
     for r in calibration_table(res["calibration"]):
         lines.append(f"| {r['tranche']} | {r['n']} | {_pct(r['exactitude'])} | {_pct(r['confiance_moy'])} |")
 
-    worst = sorted(((k, v) for k, v in res["per_field"].items() if v.get("n")),
-                   key=lambda kv: kv[1].get("ok", 0) / kv[1]["n"])[:25]
-    lines += ["", "## Champs les moins bien extraits", "", "| champ | n | exactitude |", "|---|---|---|"]
-    lines += [f"| `{k}` | {v['n']} | {_pct(v.get('ok', 0) / v['n'])} |" for k, v in worst]
+    lines += ["", "## Top 15 des champs les plus ratés", "", "| champ | erreurs | n | exactitude |",
+              "|---|---|---|---|"]
+    lines += [f"| `{k}` | {e} | {n} | {_pct((n - e) / n) if n else '—'} |" for k, e, n in top_missed(res)]
 
-    lines += ["", f"## Erreurs silencieuses (faux avec confiance > {SILENT_CONF}) : {len(res['silent'])}", ""]
+    lines += ["", f"## Erreurs silencieuses (faux avec statut CONNU) : {len(res['silent'])}", ""]
     for e in res["silent"][:40]:
         lines.append(f"- `{e['image']}` `{e['champ']}` : vérité `{e['verite']}` / prédit `{e['prediction']}` "
                      f"({e['statut']}, {e['confiance']:.2f})")
@@ -306,12 +324,17 @@ def render_markdown(res: dict, pred_dir: str = "") -> str:
 
 def console_summary(res: dict) -> str:
     m = metrics(res["groups"].get("global:tout", {}))
-    out = [f"Images évaluées : {m['images']}",
-           f"Exactitude : {_pct(m['exactitude'])} (couverture {_pct(m['couverture'])}, "
-           f"sur champs couverts {_pct(m['exactitude_sur_couverts'])})",
+    d = res.get("duree_moyenne_s")
+    out = [f"EXACTITUDE GLOBALE : {_pct(m['exactitude'])}",
+           f"ERREURS SILENCIEUSES (faux + CONNU) : {m['erreurs_silencieuses']}",
+           f"TEMPS MOYEN PAR PAGE : {'—' if d is None else f'{d:.1f} s'}",
+           "TOP 15 DES CHAMPS LES PLUS RATÉS :"]
+    out += [f"  {e:3d}/{n:<3d} {k}" for k, e, n in top_missed(res)] or ["  (aucun)"]
+    out += ["",
+           f"Images évaluées : {m['images']}",
+           f"Couverture {_pct(m['couverture'])}, exactitude sur champs couverts {_pct(m['exactitude_sur_couverts'])}",
            f"Cases cochées : précision {_pct(m['cases_precision'])}, rappel {_pct(m['cases_rappel'])}",
            f"Champs vides -> NON_FOURNI : {_pct(m['vides_non_fourni'])} ; valeurs inventées : {m['valeurs_inventees']}",
-           f"Erreurs silencieuses (conf > {SILENT_CONF}) : {m['erreurs_silencieuses']}",
            "Calibration : " + ", ".join(f"{r['tranche']} {_pct(r['exactitude'])} (n={r['n']})"
                                         for r in calibration_table(res["calibration"])[:-1]),
            f"CONFIDENTIALITÉ : {'ÉCHEC – ' + str(len(res['leaks'])) + ' fuite(s)' if res['leaks'] else 'OK'}"]

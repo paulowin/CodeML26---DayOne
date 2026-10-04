@@ -44,3 +44,20 @@ def get_db():
 def init_db():
     from app import models  # noqa: F401  (enregistre les tables)
     Base.metadata.create_all(bind=engine)
+    _add_missing_nullable_columns()
+
+
+def _add_missing_nullable_columns():
+    """Mini-migration : create_all n'ajoute pas les colonnes aux tables existantes.
+    On ajoute les colonnes NULLABLES manquantes (les autres changements : scripts/reset_db.py)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if not insp.has_table(table.name):
+                continue
+            existing = {c["name"] for c in insp.get_columns(table.name)}
+            for col in table.columns:
+                if col.name not in existing and col.nullable:
+                    ddl = col.type.compile(dialect=engine.dialect)
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}'))

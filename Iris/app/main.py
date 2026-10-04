@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from app.config import get_settings
 from app.db import SessionLocal, init_db
 from app.routers import admin, privacy, records, webhook
-from app.services import ingest, outbox, processing, sync
+from app.services import ai_worker, ingest, outbox, processing, sync
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("iris")
@@ -22,6 +22,7 @@ def run_maintenance_cycle():
         ingest.retry_failed_inbound(db)
         ingest.auto_close_stale_sessions(db)
         processing.retry_failed_processing(db)
+        ai_worker.kick()                       # lecture IA dans un thread à part (non bloquant)
         sync.sync_pending(db)
         outbox.flush_pending(db)
 
@@ -50,11 +51,30 @@ def check_config():
             problems.append("WHATSAPP_PHONE_NUMBER_ID doit être l'identifiant numérique, pas le numéro (+1...)")
         if s.whatsapp_access_token == s.whatsapp_verify_token:
             problems.append("WHATSAPP_ACCESS_TOKEN identique au VERIFY_TOKEN : ce sont deux valeurs différentes")
+    if s.ai_enabled:
+        problems += _check_ai(s)
     for p in problems:
         log.error("CONFIG .env : %s", p)
     if not problems:
         log.info("Configuration .env OK (mode %s)", s.whatsapp_mode)
     return problems
+
+
+def _check_ai(s) -> list[str]:
+    """Ollama joignable et modèles installés (avertissement seulement : les dossiers attendront)."""
+    if not 0 < s.ai_seuil_connu <= 1:
+        return [f"AI_SEUIL_CONNU={s.ai_seuil_connu} doit être entre 0 et 1"]
+    try:
+        from ai.ollama_client import OllamaClient, OllamaUnavailable
+    except ImportError as e:
+        return [f"AI_ENABLED=true mais dépendances IA absentes ({e}) : pip install -r requirements.txt"]
+    try:
+        models = OllamaClient(s.ollama_url).ping()
+    except OllamaUnavailable:
+        return [f"Ollama injoignable sur {s.ollama_url} : lancez « ollama serve » (les dossiers attendront)"]
+    missing = [m for m in {s.ai_model_main, s.ai_model_verify} if m and m not in models
+               and f"{m}:latest" not in models]
+    return [f"modèle Ollama absent : {m} (ollama pull {m})" for m in missing]
 
 
 @asynccontextmanager

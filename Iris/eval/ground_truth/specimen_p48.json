@@ -19,7 +19,7 @@
     "pp_tardif_nne.premature": true,
     "pp_tardif_nne.prochaine_visite": "11/11/2026",
     "pp_tardif_nne.signes_graves": [],
-    "pp_tardif_nne.signes_graves_autre": "Néant",
+    "pp_tardif_nne.signes_graves_autre": "RAS",
     "pp_tardif_nne.taille_cm": 56.0,
     "pp_tardif_nne.temperature_c": 36.7,
     "pp_tardif_nne.traitement": "Vit. D 400 UI/j",

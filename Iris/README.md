@@ -167,9 +167,83 @@ curl -X POST http://localhost:8000/api/admin/reseau -H "X-API-Key: dk_..." \
 
 ### Changement de schéma
 
-SQLite `create_all` n'ajoute pas les nouvelles colonnes aux tables existantes. Après
-une mise à jour du schéma : `python -m scripts.reset_db` (option `--images` pour
-effacer aussi les images chiffrées), puis recréer les comptes avec `scripts.create_staff`.
+Au démarrage, `init_db` ajoute automatiquement les colonnes **nullables** manquantes
+(mini-migration). Pour tout autre changement (colonne obligatoire, type modifié) :
+`python -m scripts.reset_db` (option `--images` pour effacer aussi les images chiffrées),
+puis recréer les comptes avec `scripts.create_staff`.
+
+## Cerveau IA (bloc 3)
+
+100 % local : [Ollama](https://ollama.com) + un modèle vision-langage. Aucune image ni
+aucun texte ne quitte la machine.
+
+```bash
+ollama pull qwen2.5vl:3b                      # modèle principal (≈ 3,6 Go)
+python -m ai.extract photo.jpg --out res.json # une ou plusieurs pages, en CLI
+python -m ai.run_eval --source specimen --limit 8 --calibrate   # évaluation + seuil proposé
+```
+
+**Modèles** (RTX 2050 4 Go, 16 Go RAM) : `qwen2.5vl:3b` ≈ 25 s/appel (retenu) ;
+`qwen2.5vl:7b` ≈ 45 s mais a halluciné presque tout sur une vraie photo ; `qwen3-vl:4b`
+≈ 390 s (exclu). Réglages : `AI_MODEL_MAIN`, `AI_MODEL_VERIFY` (2e avis), `AI_SEUIL_CONNU`,
+`AI_NUM_CTX`, `AI_NUM_PREDICT` (plafond de sortie : sans lui, le 3B a bouclé plus de 15 min sur une bande ; une sortie tronquée est réparée en gardant les paires complètes), `OLLAMA_URL`, `AI_ENABLED`.
+
+**Pipeline** (`ai/`, indépendant de la base) :
+
+1. `preprocess` : orientation EXIF, contrôle qualité (flou = variance du Laplacien,
+   luminosité, résolution), redressement, contraste (CLAHE), 3 bandes horizontales
+   qui se recouvrent de 15 %, ≤ 1280 px. Tout reste en mémoire.
+2. `classify` : type de page (mots-clés sur les titres recopiés par le modèle, sinon
+   choix fermé du modèle).
+3. `prompts` : pour chaque bande, un prompt généré depuis le template avec **uniquement**
+   les champs de ce type de page (libellé imprimé, type, choix), jamais les identifiants.
+4. `normalize` (dans `app/templates/normalize.py`, partagé avec l'évaluateur) : RAS,
+   nég/pos, tiret -> NON_APPLICABLE, vide -> NON_FOURNI, dates -> ISO, « 16SA+3j »,
+   TA « 11/7 » (cmHg) -> 110/70 mmHg, glycémie g/L -> mg/dL, « 1G », « 00 »...
+5. `validate` : plages du template, gestité ≥ parité, enfants vivants ≤ parité + 1,
+   TA sys > dia, DPA ≈ DDR + 280 j, âge gestationnel cohérent avec DDR et date de visite,
+   poids de naissance cohérent avec l'âge gestationnel.
+6. `confidence` : voir ci-dessous ; 2e avis (`AI_MODEL_VERIFY`) sur les champs
+   critiques, les cases cochées et les champs douteux.
+7. Confidentialité : liste blanche du schéma + suppression de tout texte qui ressemble
+   à un téléphone (`0[5-7]` + 8 chiffres) ou à une CIN.
+
+**Anti-hallucination** (constat : les modèles inventent quand on demande un champ absent,
+ex. DDR = « En milieu surveillé ») :
+- on ne demande que les champs du type de page, et toutes les clés sont optionnelles :
+  le modèle n'inclut que ce qu'il voit dans la bande, et une clé omise ne produit **rien** ;
+- une « valeur » égale à un libellé imprimé de la page est rejetée (`libelle_recopie`) ;
+- toute clé inventée par le modèle est ignorée ;
+- cases à cocher : une seule liste des cases vraiment cochées, sans un champ par groupe
+  (le 3B coche alors une option au hasard dans chaque groupe). Une case lue par l'IA n'est
+  **jamais CONNU** (confiance plafonnée à 0.6) : mesuré, le 3B confirme ses propres cases
+  inventées au 2e avis ;
+- tableaux découpés en requêtes de 8 lignes ; plafond de tokens par requête ; un schéma qui
+  fait planter llama.cpp (erreur 500) est abandonné pour un essai sans schéma ;
+- format compact (`"champs": {clé: texte}`) : un objet `{raw, etat, confiance}` par
+  champ fait dégénérer le 3B (« ILLISIBLE, 0.5 » partout).
+
+**Confiance et statut** : confiance déclarée par le modèle (plafonnée à 0.85), + 0.10 si
+deux bandes lisent la même chose, + 0.15 si le 2e avis confirme ; désaccord -> ≤ 0.5 avec
+`candidates` (« J'ai lu 11/7 ou 17/7 ? », bloc 4) ; échec de validation -> ≤ 0.4.
+Tiret -> NON_APPLICABLE, vide -> NON_FOURNI, illisible -> ILLISIBLE, confiance ≥
+`AI_SEUIL_CONNU` -> CONNU, sinon A_REVISER. Les champs **critiques** (VIH, syphilis, Ag HBs,
+TA, Hb, glycémie, poids de naissance, date d'accouchement, gestité, parité, enfants vivants,
+DDR, DPA) ne sont jamais CONNU sur une seule lecture.
+
+**Backend** : `app/services/ai_worker.py`, déclenché par le cycle de maintenance, lit
+un dossier EN_ATTENTE_IA à la fois dans un thread à part (pages déchiffrées en mémoire),
+écrit les `ExtractedField` (source IA, page, candidats et drapeaux dans `details_json`),
+puis EN_ATTENTE_IA -> TRAITE_IA -> A_REVISER (la sage-femme confirme toujours).
+Ollama coupé -> ECHEC_TRAITEMENT (reprise automatique, 3 tentatives). Photo floue ou
+sombre -> message « pouvez-vous la reprendre ? ». Fin -> « Lecture terminée : X champs
+lus, Y à vérifier ».
+
+**Évaluation** : `python -m ai.run_eval` écrit `eval/preds/<run_id>/`, puis lance
+`eval.evaluate` (rapport `eval/reports/<run_id>.md`). Le résumé affiche d'abord
+l'exactitude globale, les erreurs silencieuses (faux + CONNU), le temps moyen par page et
+le top 15 des champs ratés. Le cache `eval/cache/` (réponses du modèle) permet de
+réévaluer sans relancer le modèle (`--no-cache` pour l'ignorer) ; le worker ne l'utilise jamais.
 
 ## Choix de conception
 

@@ -5,11 +5,13 @@ dit quels passages sont permis, les gardes vérifient les conditions métier, et
 chaque passage est tracé dans `RecordEvent`. Aucun commit ici : l'appelant décide.
 """
 import json
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ExtractedField, FieldStatus, Record, RecordEvent, RecordStatus
+from app.models import FieldStatus, Record, RecordEvent, RecordStatus
+from app.templates.normalize import parse_date
 
 S = RecordStatus
 MAX_AI_ATTEMPTS = 3
@@ -83,23 +85,58 @@ def transition(db: Session, record: Record, to_status: RecordStatus, actor: str,
     return event
 
 
-def _current_value(record: Record, section: str, key: str) -> str | None:
+# Dates de référence d'un dossier, par type de page (de la plus spécifique à la plus générale)
+_PP_SECTIONS = ("pp_precoce_mere", "pp_precoce_nne", "pp_tardif_mere", "pp_tardif_nne")
+
+
+def _date_key(d: str) -> tuple[int, int, int]:
+    day, month, year = (int(x) for x in d.split("/"))
+    return year, month, day
+
+
+def _reference(record: Record) -> tuple[str, str] | None:
+    """(type, date jj/mm/aaaa) : date de consultation (post-partum), sinon date
+    d'accouchement, sinon « venue le » de la visite la plus récente du tableau."""
+    found: dict[str, list[str]] = {"post_partum": [], "accouchement": [], "visite": []}
     for f in record.fields:
-        if f.is_current and f.section == section and f.field_key == key:
-            return f.value_json
+        if f.is_current is False or f.value_json is None:   # None = pas encore flushé (défaut True)
+            continue
+        try:
+            d = parse_date(json.loads(f.value_json))
+        except (ValueError, TypeError):
+            continue
+        if not d or not re.fullmatch(r"\d{2}/\d{2}/\d{4}", d):
+            continue
+        if f.section in _PP_SECTIONS and f.field_key == "date_consultation":
+            found["post_partum"].append(f"{f.section}|{d}")
+        elif f.section == "accouchement" and f.field_key == "date":
+            found["accouchement"].append(d)
+        elif f.section == "grossesse_actuelle" and re.fullmatch(r"visites\.[A-Z0-9]+\.venue_le", f.field_key):
+            found["visite"].append(d)
+    if found["post_partum"]:
+        kind, d = max((x.split("|") for x in found["post_partum"]), key=lambda kd: _date_key(kd[1]))
+        return kind, d
+    if found["accouchement"]:
+        return "accouchement", max(found["accouchement"], key=_date_key)
+    if found["visite"]:
+        return "visite", max(found["visite"], key=_date_key)
     return None
 
 
+def date_reference(record: Record) -> str | None:
+    """Date qui situe le dossier dans le suivi de la patiente (jj/mm/aaaa) ou None."""
+    ref = _reference(record)
+    return ref[1] if ref else None
+
+
 def find_duplicate(db: Session, record: Record, patient_id: str) -> Record | None:
-    """Autre dossier déjà enregistré de la même patiente pour la même date de visite."""
-    visit_date = _current_value(record, "identification", "date_visite")
-    if visit_date is None or json.loads(visit_date) in (None, ""):
+    """Autre dossier déjà enregistré de la même patiente, même type de page, même date de référence."""
+    ref = _reference(record)
+    if ref is None:
         return None
     db.flush()
-    return db.scalar(
-        select(Record).join(ExtractedField)
-        .where(Record.patient_id == patient_id, Record.id != record.id,
-               Record.status.in_([S.ENREGISTRE, S.SYNCHRONISE]),
-               ExtractedField.is_current.is_(True), ExtractedField.section == "identification",
-               ExtractedField.field_key == "date_visite", ExtractedField.value_json == visit_date)
-        .limit(1))
+    others = db.scalars(
+        select(Record).where(Record.patient_id == patient_id, Record.id != record.id,
+                             Record.status.in_([S.ENREGISTRE, S.SYNCHRONISE]))
+        .order_by(Record.created_at)).all()
+    return next((o for o in others if _reference(o) == ref), None)

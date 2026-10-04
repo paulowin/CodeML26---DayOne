@@ -20,7 +20,7 @@
     "antecedents_familiaux.partenaire.hta": "RAS",
     "antecedents_familiaux.partenaire.maladies_hereditaires": "RAS",
     "antecedents_familiaux.partenaire.malformations": "RAS",
-    "antecedents_femme.chirurgicaux": "Aucun",
+    "antecedents_femme.chirurgicaux": "RAS",
     "antecedents_femme.gynecologiques": "Cycles r�guliers",
     "antecedents_femme.medicaux": "RAS",
     "antecedents_obstetricaux.enfants_vivants": 0,

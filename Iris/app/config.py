@@ -42,6 +42,16 @@ class Settings(BaseSettings):
     worker_interval_seconds: int = 20
     worker_enabled: bool = True
 
+    # --- Cerveau IA local (Ollama, aucun service externe) ---
+    ai_enabled: bool = True
+    ollama_url: str = "http://localhost:11434"
+    ai_model_main: str = "qwen2.5vl:3b"
+    ai_model_verify: str = "qwen2.5vl:3b"      # 2e avis (« qwen2.5vl:7b » si la VRAM le permet ; vide = désactivé)
+    ai_seuil_connu: float = 0.8                # confiance minimale pour le statut CONNU
+    ai_timeout_seconds: int = 600
+    ai_num_ctx: int = 8192                     # contexte Ollama (4096 si la VRAM sature)
+    ai_num_predict: int = 2048                 # plafond de tokens générés par appel (anti-boucle)
+
 
 @lru_cache
 def get_settings() -> Settings:

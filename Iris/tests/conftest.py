@@ -20,6 +20,7 @@ os.environ.update({
     "WHATSAPP_ACCESS_TOKEN": "x",
     "WHATSAPP_PHONE_NUMBER_ID": "123",
     "WORKER_ENABLED": "false",
+    "AI_ENABLED": "false",
 })
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
