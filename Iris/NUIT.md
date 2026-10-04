@@ -126,3 +126,75 @@ Mesure vs vérité terrain de la page 67 (pipeline complet + 2e avis) :
 | après | 68 | 62 | **66,3 %** | **92,6 %** | **0** (1 avant la règle « 74 . ») | 50 s |
 
 Reste à faire : relancer l'éval spécimen complète des 24 pages avec tous les correctifs du matin.
+
+## Lots de l'après-midi (avant le gel)
+
+### Lot 1 – Robustesse sur image inconnue
+Choix (temps) : échantillon de 24 images au lieu de 85 — les 5 réelles, les 16 pages des patientes
+1 et 9 (tous les types de page), et 3 images piégées (noire, floue, sans rapport). Pipeline complet
+(worker réel, OCR + 2e avis Ollama, base SQLite temporaire), une image à la fois, `OMP_NUM_THREADS=4`.
+Ajout : **budget global de 75 s par page** -> au-delà, « ⏳ La lecture prend trop de temps… nous allons
+le saisir ensemble » + saisie guidée (pas de relance : elle serait aussi lente).
+
+| image | type reconnu | champs | durée | plantage | comportement |
+|---|---|---|---|---|---|
+| 1-1.jpg | couverture | 7 | 27 s | non | résumé |
+| 1-2.jpg | identification_antecedents | 6 | 18 s | non | résumé |
+| 1-3.jpg | identification_antecedents | 7 | 25 s | non | résumé |
+| 1-4.jpg | — | 0 | 9 s | non | 🟠 « De quelle page s'agit-il ? » |
+| 1-5.jpg | — | 0 | 9 s | non | 🟠 « De quelle page s'agit-il ? » |
+| spécimen p01.png | couverture | 7 | 36 s | non | résumé |
+| spécimen p02.png | identification_antecedents | 28 | 51 s | non | résumé |
+| spécimen p03.png | grossesse_actuelle | 109 | 73 s | non | résumé |
+| spécimen p04.png | accouchement | 16 | 48 s | non | résumé |
+| spécimen p05.png | pp_precoce_mere | 24 | 50 s | non | résumé |
+| spécimen p06.png | pp_precoce_nne | 21 | 49 s | non | résumé |
+| spécimen p07.png | pp_tardif_mere | 24 | 58 s | non | résumé |
+| spécimen p08.png | pp_tardif_nne | 21 | 50 s | non | résumé |
+| spécimen p65.png | couverture | 6 | 36 s | non | résumé |
+| spécimen p66.png | identification_antecedents | 25 | 40 s | non | résumé |
+| spécimen p67.png | grossesse_actuelle | 94 | 62 s | non | résumé |
+| spécimen p68.png | accouchement | 16 | 48 s | non | résumé |
+| spécimen p69.png | pp_precoce_mere | 26 | 54 s | non | résumé |
+| spécimen p70.png | pp_precoce_nne | 21 | 51 s | non | résumé |
+| spécimen p71.png | pp_tardif_mere | 25 | 66 s | non | résumé |
+| spécimen p72.png | pp_tardif_nne | 21 | 56 s | non | résumé |
+| synthetique_noire.jpg | — | 0 | 10 s | non | 📷 reprendre la photo + 🟠 « De quelle page s'agit-il ? » |
+| synthetique_floue.jpg | — | 0 | 9 s | non | 📷 reprendre la photo + 🟠 « De quelle page s'agit-il ? » |
+| synthetique_sans_rapport.jpg | — | 0 | 10 s | non | 📷 reprendre la photo + 🟠 « De quelle page s'agit-il ? » |
+
+24 images : 0 plantage, durée max 73 s, moyenne 39 s ; 24/24 avec au moins un message.
+
+Ollama a renvoyé des réponses vides / erreurs 500 pendant le test (2e avis impossible sur certaines
+bandes) : aucune page ne plante, ces champs restent « à vérifier ». Limite notée : l'image « sans
+rapport » reçoit « photo floue » (raison approximative) puis « De quelle page s'agit-il ? ».
+
+### Lot 2 – Dates
+JJ/MM/AAAA déjà forcé et testé (02/11/2025 = 2 novembre). Nouveau : DPA = DDR + 280 j ± 3 suffit à
+passer DDR et DPA en CONNU (0,9) ; la date de dépassement s'ajoute si DPA + 7 à 14 j.
+
+### Lot 3 – Alertes cliniques
+Fait avant ce plan (commit 1bc0909, tag lot-3) : voir README « Alertes cliniques ».
+
+### Lot 4 – Commande RDV
+« RDV » -> « 📅 2 patientes attendues non revues : A64128 (RDV 05/01) ; A64125 (RDV 13/01). »
+(dernier rendez-vous CONNU d'une patiente, dépassé, sans « Venue le » postérieure.)
+
+### Lot vaccination (carnet OMS, remplace le lot 1 bis)
+- `data-perso/` ajouté au `.gitignore` AVANT tout ; photos lues en mémoire, jamais copiées ni versionnées
+  (le test utilise une page synthétique).
+- Modèle `app/templates/carnet_vaccination_oms.py` (inclus dans le modèle actif : liste blanche, 2e avis,
+  /verif, conversation inchangés) ; lecteur `ai/vaccination.py` : encre bleue seule (teinte HSV 200–280°,
+  mesuré : sous lumière jaune l'encre vaut ~(35, 32, 47) en RGB, un seuil « B > R » ne gardait que 0,5 %
+  des pixels), colonnes par en-têtes (+ lignes verticales imprimées si trouvées ; en-tête « signature »
+  sous le tampon : extrapolé), entrées = lignes d'écriture, OCR contraint de la cellule agrandie,
+  vaccin rapproché du vocabulaire, date au crayon gris -> « rappel ? » toujours à vérifier.
+  Toutes les cellules sont critiques : CONNU seulement si le 2e avis Ollama lit la même chose.
+- Page synthétique : 2 entrées, date / vaccin / dose / lot / rappel lus justes, tout « à vérifier » sans 2e avis.
+- **3 vraies photos** : 2/3 reconnues (« AUTRES VACCINATIONS »), 2 entrées découpées par page ; l'écriture
+  cursive est **mal lue par EasyOCR** (dates et vaccins méconnaissables) -> 14 champs, **tous à vérifier**
+  (confiance 0,05 à 0,5), **0 erreur silencieuse**. La 3e photo n'est pas reconnue : « Vaccinations » a été
+  ajouté à la liste « De quelle page s'agit-il ? ». 55 à 110 s par photo (2880×2160, lue à mi-résolution).
+  Conclusion honnête : la structure est là, la reconnaissance de l'écriture manuscrite cursive ne l'est pas
+  (piste : modèle d'écriture manuscrite dédié, ou saisie guidée par entrée).
+
