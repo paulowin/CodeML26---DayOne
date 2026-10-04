@@ -126,18 +126,17 @@ a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 button{font:inherit;font-size:13px;color:var(--fg);background:#fff;border:1px solid var(--line);border-radius:4px;
 padding:4px 12px;cursor:pointer}a+button{margin-left:16px}button:hover{background:#F7F7F7}
 table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
-th,td{border:0;border-bottom:1px solid var(--line);padding:9px 12px 9px 0;text-align:left;vertical-align:top}
-th{position:sticky;top:0;background:#fff;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-color:var(--mut)}
-.liste tr:hover td{background:#F7F7F7}
+th,td{border:0;border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#F3EEF2;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+color:var(--acc)}
+.liste tr:hover td{filter:brightness(.97)}
 .liste td.ok,.liste td.rev,.liste td.nl{text-align:right}.liste th.n{text-align:right}
-td.nl,.liste td.nl{color:var(--nl)}
+.ok{background:#dff3df}.rev{background:#ffe9c7}.nl{background:#eee;color:#777}
 td.st{white-space:nowrap;font-size:13px}
 td.st::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;
 vertical-align:1px;background:var(--nl)}
 tr.ok td.st::before{background:var(--ok)}tr.rev td.st::before{background:var(--rev)}
-tr.nl td{color:var(--nl)}
-.faux{color:var(--err);font-weight:600}
+.juste{background:#c9efc9}.faux{background:#f8c9c9;color:var(--err);font-weight:600}
 .page{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;margin:16px 0;align-items:start}
 .page .img{position:sticky;top:24px}.page .img img{width:100%;display:block;border:1px solid var(--line)}
 .page .img p{font-size:13px}
@@ -149,9 +148,10 @@ tr.nl td{color:var(--nl)}
 font-size:12px;color:var(--mut);max-width:220px}
 .stats span:last-child{border-right:0}
 .stats b{order:-1;font-size:32px;font-weight:600;line-height:1.1;color:var(--fg);margin-bottom:4px}
+.stats span:nth-child(1) b{color:var(--ok)}.stats span:nth-child(2) b{color:var(--acc)}
 .stats span.alert b{color:var(--err)}
-.alerte{border-left:3px solid var(--err);background:#fff;padding:8px 16px;margin:16px 0;color:var(--fg)}
-.alerte b{font-weight:600}.alerte small{color:var(--mut);font-size:13px}
+.alerte{background:var(--err);color:#fff;padding:10px 14px;border-radius:4px;margin:16px 0}
+.alerte small{color:#fff;opacity:.9}
 """
 
 
