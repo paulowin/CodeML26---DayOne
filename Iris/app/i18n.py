@@ -145,7 +145,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "pt_autre": "Autre",
         "pt_autre_d": "Je saisirai les informations avec vous",
         "help": ("Commandes : OK (confirmer), CORRIGER <n>, RESUME (ce que j'ai lu), PHOTO (reprendre la photo), "
-                 "PLUS TARD (pause), REPRENDRE, FIN (fin de capture), ANNULER, EN / FR (langue), AIDE."),
+                 "PLUS TARD (pause), REPRENDRE, FIN (fin de capture), ANNULER, EN / FR (langue), AIDE.\n"
+                 "📎 Pour une meilleure lecture, envoyez la photo comme document."),
         "lang_set": "Langue : français.",
         "retake_ask": "Envoyez la nouvelle photo de la page {n} ({ptype}).",
         "retake_which": "Quelle page voulez-vous reprendre ?",
@@ -184,6 +185,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "why_children": "plus d'enfants vivants que d'accouchements",
         "why_bp": "systolique inférieure à la diastolique",
         "why_partial": "date incomplète",
+        "why_digit": "un chiffre semble manquer",
         "why_format": "format inattendu",
         "why_label": "un libellé imprimé était mêlé à la valeur",
         "why_boxes": "plusieurs cases cochées",
@@ -311,7 +313,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "bad_photo": "Photo {n} is {reasons}: could you retake it? Straight photo, whole page, good light.",
         "pl_page": "page|pages",
         "help": ("Commands: OK (confirm), CORRECT <n>, SUMMARY (what I read), PHOTO (retake), LATER (pause), "
-                 "CONTINUE, END (end of capture), CANCEL, EN / FR (language), HELP."),
+                 "CONTINUE, END (end of capture), CANCEL, EN / FR (language), HELP.\n"
+                 "📎 For a better reading, send the photo as a document."),
         "lang_set": "Language: English.",
         "retake_ask": "Send the new photo of page {n} ({ptype}).",
         "retake_which": "Which page do you want to retake?",
@@ -347,6 +350,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "why_children": "more living children than deliveries",
         "why_bp": "systolic lower than diastolic",
         "why_partial": "incomplete date",
+        "why_digit": "a digit seems to be missing",
         "why_format": "unexpected format",
         "why_label": "a printed label was mixed with the value",
         "why_boxes": "several boxes ticked",

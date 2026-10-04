@@ -404,6 +404,8 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             if st.interp is not None and st.interp.status is None and k not in values:
                 values[k] = st.interp.value
     vflags = validate(values)
+    from ai.validate import coherent_term_dates
+    coherent = coherent_term_dates(values)
     for res, states in pages:
         out = {}
         for k, st in states.items():
@@ -427,6 +429,10 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             ocr_date = "lecture_ocr" in st.flags and st.f.type == "date"
             critical = st.f.critique or vlm_box or ocr_date
             status = C.status(st.interp.status, conf, seuil, critical, st.evidence)
+            if (k in coherent and status == "A_REVISER" and not st.interp.flags and k not in vflags
+                    and not st.evidence.disagreement and st.evidence.verified is not False):
+                conf, status = max(conf, 0.9), "CONNU"  # DDR/DPA/DDT confirmées entre elles
+                st.flags.append("dates_terme_coherentes")
             if status == "NON_FOURNI" and {"case_incertaine", "aucune_case_cochee"} & set(st.flags):
                 status = "A_REVISER"                    # « rien coché » n'est pas une certitude
             if vlm_box and status == "CONNU":

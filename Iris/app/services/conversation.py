@@ -240,7 +240,8 @@ _FLAG_REASONS = (("plusieurs_cases_cochees", "why_boxes"), ("hors_plage", "why_r
                  ("gestite_parite_incoherentes", "why_parity"), ("enfants_vivants_superieurs_parite", "why_children"),
                  ("ta_sys_inferieure_dia", "why_bp"), ("date_partielle", "why_partial"),
                  ("type_invalide", "why_format"), ("date_invalide", "why_format"), ("choix_inconnu", "why_format"),
-                 ("libelle_retire", "why_label"))
+                 ("libelle_retire", "why_label"),
+                 ("decimale_manquante", "why_digit"), ("date_chiffre_manquant", "why_digit"))
 
 
 def doubt_reason(key: str, f: FieldDef, ef: ExtractedField, disagreement: bool, lang: str) -> str:

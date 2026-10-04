@@ -151,3 +151,14 @@ def validate(values: dict[str, Any]) -> dict[str, list[str]]:
         if venue:
             prev = (col, venue)
     return {k: sorted(set(v)) for k, v in flags.items() if v}
+
+
+def coherent_term_dates(values: dict) -> set[str]:
+    """DDR, DPA et date de dépassement de terme qui se vérifient MUTUELLEMENT (DPA = DDR + 280 j ± 3,
+    DDT = DPA + 7 à 14 j) : trois lectures indépendantes qui tombent juste par l'arithmétique ->
+    ces dates peuvent être sûres même lues par l'OCR. Sinon : ensemble vide."""
+    g = "grossesse_actuelle."
+    ddr, dpa, ddt = (_d(values.get(g + k)) for k in ("ddr", "dpa", "date_depassement_terme"))
+    if ddr and dpa and ddt and abs((dpa - ddr).days - 280) <= 3 and 7 <= (ddt - dpa).days <= 14:
+        return {g + "ddr", g + "dpa", g + "date_depassement_terme"}
+    return set()

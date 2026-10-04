@@ -209,7 +209,7 @@ def _digits(s: str) -> str:
     return "".join(ch for ch in s if ch.isdigit())
 
 
-def header_match(txt: str, cand: str) -> bool:
+def header_match(txt: str, cand: str, lenient: bool = False) -> bool:
     """En-tête de colonne lu par l'OCR ~ attendu. Si l'attendu porte un chiffre (« Visite 1 »,
     « 7ème mois »), le chiffre doit être lu : sinon « Visites » (de « Prestations / Visites »)
     passait pour « Visite 1 » et décalait tout le tableau d'une colonne."""
@@ -217,7 +217,17 @@ def header_match(txt: str, cand: str) -> bool:
         return True
     dc = _digits(cand)
     if dc:
-        return _digits(txt) == dc and _ratio(txt, cand) >= 0.7
+        if _digits(txt) == dc:
+            return _ratio(txt, cand) >= 0.7
+        if _digits(txt) or not lenient:
+            return False                                  # un AUTRE chiffre : autre colonne
+        # 2e passe seulement (la 1re n'a pas trouvé le tableau) — chiffre perdu (photo WhatsApp
+        # compressée : « Visite », « Bème mois ») : on accepte le
+        # libellé sans son chiffre — l'ordre gauche -> droite fixe la colonne. Le pluriel
+        # « Visites » (en-tête « Prestations / Visites ») reste refusé.
+        core = " ".join("".join(ch for ch in cand if not ch.isdigit()).split())
+        t = " ".join(txt.split())
+        return t != core + "s" and (t == core or (len(core) > 5 and _ratio(t, core) >= 0.85))
     return len(cand) > 3 and _ratio(txt, cand) >= 0.75
 
 
@@ -229,6 +239,9 @@ def ocr_page_gt(layout: PageLayout, page_type: str):
 
     class OcrPageGT(PageGT):
         def _grid(self, sec, t):
+            return self._grid_pass(sec, t, False) or self._grid_pass(sec, t, True)
+
+        def _grid_pass(self, sec, t, lenient):
             best = None
             for line in text_lines(self.L.words, 4.0):
                 found: dict[int, float] = {}
@@ -238,7 +251,7 @@ def ocr_page_gt(layout: PageLayout, page_type: str):
                     for j in range(i, len(t.cols)):
                         code, label = t.cols[j]
                         cands = [norm_label(l) for l in (label, *t.col_aliases.get(code, ()))]
-                        if any(header_match(txt, c) for c in cands):
+                        if any(header_match(txt, c, lenient) for c in cands):
                             found[j] = w.x0
                             i = j + 1
                             break
@@ -311,6 +324,30 @@ def _band_of(y_rel: float, bands) -> int:
     return min(inside, key=lambda b: abs((b.y0 + b.y1) / 2 - y_rel)).index if inside else 0
 
 
+# Photo WhatsApp compressée : une ligne d'écriture fait ~16 px (contre ~24 px sur un scan à 200 dpi)
+LOW_RES_LINE_PX = 20
+ZOOM_TYPES = ("float", "int", "bp")                       # poids, HU, BCF, TA, Hb...
+
+
+def _zoom_read(img: Image.Image, words, px_per_pt: float) -> str | None:
+    """Relit une cellule agrandie x3 (interpolation cubique + netteté), lecture contrainte aux chiffres."""
+    import cv2
+    x0 = min(w.x0 for w in words) * px_per_pt - 4
+    x1 = max(w.x1 for w in words) * px_per_pt + 4
+    y0 = min(w.top for w in words) * px_per_pt - 4
+    y1 = max(w.y for w in words) * px_per_pt + 6
+    a = np.asarray(img.convert("RGB"))[max(0, int(y0)):int(y1), max(0, int(x0)):int(x1)]
+    if a.size == 0 or _easy is None:
+        return None
+    a = cv2.resize(a, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+    a = cv2.filter2D(a, -1, np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=np.float32))
+    try:
+        txt = _easy.readtext(a, detail=0, paragraph=True, allowlist="0123456789/.,")
+    except Exception:  # noqa: BLE001
+        return None
+    return " ".join(txt).strip() or None
+
+
 def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, debug_path=None):
     """OCR + rattachement -> (type de page, lectures par champ, page préparée, tokens)."""
     img = load_image(img_bytes)
@@ -322,6 +359,8 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
     if page_type == UNKNOWN:
         return page_type, states, prep, tokens
     layout, conf_of = build_layout(tokens, img.size[0], img.size[1], page_type)
+    heights = sorted(t.box[3] - t.box[1] for t in tokens)
+    low_res = engine == "easyocr" and bool(heights) and heights[len(heights) // 2] < LOW_RES_LINE_PX
     gt = ocr_page_gt(layout, page_type)                  # géométrie de la vérité terrain (3a)
     grids = gt.table_grids()
     assigned, _ = gt.assign_hand(grids)
@@ -344,6 +383,12 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
         band = _band_of(np.mean([w.cy for w in words]) / layout.height, prep.bands)
         st = states.setdefault(key, FieldState(f))
         st.readings.append(Reading(key, raw, _cell_etat(raw), conf, band))
+        if low_res and f.type in ZOOM_TYPES and f.table:
+            # photo compressée : relecture de la cellule agrandie x3, chiffres seulement. Un
+            # désaccord (« 74 » / « 74,8 ») = 2 lectures différentes -> à vérifier, jamais CONNU
+            zoom = _zoom_read(img, words, img.size[0] / PT_WIDTH)
+            if zoom and _digits(zoom) != _digits(raw):
+                st.readings.append(Reading(key, zoom, _cell_etat(zoom), conf, band))
     # cases : vision classique (ai/checkboxes.py), avec les libellés déjà lus par l'OCR comme ancres
     from ai.checkboxes import read_checkboxes
     from ai.extract import add_checkbox_readings

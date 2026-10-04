@@ -284,6 +284,9 @@ def interpret(f: FieldDef, raw: Any, etat: str | None = None) -> Interpretation:
                 flags.append("date_chiffre_manquant")
         else:
             flags.append("date_partielle")
+    elif f.type in ("int", "float", "bp") and isinstance(raw, str) and re.search(r"\d\s*[.,/]\s*$", raw):
+        # « 74 . » : séparateur suivi de rien = chiffre perdu (photo compressée ; vrai poids 74,8)
+        flags.append("decimale_manquante")
     elif f.type == "enum" and v not in f.choice_codes:
         flags.append("choix_inconnu")
     return Interpretation(v, None, flags)

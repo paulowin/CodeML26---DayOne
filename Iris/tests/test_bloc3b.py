@@ -497,3 +497,43 @@ def test_date_ocr_jamais_connue_sur_une_lecture():
     res = PageResult(0, "pp_tardif_nne")
     _finalize([(res, {k: st})], 0.8)
     assert res.fields[k]["status"] == "A_REVISER"
+
+
+def test_dates_de_terme_coherentes_entre_elles_deviennent_sures():
+    from ai.extract import _finalize, PageResult
+    g = "grossesse_actuelle."
+
+    def run(ddt):
+        states = {}
+        for k, raw in (("ddr", "10/02/2025"), ("dpa", "17/11/2025"), ("date_depassement_terme", ddt)):
+            st = FieldState(F[g + k], [Reading(g + k, raw, "LISIBLE", 0.85, 0)], flags=["lecture_ocr"])
+            merge(st)
+            states[g + k] = st
+        res = PageResult(0, "grossesse_actuelle")
+        _finalize([(res, states)], 0.8)
+        return res.fields
+
+    ok = run("27/11/2025")                                         # DPA + 10 j
+    assert all(v["status"] == "CONNU" and v["confidence"] >= 0.9 for v in ok.values())
+    ko = run("27/01/2026")                                         # incohérente : rien de promu
+    assert all(v["status"] == "A_REVISER" for v in ko.values())
+
+
+def test_chiffre_perdu_apres_separateur_a_verifier():
+    it = interpret(F[V + "poids_kg"], "74 .")
+    assert it.value == 74 and "decimale_manquante" in it.flags
+    assert "decimale_manquante" not in interpret(F[V + "poids_kg"], "74,8").flags
+
+
+def test_entete_de_tableau_sans_chiffre_photo_compressee():
+    from ai.ocr_classique import header_match
+    assert not header_match("visite", "visite 2")                 # 1re passe : chiffre exigé
+    assert header_match("visite", "visite 2", lenient=True)        # 2e passe : chiffre perdu accepté
+    assert not header_match("visites", "visite 1", lenient=True)   # « Prestations / Visites » : refusé
+    assert not header_match("visite 3", "visite 1", lenient=True)  # autre chiffre : refusé
+    assert header_match("bème mois", "8ème mois", lenient=True)
+
+
+def test_aide_conseille_l_envoi_en_document():
+    from app.i18n import t
+    assert "📎" in t("fr", "help") and "document" in t("fr", "help")

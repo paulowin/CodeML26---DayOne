@@ -94,3 +94,35 @@ aucun champ : le dossier passera en saisie guidée. 10 s/page. C'est la limite p
 8. Écrire `RESUME`, `EN`, `CONTINUE`, `FR`, `AIDE`.
 
 Attention : la 1re lecture charge EasyOCR (~10 s de plus) ; garder Ollama lancé pour le 2e avis.
+
+## Matin — zéro erreur silencieuse
+
+### Cases à cocher (24 pages spécimen, `scripts/eval_cases.py`)
+| | précision | rappel | à réviser / champs cases | erreurs silencieuses |
+|---|---|---|---|---|
+| avant (VLM 3b) | 100 % | 71,0 % | 23 / 225 | 6 |
+| après (OpenCV, coches noires + « rien coché » = à vérifier) | 100 % | **96,4 %** | 88 / 225 | **0** |
+
+### Test réel WhatsApp — page « Grossesse actuelle », patiente 9 (dossier 2d70ffd6)
+Diagnostic (image reçue 1131×1600 px, 196 Ko vs page PDF 1654×2339 px) : l'OCR lisait bien le texte
+(151 lignes contre 171), mais la photo compressée perdait les chiffres des en-têtes (« Visite » au lieu de
+« Visite 1 », « Bème mois ») -> la grille du tableau n'était pas trouvée (0 cellule au lieu de 93).
+
+Correctifs :
+- en-têtes de tableau : 2e passe tolérante (chiffre perdu accepté, l'ordre fixe la colonne ; « Visites »
+  refusé) utilisée SEULEMENT si la passe stricte échoue -> aucun changement sur les scans nets ;
+- photo basse résolution (ligne < 20 px) : cellules chiffrées (poids, TA, HU, BCF…) relues agrandies x3
+  (cubique + netteté, chiffres seulement) ; désaccord -> à vérifier ;
+- « 74 . » (séparateur suivi de rien) -> drapeau `decimale_manquante`, raison « un chiffre semble manquer » ;
+- DDR / DPA / date de dépassement cohérentes entre elles (DPA = DDR + 280 j ± 3, DDT = DPA + 7 à 14 j) ->
+  CONNU 0,9 (sauf désaccord, 2e avis contraire ou autre drapeau) ;
+- aide : « 📎 Pour une meilleure lecture, envoyez la photo comme document » (déjà acceptée par `ingest`).
+
+Mesure vs vérité terrain de la page 67 (pipeline complet + 2e avis) :
+
+| | valeurs lues | dont visites | exactitude | champs couverts justes | erreurs silencieuses | durée |
+|---|---|---|---|---|---|---|
+| avant | 6 | 0 | 4,2 % | 66,7 % | 0 | 30 s |
+| après | 68 | 62 | **66,3 %** | **92,6 %** | **0** (1 avant la règle « 74 . ») | 50 s |
+
+Reste à faire : relancer l'éval spécimen complète des 24 pages avec tous les correctifs du matin.
