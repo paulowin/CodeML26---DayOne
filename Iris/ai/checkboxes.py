@@ -31,6 +31,9 @@ from app.templates.base import norm_label
 log = logging.getLogger("iris.cases")
 LAYOUT_PATH = Path(__file__).resolve().parent.parent / "app" / "templates" / "carnet_maroc_cases.json"
 ENLARGE = 0.30
+# encre sombre : l'excès au-dessus d'une case vide est plus faible que l'encre bleue (le cadre noir
+# occupe déjà la zone) ; mesuré : coche noire >= 0.068, case vide <= 0.04 -> remis à l'échelle des seuils
+DARK_SCALE = 2.5
 MIN_ANCHORS = 6
 
 
@@ -61,20 +64,43 @@ def blue_ink(rgb: np.ndarray) -> np.ndarray:
     return (b > r + 20) & (b > g) & ((r + g + b) / 3 < 215)
 
 
-def measure(rgb: np.ndarray, gray_dark: np.ndarray, box: tuple[float, float, float, float]) -> tuple[float, tuple]:
-    """Taux d'encre de la case (zone élargie de 30 % pour l'encre bleue ; intérieur seul pour le noir)."""
+def measure(rgb: np.ndarray, gray_dark: np.ndarray, box: tuple[float, float, float, float]):
+    """(encre bleue [zone], encre sombre [zone], encre sombre [intérieur], zone) — zone = case élargie
+    de 30 %. L'encre sombre inclut le cadre imprimé : on lui retire ensuite le niveau d'une case VIDE
+    (médiane de la page, cf. read_checkboxes)."""
     h, w = gray_dark.shape
     x0, y0, x1, y1 = box
     bw, bh = x1 - x0, y1 - y0
     ex0, ey0 = int(max(0, x0 - bw * ENLARGE / 2)), int(max(0, y0 - bh * ENLARGE / 2))
     ex1, ey1 = int(min(w, x1 + bw * ENLARGE / 2)), int(min(h, y1 + bh * ENLARGE / 2))
     if ex1 <= ex0 or ey1 <= ey0:
-        return 0.0, (ex0, ey0, ex1, ey1)
-    blue = float(blue_ink(rgb[ey0:ey1, ex0:ex1]).mean())
-    ix0, iy0 = int(x0 + bw * 0.25), int(y0 + bh * 0.25)      # intérieur : sans le cadre imprimé
-    ix1, iy1 = int(x1 - bw * 0.25), int(y1 - bh * 0.25)
-    dark = float(gray_dark[iy0:iy1, ix0:ix1].mean()) if ix1 > ix0 and iy1 > iy0 else 0.0
-    return max(blue, dark * 0.8), (ex0, ey0, ex1, ey1)
+        return 0.0, 0.0, 0.0, (ex0, ey0, ex1, ey1)
+    zone = (slice(ey0, ey1), slice(ex0, ex1))
+    blue = float(blue_ink(rgb[zone]).mean())
+    dark = float(gray_dark[zone].mean())
+    ix0, iy0, ix1, iy1 = int(x0 + bw * 0.18), int(y0 + bh * 0.18), int(x1 - bw * 0.18), int(y1 - bh * 0.18)
+    inner = float(gray_dark[iy0:iy1, ix0:ix1].mean()) if ix1 > ix0 and iy1 > iy0 else 0.0
+    return blue, dark, inner, (ex0, ey0, ex1, ey1)
+
+
+INNER_MARKED, INNER_EMPTY = 0.08, 0.04       # encre sombre à l'INTÉRIEUR de la case (cadre exclu)
+
+
+def decide_combined(blue: float, dark_ex: float, inner_ex: float) -> tuple[float, str, float]:
+    """Décision prudente (objectif : zéro erreur silencieuse) :
+    - encre bleue nette -> cochée ;
+    - encre sombre : cochée seulement si la zone ET l'intérieur l'indiquent ; vide seulement si
+      les deux sont bas ; un désaccord -> incertaine (à vérifier), jamais une affirmation."""
+    hi, lo = thresholds()
+    dark = DARK_SCALE * dark_ex
+    ratio = max(blue, dark)
+    if blue > hi:
+        return ratio, *decide(blue)
+    if dark > hi and inner_ex > INNER_MARKED:
+        return ratio, *decide(dark)
+    if blue < lo and dark < lo and inner_ex < INNER_EMPTY:
+        return ratio, *decide(max(blue, dark))
+    return ratio, "incertaine", 0.4
 
 
 def decide(ratio: float) -> tuple[str, float]:
@@ -139,7 +165,7 @@ def _fallback(page_type: str, rgb: np.ndarray, tokens) -> list[tuple[dict, tuple
     g = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).copy()
     g[blue_ink(rgb)] = 255
     bw = cv2.adaptiveThreshold(g, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25, 15)
-    bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+    bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))   # coins effacés par la croix
     contours, _ = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     squares = []
     for c in contours:
@@ -195,10 +221,15 @@ def read_checkboxes(img: Image.Image, page_type: str, tokens=None, debug_path: P
     else:
         method = "contours"
         placed = _fallback(page_type, rgb, tokens)
+    measures = [(b, *measure(rgb, dark, box)) for b, box in placed]
+    base_in = float(np.median([m[3] for m in measures])) if measures else 0.0
+    # encre sombre (stylo noir) : ce que le cadre imprimé n'explique pas. La plupart des cases d'une
+    # page sont vides -> la médiane donne le niveau « cadre seul ». Mesuré : patiente 2 coche au stylo
+    # presque noir, l'ancienne mesure (intérieur seul) ratait les coches qui débordent.
+    base = float(np.median([m[2] for m in measures])) if measures else 0.0
     results = []
-    for b, box in placed:
-        ratio, zone = measure(rgb, dark, box)
-        decision, conf = decide(ratio)
+    for b, blue, dk, inner, zone in measures:
+        ratio, decision, conf = decide_combined(blue, dk - base, inner - base_in)
         results.append(BoxResult(b["key"], b["code"], tuple(int(v) for v in zone), round(ratio, 4), decision, conf))
     if debug_path is not None:
         save_debug(img, results, debug_path)

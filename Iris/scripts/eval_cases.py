@@ -31,7 +31,8 @@ def pred_from_boxes(image: str, results) -> dict:
             value = codes[0] if len(codes) == 1 else (codes or None)
         else:
             value = codes
-        fields[key] = {"value": value, "status": "A_REVISER" if unsure or conf < 0.8 else "CONNU",
+        empty_enum = f.type == "enum" and not codes            # même règle que le pipeline
+        fields[key] = {"value": value, "status": "A_REVISER" if unsure or empty_enum or conf < 0.8 else "CONNU",
                        "confidence": 0.4 if unsure else conf}
     return {"image": image, "fields": fields}
 
@@ -49,10 +50,13 @@ def cases_metrics(preds: list[dict], gts: dict, images: set[str]) -> dict:
         vp, fp, fn = vp + len(pred_c & true_c), fp + len(pred_c - true_c), fn + len(true_c - pred_c)
         total += len(keys)
         incertaines += sum(1 for k in keys if (p["fields"].get(k) or {}).get("status") == "A_REVISER")
+    from eval.evaluate import evaluate
+    sel = [p for p in preds if p.get("image") in images]
+    silent = len(evaluate(sel, gts)["silent"]) if sel else 0
     prec = vp / (vp + fp) if vp + fp else None
     rec = vp / (vp + fn) if vp + fn else None
     return {"vp": vp, "fp": fp, "fn": fn, "precision": prec, "rappel": rec,
-            "champs_cases": total, "a_reviser": incertaines}
+            "champs_cases": total, "a_reviser": incertaines, "silencieuses": silent}
 
 
 def _pct(x):
@@ -81,11 +85,12 @@ def main():
     before = cases_metrics(load_predictions(a.avant), gts, done) if a.avant.exists() else None
     md = ["# Cases à cocher : VLM (avant) vs vision classique OpenCV (après)", "",
           f"Pages spécimen : {sorted(a.pages)}", "",
-          "| | précision | rappel | VP | FP | FN | à réviser / champs cases |", "|---|---|---|---|---|---|---|"]
+          "| | précision | rappel | VP | FP | FN | à réviser / champs cases | erreurs silencieuses |",
+          "|---|---|---|---|---|---|---|---|"]
     for name, m in (("avant (VLM 3b)", before), ("après (OpenCV)", after)):
         if m:
             md.append(f"| {name} | {_pct(m['precision'])} | {_pct(m['rappel'])} | {m['vp']} | {m['fp']} | {m['fn']} "
-                      f"| {m['a_reviser']} / {m['champs_cases']} |")
+                      f"| {m['a_reviser']} / {m['champs_cases']} | {m['silencieuses']} |")
     md += ["", "| page | type | localisation | cases | durée |", "|---|---|---|---|---|"] + lines
     md += ["", f"Images de debug : `{out}` (vert = cochée, rouge = vide, orange = incertaine)."]
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -93,7 +98,8 @@ def main():
     for name, m in (("AVANT (VLM)", before), ("APRÈS (OpenCV)", after)):
         if m:
             print(f"{name:15} précision {_pct(m['precision'])}  rappel {_pct(m['rappel'])}  "
-                  f"(VP {m['vp']}, FP {m['fp']}, FN {m['fn']}, à réviser {m['a_reviser']}/{m['champs_cases']})")
+                  f"(VP {m['vp']}, FP {m['fp']}, FN {m['fn']}, à réviser {m['a_reviser']}/{m['champs_cases']}, "
+                  f"erreurs silencieuses {m['silencieuses']})")
 
 
 if __name__ == "__main__":

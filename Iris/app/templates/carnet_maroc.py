@@ -7,6 +7,7 @@ Les champs `identifiant=True` ne sont JAMAIS extraits ni stockés : ils ne sont
 décrits ici que pour reconnaître (et écarter) leur zone sur la page.
 """
 from .base import FieldDef as F, PageType, SectionDef, TableDef, Template, ch
+from .vocabulaire import PROVINCES_MAROC
 
 
 def _id(key: str, label: str, **kw) -> F:
@@ -33,7 +34,7 @@ REGIONS_MAROC = (
 COUVERTURE = SectionDef("couverture", "Couverture", (
     F("numero_fiche", "N° de la fiche :"),
     F("region", "Région :", vocabulaire=REGIONS_MAROC),
-    F("province", "Province :", aliases=("Province",)),
+    F("province", "Province :", aliases=("Province",), vocabulaire=PROVINCES_MAROC),
     F("etablissement", "Nom de l'établissement sanitaire :"),
     F("type_etablissement", "Type de l'établissement sanitaire :", "enum",
       (ch("DR"), ch("CSC"), ch("CSU"), ch("CSCA"), ch("CSUA"))),

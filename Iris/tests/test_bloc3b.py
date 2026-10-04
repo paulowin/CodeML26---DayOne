@@ -432,3 +432,68 @@ def test_worker_photo_floue_previent_la_sage_femme(client):
 ])
 def test_regions_officielles(raw, official):
     assert normalize_value(F["couverture.region"], raw) == official
+
+
+# ------------------------------------------------------------------ matin : zéro erreur silencieuse
+@pytest.mark.parametrize("raw,iso", [("02/11/2025", "2025-11-02"), ("11/02/2025", "2025-02-11"),
+                                     ("03/04/26", "2026-04-03"), ("2025-11-02", "2025-11-02")])
+def test_dates_toujours_jour_en_premier(raw, iso):
+    assert interpret(F["grossesse_actuelle.ddr"], raw).value == iso
+
+
+def test_date_avec_chiffre_manquant_a_verifier():
+    it = interpret(F[V + "rendez_vous"], "02/1/2025")          # OCR : « 11 » lu « 1 »
+    assert it.value == "2025-01-02" and "date_chiffre_manquant" in it.flags
+    assert "date_chiffre_manquant" not in interpret(F[V + "rendez_vous"], "02/11/2025").flags
+
+
+def test_coherence_des_dates():
+    flags = validate({
+        "pp_tardif_nne.date_consultation": "2026-03-18", "pp_tardif_nne.prochaine_visite": "2026-03-10",
+        "grossesse_actuelle.visites.T2V1.venue_le": "2025-09-28",
+        "grossesse_actuelle.visites.T2V2.venue_le": "2025-08-01",            # avant la visite précédente
+        "grossesse_actuelle.visites.T2V3.rendez_vous": "2025-07-01",           # avant la venue précédente
+        "accouchement.date": "2019-02-03",                                     # avant 2020
+    })
+    assert "rdv_avant_visite" in flags["pp_tardif_nne.prochaine_visite"]
+    assert "dates_visites_desordre" in flags["grossesse_actuelle.visites.T2V2.venue_le"]
+    assert "rdv_avant_visite" in flags["grossesse_actuelle.visites.T2V3.rendez_vous"]
+    assert "date_hors_periode" in flags["accouchement.date"]
+    assert "antecedents_obstetricaux.accouchements.1.date" not in validate(
+        {"antecedents_obstetricaux.accouchements.1.date": "2016-01-25"})     # antécédents : pas de borne 2020
+
+
+def test_province_officielle_et_texte_hors_vocabulaire():
+    from ai.ocr_classique import in_vocabulary, snap_vocabulary
+    assert normalize_value(F["couverture.province"], "AI Haouz") == "Al Haouz"
+    assert normalize_value(F["couverture.province"], "Kenitra") == "Kénitra"
+    assert in_vocabulary("Chauffeur") and not in_vocabulary("Chuffeurx")
+    assert snap_vocabulary("Chuffeur") == "Chauffeur" and snap_vocabulary("Asthme ger") == "Asthme léger"
+
+
+def test_texte_hors_vocabulaire_jamais_connu_sans_second_avis():
+    from ai.extract import _finalize, PageResult
+    k = "identification.profession"
+    st = FieldState(F[k], [Reading(k, "Xylophoniste", "LISIBLE", 0.95, 0)], flags=["lecture_ocr", "hors_vocabulaire"])
+    merge(st)
+    res = PageResult(0, "identification_antecedents")
+    _finalize([(res, {k: st})], 0.8)
+    assert res.fields[k]["status"] == "A_REVISER" and res.fields[k]["confidence"] <= 0.6
+    st2 = FieldState(F[k], [Reading(k, "Xylophoniste", "LISIBLE", 0.95, 0),
+                            Reading(k, "Xylophoniste", "LISIBLE", 0.9, 0, source="verify")],
+                     flags=["lecture_ocr", "hors_vocabulaire"])
+    merge(st2)
+    apply_verify(st2)
+    res2 = PageResult(0, "identification_antecedents")
+    _finalize([(res2, {k: st2})], 0.8)
+    assert res2.fields[k]["status"] == "CONNU"                                 # 2e avis identique
+
+
+def test_date_ocr_jamais_connue_sur_une_lecture():
+    from ai.extract import _finalize, PageResult
+    k = "pp_tardif_nne.prochaine_visite"
+    st = FieldState(F[k], [Reading(k, "13/05/2026", "LISIBLE", 0.95, 0)], flags=["lecture_ocr"])
+    merge(st)
+    res = PageResult(0, "pp_tardif_nne")
+    _finalize([(res, {k: st})], 0.8)
+    assert res.fields[k]["status"] == "A_REVISER"

@@ -34,8 +34,8 @@ def test_entete_de_colonne_exige_le_bon_chiffre():
 def _page(draw_marks: list[tuple[float, float]], boxes: list[tuple[float, float]] = ()) -> bytes:
     img = Image.new("RGB", (W, H), "white")
     d = ImageDraw.Draw(img)
-    for y in range(80, 2300, 120):                       # lignes du formulaire (qualité OK)
-        d.line((60, y, W - 60, y), fill=(40, 30, 30), width=2)
+    for y in range(80, 2300, 40):                        # traits dans la marge (qualité OK, hors des cases)
+        d.line((10, y, 90, y), fill=(40, 30, 30), width=2)
     for x, y in list(boxes) + list(draw_marks):          # cadre imprimé de la case (8 pt)
         d.rectangle((x * S, y * S, (x + 8) * S, (y + 8) * S), outline=(30, 20, 25), width=2)
     for x, y in draw_marks:                              # croix bleue dans une case (points PDF)

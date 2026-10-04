@@ -282,8 +282,13 @@ def ocr_page_gt(layout: PageLayout, page_type: str):
 # ------------------------------------------------------------------ pipeline
 # réponses fréquentes du carnet : une faute de frappe d'OCR proche est corrigée, avec une confiance
 # plafonnée (A_REVISER) — mesuré : « Nbrmaux », « Ou; » sortaient en CONNU (erreurs silencieuses)
-VOCABULARY = ("RAS", "Normaux", "Normales", "Normal", "Oui", "Non", "Neg", "Pos", "Immune", "Non immune",
-              "Fermé", "Céphalique", "Aucun", "Aucune", "Néant", "Pâles", "Voie basse", "Non fait")
+from app.templates.vocabulaire import VOCABULAIRE_TEXTE as VOCABULARY  # noqa: E402
+
+
+def in_vocabulary(raw: str) -> bool:
+    import re
+    n = re.sub(r"[^a-z0-9 ]", "", norm_label(raw)).strip()
+    return any(re.sub(r"[^a-z0-9 ]", "", norm_label(v)).strip() == n for v in VOCABULARY)
 
 
 def snap_vocabulary(raw: str) -> str:
@@ -327,10 +332,15 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
         words.sort(key=lambda w: (round(w.y / 4), w.x0))
         raw = " ".join(w.text for w in words)
         conf = float(np.mean([conf_of.get(id(w), 0.5) for w in words]))
-        if f.type in ("str", "enum"):
+        st = states.setdefault(key, FieldState(f))
+        st.flags.append("lecture_ocr")
+        if f.type in ("str", "enum") and not f.vocabulaire:
             fixed = snap_vocabulary(raw)
             if fixed != raw:                     # « Nbrmaux » -> « Normaux » : corrigé MAIS à vérifier
                 raw, conf = fixed, min(conf, 0.6)
+            elif f.type == "str" and not in_vocabulary(raw):
+                # texte libre inconnu (« Chuffeur ») : CONNU seulement si le 2e avis lit la même chose
+                st.flags.append("hors_vocabulaire")
         band = _band_of(np.mean([w.cy for w in words]) / layout.height, prep.bands)
         st = states.setdefault(key, FieldState(f))
         st.readings.append(Reading(key, raw, _cell_etat(raw), conf, band))

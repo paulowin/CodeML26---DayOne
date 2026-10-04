@@ -299,6 +299,11 @@ def add_checkbox_readings(states: dict[str, FieldState], results, bands, page_he
         if unsure:
             st.flags.append("case_incertaine")
             conf = min(conf, 0.4)
+        elif not codes and T.fields[key].type == "enum":
+            # choix unique sans AUCUNE case vue cochée : plus probablement une coche manquée (stylo
+            # fin, cadre légèrement décalé) qu'un champ vide -> à confirmer, jamais « vide » affirmé
+            st.flags.append("aucune_case_cochee")
+            conf = min(conf, 0.5)
         y_rel = ys.get(key, 0) / max(1, page_height_px)
         band = next((b.index for b in bands if b.y0 <= y_rel <= b.y1), 0)
         st.readings.append(Reading(key, codes, "LISIBLE", conf, band))
@@ -307,6 +312,8 @@ def add_checkbox_readings(states: dict[str, FieldState], results, bands, page_he
 def _needs_verify(st: FieldState, seuil: float) -> bool:
     if "lecture_cv" in st.flags:                       # case lue par vision classique : pas de 2e avis VLM
         return False
+    if "hors_vocabulaire" in st.flags or ("lecture_ocr" in st.flags and st.f.type == "date"):
+        return st.interp is not None and st.interp.status is None and st.chosen is not None
     if st.interp is None or st.interp.status or st.chosen is None or st.chosen.etat != "LISIBLE":
         return False
     prelim = C.score(st.evidence)
@@ -364,8 +371,8 @@ def _second_opinion(client, page_type: str, bands, model: str, use_cache: bool,
                     states: dict[str, FieldState], seuil: float, critical_only: bool = False) -> None:
     by_band: dict[int, set[str]] = {}
     for k, st in states.items():
-        if critical_only and not st.f.critique:
-            continue                                   # mode OCR : 2e avis Ollama sur les critiques seulement
+        if critical_only and not (st.f.critique or st.f.type == "date" or "hors_vocabulaire" in st.flags):
+            continue                                   # mode OCR : 2e avis sur critiques, dates, texte inconnu
         if _needs_verify(st, seuil) and st.chosen.band is not None:
             by_band.setdefault(st.chosen.band, set()).add(k)
     for band_idx, keys in sorted(by_band.items()):
@@ -408,14 +415,20 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             if "libelle_recopie" in st.flags or st.interp.flags:
                 st.evidence.validation_failed = True
             conf = C.score(st.evidence)
+            if "hors_vocabulaire" in st.flags and st.evidence.verified is not True:
+                conf = min(conf, 0.6)                  # texte libre inconnu, non confirmé par le 2e avis
             vlm_box = st.f.is_checkbox and "lecture_cv" not in st.flags
             if vlm_box:
                 # mesuré : le VLM invente des cases cochées, même confirmées par un 2e avis du même
                 # modèle -> une case lue par le VLM est toujours à confirmer par la sage-femme
                 # (une case lue par vision classique — taux d'encre, mode OCR — n'est pas concernée)
                 conf = min(conf, C.CHECKBOX_CAP)
-            critical = st.f.critique or vlm_box
+            # mode OCR : une date n'est jamais CONNU sur une seule lecture (chiffre manquant/mal lu)
+            ocr_date = "lecture_ocr" in st.flags and st.f.type == "date"
+            critical = st.f.critique or vlm_box or ocr_date
             status = C.status(st.interp.status, conf, seuil, critical, st.evidence)
+            if status == "NON_FOURNI" and {"case_incertaine", "aucune_case_cochee"} & set(st.flags):
+                status = "A_REVISER"                    # « rien coché » n'est pas une certitude
             if vlm_box and status == "CONNU":
                 status = "A_REVISER"                    # quel que soit le seuil
             raw = st.chosen.raw if isinstance(st.chosen.raw, str) else None

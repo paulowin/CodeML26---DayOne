@@ -98,7 +98,8 @@ def parse_ga(raw: Any) -> float | None:
 
 
 def parse_date(raw: Any) -> str | None:
-    """'3/2/26', '03-02-2026', '/19/05/2025/', '2026-02-03' -> '03/02/2026'.
+    """Format du carnet marocain = JJ/MM/AAAA : le JOUR d'abord, toujours (jamais MM/JJ).
+    '3/2/26', '03-02-2026', '/19/05/2025/', '2026-02-03' -> '03/02/2026'.
     Date partielle ('12/05', '2023') : renvoyée telle quelle (voir `is_full_date`)."""
     s = clean_text(raw).strip(" /.-")
     m = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", s)
@@ -276,6 +277,11 @@ def interpret(f: FieldDef, raw: Any, etat: str | None = None) -> Interpretation:
     if f.type == "date":
         if is_full_date(v):
             v = to_iso(v)
+            # le carnet s'écrit JJ/MM/AAAA : un jour ou un mois à UN chiffre (« 02/1/2025 ») trahit
+            # souvent un chiffre perdu par la lecture (02/11 -> 02/1) -> à vérifier
+            parts = re.split(r"\s*[/.\-]\s*", clean_text(raw).strip(" /.-")) if isinstance(raw, str) else []
+            if len(parts) == 3 and len(parts[0]) != 4 and (len(parts[0]) == 1 or len(parts[1]) == 1):
+                flags.append("date_chiffre_manquant")
         else:
             flags.append("date_partielle")
     elif f.type == "enum" and v not in f.choice_codes:

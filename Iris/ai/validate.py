@@ -15,6 +15,9 @@ from app.templates import get_template
 from app.templates.base import FieldDef
 
 T = get_template()
+CURRENT_SECTIONS = {"grossesse_actuelle", "accouchement", "pp_precoce_mere", "pp_precoce_nne",
+                    "pp_tardif_mere", "pp_tardif_nne"}
+VISIT_ORDER = ("T1V1", "T1V2", "T1V3", "T2V1", "T2V2", "T2V3", "M7", "M8", "M9")
 
 # poids de naissance plausible (g) selon l'âge gestationnel (SA) : bornes larges (~p1/p99)
 _BW_TABLE = ((24, 400, 1100), (28, 600, 1700), (32, 1000, 2600), (36, 1700, 3800), (40, 2200, 5000),
@@ -115,4 +118,36 @@ def validate(values: dict[str, Any]) -> dict[str, list[str]]:
         lo, hi = birth_weight_range(ga)
         if not (lo <= bw <= hi):
             flag(["accouchement.poids_naissance_g", "accouchement.age_gestationnel_sa"], "poids_incoherent_avec_age")
+    # dates de la grossesse en cours et du post-partum : entre 2020 et aujourd'hui + 1 an
+    lo, hi = date(2020, 1, 1), date.today().replace(year=date.today().year + 1)
+    for k, v in values.items():
+        f = T.fields.get(k)
+        if f is not None and f.type == "date" and k.split(".")[0] in CURRENT_SECTIONS:
+            d = _d(v)
+            if d and not (lo <= d <= hi):
+                flags[k].append("date_hors_periode")
+
+    # rendez-vous après la consultation (post-partum)
+    for sec in ("pp_precoce_mere", "pp_tardif_mere"):
+        visit, rdv = _d(values.get(f"{sec}.date_consultation")), _d(values.get(f"{sec}.prochain_rdv"))
+        if visit and rdv and rdv <= visit:
+            flag([f"{sec}.prochain_rdv"], "rdv_avant_visite")
+    for sec in ("pp_precoce_nne", "pp_tardif_nne"):
+        visit, rdv = _d(values.get(f"{sec}.date_consultation")), _d(values.get(f"{sec}.prochaine_visite"))
+        if visit and rdv and rdv <= visit:
+            flag([f"{sec}.prochaine_visite"], "rdv_avant_visite")
+
+    # tableau des visites : dates de venue croissantes ; rendez-vous après la venue précédente
+    prev = None
+    for col in VISIT_ORDER:
+        venue = _d(values.get(f"grossesse_actuelle.visites.{col}.venue_le"))
+        rdv = _d(values.get(f"grossesse_actuelle.visites.{col}.rendez_vous"))
+        if prev is not None:
+            pcol, pdate = prev
+            if venue and venue < pdate:
+                flag([f"grossesse_actuelle.visites.{col}.venue_le"], "dates_visites_desordre")
+            if rdv and rdv < pdate:
+                flag([f"grossesse_actuelle.visites.{col}.rendez_vous"], "rdv_avant_visite")
+        if venue:
+            prev = (col, venue)
     return {k: sorted(set(v)) for k, v in flags.items() if v}
