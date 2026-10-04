@@ -6,6 +6,17 @@ Agent WhatsApp qui transforme la photo d'un registre maternel papier en dossier
 numérique structuré, vérifié par la sage-femme et relié de visite en visite.
 **Tout tourne en local** : aucune donnée n'est envoyée à un service d'IA/OCR tiers.
 
+## Le problème
+
+Dans les centres de santé ruraux, le suivi de grossesse vit dans des **carnets papier** : rien
+n'est consultable d'une visite à l'autre ni agrégeable pour le registre, et la saisie
+informatique est une double charge pour des sages-femmes souvent sans connexion fiable.
+Iris part de ce que la sage-femme a déjà en main — son téléphone et WhatsApp : elle photographie
+la page, Iris la lit **sur un poste local** (aucune IA en ligne), lui dit ce qu'il a lu et ce qui
+est douteux, elle confirme ou corrige en quelques gestes, et le dossier est rattaché à la
+patiente puis synchronisé quand le réseau revient. Principe directeur : **zéro erreur
+silencieuse** — une valeur douteuse est toujours montrée, jamais enregistrée comme sûre.
+
 ## Vue d'ensemble
 
 ```
@@ -396,6 +407,19 @@ sur le téléphone (corriger la DDR, choisir la TA, déclarer le BCF illisible) 
 confirmer → « ⚠️ Signes d'alerte » (pré-éclampsie, anémie… voir Alertes cliniques) → choisir « Patiente 1 » (A64128 est aussi proposée, code proche) → dossier
 ENREGISTRE en ECHEC_SYNCHRO → rallumer le réseau → SYNCHRONISE.
 
+## Commande RDV
+
+`RDV` sur WhatsApp → « 📅 2 patientes attendues non revues : A64128 (RDV 05/01) ; A64125 (RDV 13/01). »
+(dernier rendez-vous confirmé d'une patiente, dépassé, sans visite enregistrée depuis).
+
+## Carnet de vaccination OMS (expérimental)
+
+Page « AUTRES VACCINATIONS / OTHER VACCINATIONS » : modèle `app/templates/carnet_vaccination_oms.py`,
+lecteur `ai/vaccination.py` (encre bleue seule, entrées par ligne d'écriture, date au crayon gris =
+« rappel ? »). Chaque cellule n'est CONNU que si le 2e avis concorde ; la couverture (nom, n° de
+certificat, passeport) n'est jamais stockée. Sur 3 vraies photos : structure retrouvée, écriture
+cursive mal lue → tout est « à vérifier » (0 erreur silencieuse).
+
 ## Alertes cliniques
 
 > ⚠️ **Aide à la décision, pas un diagnostic.** Une alerte signale une valeur à évaluer par la
@@ -438,6 +462,37 @@ réservation de plus de 2 min (processus tué) est libérée. Constaté au test 
 - **Champs en lignes** (`extracted_fields`) : valeur + statut + confiance + source +
   historique des corrections pour chaque champ.
 
+## Évaluation (chiffres)
+
+Vérité terrain extraite du PDF spécimen (`eval/`), `python -m ai.run_eval`, une page à la fois sur CPU.
+
+| Mesure | Résultat |
+|---|---|
+| Spécimen, 24 pages (patientes 1–3), OCR + cases OpenCV + 2e avis | exactitude **74,4 %**, couverture 92,2 %, précision des champs sûrs **98,6 %**, 23,6 s/page (avant les correctifs « zéro erreur silencieuse » du dernier matin, qui ciblaient les 6 erreurs silencieuses restantes ; évaluation complète non rejouée faute de temps) |
+| Avant (VLM qwen2.5vl:3b seul, 8 pages) | exactitude 26,6 %, couverture 48,8 %, ~400 s/page |
+| Cases à cocher, 24 pages | VLM : précision 100 %, rappel 71 %, 6 erreurs silencieuses → **OpenCV : 100 % / 96,4 %, 0 erreur silencieuse** |
+| Vraie photo WhatsApp (page grossesse, patiente 9) | 6 → **68 valeurs lues** (62 dans le tableau des visites), exactitude 66,3 %, **0 erreur silencieuse** |
+| Robustesse (24 images : 5 réelles, 16 spécimen, noire / floue / sans rapport) | **0 plantage**, un message pour chaque image, 73 s max (budget 75 s) |
+| Confidentialité | **0 fuite** d'identifiant sur toutes les évaluations |
+
+Écart honnête : sur pages propres, Iris lit l'essentiel ; sur vraies photos (écriture cursive,
+lumière, compression WhatsApp), la lecture baisse nettement et une partie des pages n'est pas
+reconnue — Iris le dit (à vérifier / type de page demandé / saisie guidée) au lieu de deviner.
+Détails : NUIT.md, `eval/reports/`.
+
+## Confidentialité
+
+- Traitement IA **100 % local** (EasyOCR, OpenCV, Ollama sur le poste) ; aucune image ni texte
+  envoyé à un service d'IA tiers.
+- Images chiffrées au repos (`STORAGE_ENCRYPTION_KEY`), déchiffrées en mémoire seulement.
+- **Liste blanche** du schéma : les identifiants (nom, téléphone, CIN, adresse, nom du soignant…)
+  ne sont jamais extraits ni stockés ; tout texte qui ressemble à un téléphone ou une CIN est
+  retiré. La sage-femme est prévenue (« 🔒 Non enregistré : nom de la patiente » — le type, jamais
+  la valeur). Contrôlé à chaque évaluation : **0 fuite**.
+- Patiente identifiée par un **code aléatoire** écrit sur le carnet ; la synchronisation centrale
+  est anonymisée. `/verif` n'est accessible que depuis le poste local (ou avec une clé du personnel),
+  et chaque consultation d'image est journalisée.
+
 ## Limites connues
 
 - **Vraies photos** (écriture cursive, photo inclinée, pliure) : l'OCR et le VLM les lisent mal
@@ -452,3 +507,23 @@ réservation de plus de 2 min (processus tué) est libérée. Constaté au test 
 - La base SQLite n'est pas chiffrée (les images le sont) ; piste : SQLCipher ou
   chiffrement disque.
 - Une image chiffrée peut rester orpheline si le traitement plante juste après l'écriture.
+- Page de grossesse en **écriture cursive** (vraies photos 1-4 et 1-5) : non reconnue -> la
+  sage-femme indique le type de page, puis relecture ou saisie guidée.
+- Photo WhatsApp compressée : la lecture reste plus faible que sur un scan (66 % d'exactitude,
+  72 % de couverture sur la page grossesse de la patiente 9 envoyée par WhatsApp, 0 erreur
+  silencieuse) — conseiller l'envoi « en document » 📎.
+- Lecture sur CPU : 10 à 50 s par page ; au-delà de 75 s, saisie guidée expliquée.
+- Les alertes cliniques sont des règles simples sur les valeurs confirmées : elles ne voient
+  ni l'histoire clinique ni ce qui n'est pas écrit dans le carnet.
+
+## Pistes futures
+
+- **Arabe** : carnets remplis en arabe (détection de l'écriture, lecteur EasyOCR `ar`) et
+  conversation en arabe pour les sages-femmes arabophones.
+- **Apprentissage par les corrections** : chaque correction de la sage-femme est une paire
+  (image de cellule, valeur juste) — de quoi affiner l'OCR et recalibrer les seuils de confiance
+  sur le terrain.
+- **Nouveaux carnets par fichier modèle** : le carnet est décrit dans un seul fichier
+  (`app/templates/carnet_maroc.py` + positions des cases) ; un autre pays ou une autre version du
+  carnet = un nouveau fichier modèle, sans toucher au pipeline.
+- Lecture par différence avec un formulaire vierge (recalage + soustraction) pour isoler l'encre.
