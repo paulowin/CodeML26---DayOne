@@ -110,23 +110,56 @@ def debug_image(entry: dict | None) -> Path | None:
 
 # ------------------------------------------------------------------ rendu
 CSS = """
-body{font-family:system-ui,Segoe UI,sans-serif;margin:16px;color:#222;background:#fafafa}
-table{border-collapse:collapse;width:100%;font-size:13px;background:#fff}
-th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;vertical-align:top}
-th{background:#eee;position:sticky;top:0}
-.ok{background:#dff3df}.rev{background:#ffe9c7}.nl{background:#eee;color:#777}
-.juste{background:#c9efc9}.faux{background:#f8c9c9;font-weight:600}
-.page{display:flex;gap:16px;margin:16px 0;align-items:flex-start}
-.page .img{flex:0 0 42%;position:sticky;top:8px}.page .img img{width:100%;border:1px solid #ccc}
-.page .tab{flex:1;max-height:90vh;overflow:auto}
-.stats span{display:inline-block;margin-right:18px;padding:4px 8px;background:#fff;border:1px solid #ddd}
-a{color:#0645ad}button{padding:6px 12px;cursor:pointer}
+:root{--fg:#111;--mut:#6B6B6B;--line:#E6E6E6;--acc:#4A1942;--ok:#2E7D4F;--rev:#B8650A;--err:#B3261E;--nl:#9A9A9A}
+*{box-sizing:border-box}
+body{font-family:system-ui,"Segoe UI",sans-serif;font-size:15px;line-height:1.5;margin:0;color:var(--fg);
+background:#fff;font-variant-numeric:tabular-nums}
+.top{max-width:1400px;margin:0 auto;padding:24px 40px 0}
+.brand{color:var(--acc);font-weight:700;font-size:14px;letter-spacing:.02em}
+main{max-width:1400px;margin:0 auto;padding:8px 40px 64px}
+h1{font-size:28px;font-weight:600;line-height:1.25;margin:24px 0 8px;color:var(--fg)}
+h1 .st{display:block;margin-top:6px;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+color:var(--mut)}
+h2{font-size:17px;font-weight:600;margin:48px 0 16px;padding-top:24px;border-top:1px solid var(--line);color:var(--acc)}
+p{margin:12px 0}.meta{color:var(--mut);font-size:14px}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+button{font:inherit;font-size:13px;color:var(--fg);background:#fff;border:1px solid var(--line);border-radius:4px;
+padding:4px 12px;cursor:pointer}a+button{margin-left:16px}button:hover{background:#F7F7F7}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
+th,td{border:0;border-bottom:1px solid var(--line);padding:9px 12px 9px 0;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#fff;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+color:var(--mut)}
+.liste tr:hover td{background:#F7F7F7}
+.liste td.ok,.liste td.rev,.liste td.nl{text-align:right}.liste th.n{text-align:right}
+td.nl,.liste td.nl{color:var(--nl)}
+td.st{white-space:nowrap;font-size:13px}
+td.st::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;
+vertical-align:1px;background:var(--nl)}
+tr.ok td.st::before{background:var(--ok)}tr.rev td.st::before{background:var(--rev)}
+tr.nl td{color:var(--nl)}
+.faux{color:var(--err);font-weight:600}
+.page{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;margin:16px 0;align-items:start}
+.page .img{position:sticky;top:24px}.page .img img{width:100%;display:block;border:1px solid var(--line)}
+.page .img p{font-size:13px}
+.page .tab{max-height:90vh;overflow:auto}
+@media (max-width:1100px){.page{grid-template-columns:1fr}.page .img{position:static}.page .tab{max-height:none}}
+@media (max-width:640px){.top,main{padding-left:16px;padding-right:16px}}
+.stats{display:flex;flex-wrap:wrap;margin:32px 0 8px;padding:20px 0 0;border-top:1px solid var(--line)}
+.stats span{display:flex;flex-direction:column;padding:0 40px 0 0;margin-right:40px;border-right:1px solid var(--line);
+font-size:12px;color:var(--mut);max-width:220px}
+.stats span:last-child{border-right:0}
+.stats b{order:-1;font-size:32px;font-weight:600;line-height:1.1;color:var(--fg);margin-bottom:4px}
+.stats span.alert b{color:var(--err)}
+.alerte{border-left:3px solid var(--err);background:#fff;padding:8px 16px;margin:16px 0;color:var(--fg)}
+.alerte b{font-weight:600}.alerte small{color:var(--mut);font-size:13px}
 """
 
 
 def _page_html(title: str, body: str) -> HTMLResponse:
     return HTMLResponse(f"<!doctype html><html lang='fr'><head><meta charset='utf-8'><title>{html.escape(title)}"
-                        f"</title><style>{CSS}</style></head><body>{body}</body></html>")
+                        "</title><meta name='viewport' content='width=device-width,initial-scale=1'>"
+                        f"<style>{CSS}</style></head><body><header class='top'><span class='brand'>Iris</span></header>"
+                        f"<main>{body}</main></body></html>")
 
 
 def _source(ef, rec: Record) -> str:
@@ -187,8 +220,8 @@ def verif_list(staff: Staff = Depends(require_local_or_staff), db: Session = Dep
                     f"<td class='rev'>{c['ILLISIBLE']}</td><td class='nl'>{c['non lus']}</td></tr>")
     body = ("<h1>Vérification de l'extraction</h1>"
             "<p><button onclick='location.reload()'>Rafraîchir</button></p>"
-            "<table><tr><th>Dossier</th><th>Date</th><th>Statut</th><th>Pages</th><th>CONNU</th>"
-            "<th>À réviser</th><th>Illisibles</th><th>Non lus</th></tr>" + "".join(rows) + "</table>")
+            "<table class='liste'><tr><th>Dossier</th><th>Date</th><th>Statut</th><th>Pages</th><th class='n'>CONNU</th>"
+            "<th class='n'>À réviser</th><th class='n'>Illisibles</th><th class='n'>Non lus</th></tr>" + "".join(rows) + "</table>")
     return _page_html("Vérification – dossiers", body)
 
 
@@ -222,10 +255,10 @@ def verif_record(record_id: str, request: Request, staff: Staff = Depends(requir
                 val = _value(ef)
                 tds = (f"<td>{html.escape(ef.raw_text or '')}</td>"
                        f"<td>{html.escape(fmt_value(f, val)) if f else html.escape(str(val))}</td>"
-                       f"<td>{ef.status.value}</td><td>{ef.confidence:.2f}</td><td>{_source(ef, rec)}</td>")
+                       f"<td class='st'>{ef.status.value}</td><td>{ef.confidence:.2f}</td><td>{_source(ef, rec)}</td>")
                 css = _css(ef)
             else:
-                val, tds, css = None, "<td></td><td>—</td><td>non lu</td><td></td><td></td>", "nl"
+                val, tds, css = None, "<td></td><td>—</td><td class='st'>non lu</td><td></td><td></td>", "nl"
             exp_td = ""
             if gt is not None:
                 if k in gt_fields and f is not None:
@@ -261,16 +294,16 @@ def verif_record(record_id: str, request: Request, staff: Staff = Depends(requir
         stats = ("<div class='stats'>"
                  f"<span>Exactitude : <b>{100 * total['justes'] / a:.1f} %</b> ({total['justes']}/{a})</span>"
                  f"<span>Couverture : <b>{100 * total['couverts'] / a:.1f} %</b></span>"
-                 f"<span>Erreurs silencieuses (faux mais affiché sûr) : <b>{total['silencieuses']}</b></span></div>")
+                 f"<span{' class=alert' if total['silencieuses'] else ''}>Erreurs silencieuses (faux mais affiché sûr) : <b>{total['silencieuses']}</b></span></div>")
     c = _counts(rec)
     from app.services import alerts
     al = alerts.message(alerts.record_alerts(rec), "fr")
-    banner = (f"<div style='background:#b3261e;color:#fff;padding:10px 14px;border-radius:6px;margin:8px 0'>"
+    banner = ("<div class='alerte'>"
               f"<b>{html.escape(al)}</b><br><small>Aide à la décision, pas un diagnostic : seules les valeurs "
               f"confirmées par la sage-femme sont prises en compte.</small></div>") if al else ""
     body = (f"<p><a href='/verif'>← tous les dossiers</a> <button onclick='location.reload()'>Rafraîchir</button></p>"
-            f"<h1>Dossier {rec.id[:8]} – {rec.status.value}</h1>{banner}"
-            f"<p>Modèle : {html.escape(rec.extraction_model or '—')} · CONNU {c['CONNU']} · à réviser {c['A_REVISER']}"
+            f"<h1>Dossier {rec.id[:8]} <span class='st'>– {rec.status.value}</span></h1>{banner}"
+            f"<p class='meta'>Modèle : {html.escape(rec.extraction_model or '—')} · CONNU {c['CONNU']} · à réviser {c['A_REVISER']}"
             f" · illisibles {c['ILLISIBLE']} · non lus {c['non lus']}</p>{stats}" + "".join(blocks))
     return _page_html(f"Vérification – {rec.id[:8]}", body)
 

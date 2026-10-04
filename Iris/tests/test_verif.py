@@ -98,5 +98,5 @@ def test_bandeau_rouge_des_alertes_sur_valeurs_confirmees(local):
                                          source=FieldSource.SAGE_FEMME, page_number=1, is_current=True))
         db.commit()
     page = local.get(f"/verif/{rid}").text
-    assert "background:#b3261e" in page and "anémie (Hb 10,9 g/dL)" in page
+    assert "class='alerte'" in page and "anémie (Hb 10,9 g/dL)" in page
     assert "Aide à la décision, pas un diagnostic" in page
