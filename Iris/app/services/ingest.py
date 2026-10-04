@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import InboundMessage, InboundStatus, Midwife, Page, Record, RecordStatus
-from app.services import outbox
+from app.services import conversation, outbox
 from app.state_machine import transition
 from app.storage import get_store
 from app.whatsapp import WhatsAppClient, get_client, buttons_message, text_message
@@ -163,6 +163,12 @@ def _handle_image(db: Session, msg: InboundMessage, midwife: Midwife, client: Wh
         return
 
     at = _utc(msg.wa_timestamp)
+    if conversation.awaiting_photo(midwife):            # « Reprendre la photo » (bloc 4)
+        rec = conversation.attach_replacement_photo(db, midwife, dict(
+            storage_key=storage_key, sha256=digest, mime_type=mime, size_bytes=len(data),
+            wa_message_id=msg.wa_message_id, captured_at=at))
+        if rec is not None:
+            return
     record = _open_session(db, midwife, at)
     if record is None:
         record = Record(midwife_id=midwife.id, first_captured_at=at, last_page_at=at)
@@ -201,10 +207,9 @@ def _handle_text(db: Session, msg: InboundMessage, midwife: Midwife):
             record.session_open = False
             transition(db, record, RecordStatus.ANNULE, f"midwife:{midwife.id}", "annulé par la sage-femme")
         _reply(db, text_message(msg.wa_from, "Capture annulée. Les photos sont conservées mais ne seront pas traitées."))
-    else:
-        # Point d'extension : logique conversationnelle (bloc 4)
-        _reply(db, text_message(msg.wa_from, "Bonjour ! Envoyez une photo de chaque page du registre, "
-                                             "puis écrivez FIN."))
+    elif not conversation.handle_text(db, midwife, msg.text or ""):
+        from app.i18n import t
+        _reply(db, text_message(msg.wa_from, t(midwife.language, "welcome")))
 
 
 def auto_close_stale_sessions(db: Session) -> int:

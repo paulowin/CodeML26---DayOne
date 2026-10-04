@@ -15,6 +15,7 @@ from ai.prompts import build_prompt, build_schema, page_spec
 from ai.validate import validate
 from app.templates import get_template
 from app.templates.normalize import interpret, text_equal, values_equal
+from tests.conftest import body_of
 
 T = get_template()
 F = T.fields
@@ -379,7 +380,7 @@ def test_worker_en_attente_ia_vers_a_reviser(client):
         assert poids.page_number == 1 and poids.is_current and poids.raw_text == "3587 g"
         assert [e.to_status for e in rec.events][-2:] == ["TRAITE_IA", "A_REVISER"]
         assert rec.pages[0].page_type == "accouchement"
-        msgs = [json.loads(m.payload_json)["text"]["body"] for m in db.scalars(select(OutboundMessage)).all()]
+        msgs = [body_of(json.loads(m.payload_json)) for m in db.scalars(select(OutboundMessage)).all()]
         assert any(m.startswith("Lecture terminée") for m in msgs)
         assert all(not f.field_key.startswith("nom") for f in db.scalars(select(ExtractedField)).all())
         assert ai_worker.process_next(db) is None                       # plus rien à lire
@@ -419,5 +420,5 @@ def test_worker_photo_floue_previent_la_sage_femme(client):
         ai_worker.process_next(db, extractor=blurry)
         rec = db.get(Record, rec_id)
         assert json.loads(rec.pages[0].quality_json)["raisons"] == ["floue"]
-        msgs = [json.loads(m.payload_json)["text"]["body"] for m in db.scalars(select(OutboundMessage)).all()]
+        msgs = [body_of(json.loads(m.payload_json)) for m in db.scalars(select(OutboundMessage)).all()]
         assert any("floue" in m and "reprendre" in m for m in msgs)

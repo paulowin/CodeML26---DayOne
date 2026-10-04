@@ -175,7 +175,8 @@ def test_worker_reprise_echec_traitement(client, fake_wa):
         assert db.get(Record, retry_id).status == S.EN_ATTENTE_IA
         assert db.get(Record, manual_id).status == S.REVISION_MANUELLE_REQUISE
         assert db.scalar(select(OutboundMessage)) is not None
-    assert len(fake_wa.sent) == 1
+    assert len(fake_wa.sent) == 2                      # + proposition de saisie guidée (bloc 4)
+    assert fake_wa.sent[1]["type"] == "interactive"
     assert f"dossier {manual_id[:8]}" in fake_wa.sent[0]["text"]["body"]
     assert "saisir ensemble" in fake_wa.sent[0]["text"]["body"]
 

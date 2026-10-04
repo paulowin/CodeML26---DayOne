@@ -105,3 +105,10 @@ def text_msg(wamid: str, body: str, ts: int) -> dict:
 def button_msg(wamid: str, button_id: str, ts: int) -> dict:
     return {"from": MIDWIFE, "id": wamid, "timestamp": str(ts), "type": "interactive",
             "interactive": {"type": "button_reply", "button_reply": {"id": button_id, "title": "x"}}}
+
+
+def body_of(payload: dict) -> str:
+    """Texte d'un message sortant, qu'il soit simple ou interactif (boutons / liste)."""
+    if payload.get("type") == "interactive":
+        return payload["interactive"]["body"]["text"]
+    return payload["text"]["body"]

@@ -141,12 +141,23 @@ décision de correspondance patiente.
       **Pistes** : cases à cocher par vision classique (densité de pixels dans les carrés
       détectés, sans IA générative) ; découpe du tableau par colonnes (une image par visite) ;
       essayer qwen2.5vl:7b en 2e avis sur machine ≥ 6 Go VRAM.
-- [ ] **Bloc 4 – Conversation & liaison** : `Midwife.conversation_state` (JSON) ;
-      point d'entrée : `ingest._handle_text` (branche `else`). Confirmer / Corriger /
-      Reprendre la photo pour chaque champ A_REVISER/ILLISIBLE ; saisie manuelle si IA
-      indisponible ; liaison par code : [Patiente 1] [Patiente 2] [Aucune, créer]
-      [Je ne sais pas], jamais de création automatique ; re-photographie d'un registre
-      existant → montrer le dossier et laisser choisir.
+- [x] **Bloc 4 – Conversation & liaison** (README « Flux conversationnel » et « Démo ») :
+      `app/services/conversation.py` (état JSON par sage-femme, un dossier à la fois, boutons
+      versionnés `<action>|<dossier>|<champ>|<version>` -> réponse périmée ignorée), textes FR/EN
+      `app/i18n.py`. Révision : résumé [Vérifier][Reprendre photo][Plus tard], ≤ 10 questions
+      (critiques d'abord ; au-delà : source SYSTEME + `champs_a_verifier_superviseur`), candidats
+      en liste, correction validée (normalize + validate), nouvelles versions SAGE_FEMME, Voir /
+      `CORRIGER n` / Tout confirmer -> VALIDE. Garde VALIDE : ne bloque que les doutes encore
+      source IA. Reprendre la photo : `pages.replaced/replaces_page`, A_REVISER -> EN_ATTENTE_IA
+      (le worker ignore les pages remplacées). Saisie guidée (REVISION_MANUELLE_REQUISE) : champs
+      clés hors tableaux. Liaison : code confirmé ou demandé, candidates de la même sage-femme
+      (exact / confusions O0 I1 S5 B8 / 1 erreur), jamais de création automatique, « Je ne sais
+      pas » -> `link_pending` + `POST /api/records/{id}/rattacher` (superviseur) + `a_rattacher`
+      dans `/api/tableau` ; doublon -> [Mettre à jour][Nouvelle visite][Annuler].
+      Démo : `scripts/demo_reset.py`, `scripts/demo_seed.py`. 135 tests verts.
+      Limites : la saisie guidée ne couvre pas le tableau des visites ; « Mettre à jour » un
+      dossier déjà SYNCHRONISE modifie la copie locale sans le renvoyer au serveur central
+      (SYNCHRONISE est un état final du bloc 2).
 
 ## Commandes
 ```bash

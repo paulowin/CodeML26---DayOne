@@ -167,6 +167,9 @@ class Page(Base):
     # contrôle qualité de l'IA (JSON : {"ok", "raisons", "flou", "luminosite"...}) ; None = pas encore lue
     quality_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     page_type: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    # « Reprendre la photo » (bloc 4) : l'ancienne page est conservée mais marquée remplacée
+    replaced: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
+    replaces_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     record: Mapped[Record] = relationship(back_populates="pages")
 

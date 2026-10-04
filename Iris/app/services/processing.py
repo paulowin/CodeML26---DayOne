@@ -24,5 +24,7 @@ def retry_failed_processing(db: Session) -> int:
             mw = db.get(Midwife, rec.midwife_id)
             outbox.enqueue(db, text_message(mw.wa_id, f"Je n'arrive pas à lire le dossier {rec.id[:8]} "
                                                       "automatiquement. Nous allons le saisir ensemble."))
+            from app.services import conversation
+            conversation.on_manual_required(db, rec)          # saisie guidée (bloc 4)
     db.commit()
     return len(failed)

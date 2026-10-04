@@ -56,7 +56,7 @@ def _fail(db: Session, rec: Record, reason: str) -> None:
     db.commit()
 
 
-def _write_fields(db: Session, rec: Record, results) -> tuple[int, int]:
+def _write_fields(db: Session, rec: Record, results, pages) -> tuple[int, int]:
     """Écrit les champs ; renvoie (champs lus, champs à vérifier)."""
     current = {f"{f.section}.{f.field_key}": f for f in rec.fields if f.is_current}
     best: dict[str, dict] = {}
@@ -76,7 +76,8 @@ def _write_fields(db: Session, rec: Record, results) -> tuple[int, int]:
         rec.fields.append(ExtractedField(
             section=section, field_key=field_key, value_json=json.dumps(d["value"], ensure_ascii=False),
             raw_text=d.get("raw_text"), status=status, confidence=d["confidence"], source=FieldSource.IA,
-            page_number=d.get("page"), is_current=True,
+            page_number=pages[d["page"] - 1].page_number if d.get("page") and d["page"] <= len(pages) else None,
+            is_current=True,
             details_json=json.dumps({"candidates": d.get("candidates") or [], "flags": d.get("flags") or []},
                                     ensure_ascii=False)))
         lus += d["value"] is not None
@@ -98,7 +99,8 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         _fail(db, rec, f"cerveau IA non installé : {e}")
         return rec.id
     try:
-        images = [get_store().load(p.storage_key) for p in rec.pages]   # en mémoire uniquement
+        active = sorted((p for p in rec.pages if not p.replaced), key=lambda p: p.page_number)
+        images = [get_store().load(p.storage_key) for p in active]       # en mémoire uniquement
         results = (extractor or _default_extractor())(images)
     except OllamaUnavailable as e:
         _fail(db, rec, f"IA locale indisponible : {e}")
@@ -115,7 +117,7 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         _fail(db, rec, "; ".join(f"page {r.index + 1} : {r.error}" for r in results))
         return rec.id
 
-    pages = sorted(rec.pages, key=lambda p: p.page_number)
+    pages = active
     bad = []
     for page, res in zip(pages, results):
         page.quality_json = json.dumps(res.quality, ensure_ascii=False) if res.quality else None
@@ -123,13 +125,14 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         if res.quality and not res.quality.get("ok", True):
             bad.append((page.page_number, res.quality.get("raisons") or []))
     rec.extraction_model = (s.ai_model_main or "")[:80]
-    lus, a_verifier = _write_fields(db, rec, results)
+    lus, a_verifier = _write_fields(db, rec, results, pages)
     transition(db, rec, RecordStatus.TRAITE_IA, ACTOR, f"{lus} champ(s) lu(s)")
     transition(db, rec, RecordStatus.A_REVISER, ACTOR, f"{a_verifier} champ(s) à vérifier")
     for n, reasons in bad:
         _notify(db, rec, f"La photo {n} est {' et '.join(reasons) or 'de mauvaise qualité'} : "
                          "pouvez-vous la reprendre ?")
-    _notify(db, rec, f"Lecture terminée : {lus} champ(s) lu(s), {a_verifier} à vérifier.")
+    from app.services import conversation
+    conversation.on_record_ready(db, rec)                    # résumé + [Vérifier] (bloc 4)
     db.commit()
     log.info("Dossier %s lu : %d champs, %d à vérifier", rec.id[:8], lus, a_verifier)
     return rec.id

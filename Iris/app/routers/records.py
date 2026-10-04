@@ -8,11 +8,12 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import AccessLog, Page, Record, Role, Staff
+from app.models import AccessLog, Page, Patient, Record, RecordStatus, Role, Staff
 from app.security import require_staff
 from app.storage import StorageError, get_store
 
@@ -63,3 +64,36 @@ def get_page_image(record_id: str, page_number: int, staff: Staff = Depends(requ
         raise HTTPException(500, "Image indisponible ou altérée")
     return Response(content=data, media_type=page.mime_type,
                     headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+class LinkBody(BaseModel):
+    patient_id: str
+
+
+@router.post("/records/{record_id}/rattacher")
+def link_record(record_id: str, body: LinkBody, staff: Staff = Depends(require_staff), db: Session = Depends(get_db)):
+    """Résout un « Je ne sais pas » : le superviseur rattache un dossier VALIDE à une patiente
+    de la MÊME sage-femme (ADMIN / SUPERVISEUR uniquement)."""
+    from app.state_machine import find_duplicate, transition
+    if staff.role not in (Role.ADMIN, Role.SUPERVISEUR):
+        raise HTTPException(403, "Réservé aux rôles ADMIN et SUPERVISEUR")
+    rec = db.get(Record, record_id)
+    if not rec:
+        raise HTTPException(404, "Dossier introuvable")
+    _check_access(db, staff, rec, "link_record")
+    if rec.status != RecordStatus.VALIDE:
+        raise HTTPException(409, f"Dossier en état {rec.status.value} : seul un dossier VALIDE se rattache")
+    patient = db.get(Patient, body.patient_id)
+    if not patient or patient.midwife_id != rec.midwife_id:
+        raise HTTPException(400, "Patiente inconnue pour cette sage-femme")
+    actor = f"staff:{staff.id}"
+    rec.patient_id, rec.link_pending = patient.id, False
+    dup = find_duplicate(db, rec, patient.id)
+    if dup is not None:
+        transition(db, rec, RecordStatus.DOUBLON_SUSPECT, actor, f"ressemble au dossier {dup.id[:8]}")
+    else:
+        transition(db, rec, RecordStatus.PATIENTE_LIEE, actor, f"rattaché par {staff.role.value}")
+        transition(db, rec, RecordStatus.ENREGISTRE, actor)
+    db.commit()
+    return {"id": rec.id, "status": rec.status.value, "patient_id": patient.id,
+            "doublon_de": dup.id if dup is not None else None}

@@ -245,6 +245,88 @@ l'exactitude globale, les erreurs silencieuses (faux + CONNU), le temps moyen pa
 le top 15 des champs ratés. Le cache `eval/cache/` (réponses du modèle) permet de
 réévaluer sans relancer le modèle (`--no-cache` pour l'ignorer) ; le worker ne l'utilise jamais.
 
+## Flux conversationnel (bloc 4)
+
+`app/services/conversation.py` ; textes FR/EN dans `app/i18n.py` (commande `EN` / `FR`).
+Un seul dossier en conversation à la fois par sage-femme (état JSON dans
+`Midwife.conversation_state`) ; les autres attendent leur tour. Chaque bouton porte
+`<action>|<dossier>|<champ>|<version>` : une réponse périmée (arrivée en retard après une
+coupure) reçoit « Cette question n'est plus d'actualité. » et ne change rien.
+
+Exemple d'échange (démo) :
+
+```
+Iris : Lecture terminée (dossier 3f2a9c1b) : 150 champ(s) lu(s), 5 à vérifier.
+       [Vérifier] [Reprendre photo] [Plus tard]
+SF   : Vérifier
+Iris : Question 1/5 – Grossesse actuelle · DDR
+       J'ai lu : « 26/04/2025 ». Je ne suis pas sûre de cette lecture.
+       [Confirmer] [Corriger] [Illisible]
+SF   : Corriger
+Iris : Tapez la bonne valeur pour : Grossesse actuelle · DDR
+       Format : une date jj/mm/aaaa, ex. 03/02/2026
+SF   : 27/04/2025
+Iris : Question 2/5 – Grossesse actuelle · 2ème trimestre, Visite 2 · TA
+       Les deux lectures ne sont pas d'accord. Laquelle est écrite sur le registre ?
+       (liste) 106/77 mmHg · 166/77 mmHg · Autre valeur · Illisible sur le papier · Reprendre la photo
+...
+Iris : Les 145 autres champs lus vous conviennent ?   [Tout confirmer] [Voir]
+SF   : Tout confirmer
+Iris : Dossier 3f2a9c1b validé ✅
+Iris : Code A64125. À quelle patiente rattacher ce dossier ?
+       (liste) Patiente 1 – code A64125 – 3 visite(s), dernière 01/12
+               Patiente 2 – code A64128 – 1 visite(s), dernière 15/12
+               Aucune, créer · Je ne sais pas
+SF   : Patiente 1
+Iris : Dossier 3f2a9c1b enregistré pour la patiente code A64125 ✅
+```
+
+- Questions : champs A_REVISER/ILLISIBLE de l'IA, critiques d'abord, 10 au maximum (le reste
+  est confié au superviseur : `champs_a_verifier_superviseur` dans `/api/tableau`).
+- Chaque réponse crée une **nouvelle version** du champ (source SAGE_FEMME), l'ancienne est
+  gardée (`is_current=False`). Une correction passe par la normalisation + les validations ;
+  si elle est invalide, le format attendu est réexpliqué (« TA au format 12/7 ou 120/70 »).
+- Commandes : `OK`, `CORRIGER <n>` (après « Voir »), `PLUS TARD` / `STOP`, `REPRENDRE`,
+  `AIDE`, `EN` / `FR`. « Reprendre la photo » : la photo suivante remplace la page
+  (l'ancienne est conservée, marquée remplacée) et le dossier repart en lecture IA.
+- Saisie guidée (`REVISION_MANUELLE_REQUISE`) : champs clés (colonne du CSV ou critiques,
+  hors tableaux), « passer » = vide, puis VALIDE.
+
+Liaison patiente (après VALIDE) :
+
+```
+code = n° de fiche confirmé  ──(absent)──> « Quel est le code de la patiente ? »
+   │
+   ▼  patientes de CETTE sage-femme : code exact, puis proche (1 erreur, O/0 I/1 S/5 B/8), max 2
+┌──────────────┬───────────────────────────────┬────────────────────────────────┐
+│ Patiente n   │ Aucune, créer                  │ Je ne sais pas                 │
+│   │          │   └─> nouvelle Patient (UUID)  │   └─> reste VALIDE, link_pending│
+│   ▼          │                                │       superviseur : POST        │
+│ doublon ? ── oui ─> DOUBLON_SUSPECT            │       /api/records/{id}/rattacher│
+│   │            [Mettre à jour] [Nouvelle visite] [Annuler]                       │
+│   non                                                                           │
+│   ▼                                                                             │
+│ PATIENTE_LIEE -> ENREGISTRE -> (synchro bloc 2) SYNCHRONISE                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+Jamais de création automatique, même si le code est identique ; aucune donnée nominative
+dans les messages (code de registre, nombre de visites, date de la dernière).
+
+## Démo
+
+```bash
+python -m scripts.demo_reset --yes          # efface dossiers/patientes/messages (garde les comptes et le .env)
+python -m scripts.demo_seed 2126XXXXXXXX    # numéro WhatsApp de la sage-femme (sans +)
+```
+
+`demo_seed` crée 2 patientes (A64125 : 3 visites synchronisées ; A64128 : 1 visite) et un
+dossier A_REVISER construit depuis la vérité terrain de la page spécimen 3 (données
+fictives), avec 5 champs douteux dont une TA à 2 lectures : la démo ne dépend pas des
+minutes de lecture IA. Scénario : couper le réseau central (`/api/admin/reseau`) → vérifier
+sur le téléphone (corriger la DDR, choisir la TA, déclarer l'hémoglobine illisible) → Tout
+confirmer → choisir « Patiente 1 » (A64128 est aussi proposée, code proche) → dossier
+ENREGISTRE en ECHEC_SYNCHRO → rallumer le réseau → SYNCHRONISE.
+
 ## Choix de conception
 
 - **Confidentialité** : aucune colonne nom/téléphone/adresse de patiente ; liste

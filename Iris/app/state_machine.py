@@ -10,7 +10,7 @@ import re
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import FieldStatus, Record, RecordEvent, RecordStatus
+from app.models import FieldSource, FieldStatus, Record, RecordEvent, RecordStatus
 from app.templates.normalize import parse_date
 
 S = RecordStatus
@@ -59,8 +59,9 @@ def _check_guards(record: Record, frm: RecordStatus | None, to: RecordStatus, ac
     if to == S.VALIDE:
         if not actor.startswith("midwife:"):
             refuse(f"seule la sage-femme peut valider (acteur « {actor} »)")
+        # bloquent : les doutes de l'IA non tranchés (un ILLISIBLE confirmé par la sage-femme passe)
         pending = sorted(f"{f.section}.{f.field_key}" for f in record.fields
-                         if f.is_current and f.status in BLOCKING_FIELD_STATUSES)
+                         if f.is_current and f.status in BLOCKING_FIELD_STATUSES and f.source == FieldSource.IA)
         if pending:
             refuse(f"champ(s) encore à réviser ou illisibles : {', '.join(pending)}")
     if to == S.PATIENTE_LIEE and not record.patient_id:
