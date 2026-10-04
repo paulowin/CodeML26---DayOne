@@ -742,6 +742,33 @@ def test_page_non_reconnue_puis_type_impose_puis_saisie_guidee(client, fake_wa):
     assert "Question 1/" in body_of(fake_wa.sent[-1])        # toujours rien : saisie guidée
 
 
+def test_liste_types_de_page_conforme_et_renvoyee_par_verifier(client, fake_wa):
+    """Meta refuse une liste aux id en double (Identification/Antécédents) ; [Vérifier] et CONTINUE
+    doivent renvoyer cette liste, jamais boucler sur le message d'accueil."""
+    from ai.extract import PageResult
+    from app.services import ai_worker
+    rid = _record_en_attente_ia()
+    with SessionLocal() as db:
+        ai_worker.process_next(db, extractor=lambda images, page_types=None: [PageResult(0, "inconnu")])
+    flush(fake_wa)
+    q = fake_wa.sent[-1]
+    act = q["interactive"]["action"]
+    rows = act["sections"][0]["rows"]
+    assert 1 <= len(rows) <= 10 and len(act["button"]) <= 20 and len(act["sections"][0]["title"]) <= 24
+    assert all(len(r["title"]) <= 24 and len(r.get("description", "")) <= 72 for r in rows)
+    assert len({r["id"] for r in rows}) == len(rows)                     # pas de « Duplicated row id »
+    say(client, "Allo")
+    greet = fake_wa.sent[-1]
+    assert "attend votre réponse" in body_of(greet)
+    press(client, next(i for i in ids(greet) if i.startswith("GO|")))
+    assert body_of(fake_wa.sent[-1]) == body_of(q)                       # [Vérifier] -> la liste, pas l'accueil
+    say(client, "CONTINUE")
+    assert body_of(fake_wa.sent[-1]) == body_of(q)
+    press(client, next(i for i in ids(fake_wa.sent[-1]) if ":grossesse_actuelle|" in i))
+    with SessionLocal() as db:
+        assert db.get(Record, rid).pages[0].page_type == "grossesse_actuelle"
+
+
 def test_page_non_reconnue_autre_saisie_guidee_directe(client, fake_wa):
     from ai.extract import PageResult
     from app.services import ai_worker

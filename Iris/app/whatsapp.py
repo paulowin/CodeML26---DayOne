@@ -97,6 +97,8 @@ def list_message(to: str, body: str, button_label: str, rows: list[tuple[str, st
     Nécessaire pour la liaison patiente (4 options > limite des 3 boutons)."""
     if not 1 <= len(rows) <= 10:
         raise ValueError("WhatsApp autorise 1 à 10 lignes")
+    if len({r[0] for r in rows}) != len(rows):                # Meta refuse : « Duplicated row id »
+        raise ValueError("Identifiants de lignes en double dans la liste")
     return {"messaging_product": "whatsapp", "to": to, "type": "interactive",
             "interactive": {"type": "list", "body": {"text": body[:1024]},
                             "action": {"button": button_label[:20], "sections": [{

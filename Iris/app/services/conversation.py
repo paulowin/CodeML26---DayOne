@@ -735,15 +735,23 @@ def ask_page_type(db: Session, rec: Record, page: Page) -> None:
         return                                            # demandé après le dossier en cours
     st = _reset(st)
     st.update(mode=PAGE_TYPE, record_id=rec.id, page=page.page_number)
+    _send_page_types(mw, st, out)
+
+
+def _send_page_types(mw: Midwife, st: dict, out: Out) -> None:
+    """Liste des types de page (aussi renvoyée par [Vérifier] / CONTINUE). Id de ligne unique : deux choix
+    (Identification, Antécédents) mènent au même type, d'où « page.rang:type »."""
+    n = st.get("page") or 1
     _bump(st)
-    rows = [(_bid(st, "PTYPE", f"{page.page_number}:{ptype}"), out.tr(key),
-             out.tr("pt_autre_d") if ptype == "autre" else "") for key, ptype in PAGE_CHOICES]
-    out.rows(out.tr("page_unknown", n=page.page_number), rows)
+    rows = [(_bid(st, "PTYPE", f"{n}.{i}:{ptype}"), out.tr(key), out.tr("pt_autre_d") if ptype == "autre" else "")
+            for i, (key, ptype) in enumerate(PAGE_CHOICES)]
+    out.rows(out.tr("page_unknown", n=n), rows)
     save_state(mw, st)
 
 
 def _choose_page_type(db: Session, mw: Midwife, rec: Record, st: dict, out: Out, key: str) -> None:
     n, _, ptype = key.partition(":")
+    n = n.split(".")[0]
     page = next((p for p in rec.pages if str(p.page_number) == n), None)
     if page is None or rec.status != RecordStatus.A_REVISER:
         out.text(out.tr("stale"))
@@ -1105,6 +1113,8 @@ def _reask(db: Session, mw: Midwife, st: dict, out: Out) -> None:
                     [(_bid(st, "DUPUPD"), out.tr("btn_update")), (_bid(st, "DUPNEW"), out.tr("btn_new_visit")),
                      (_bid(st, "DUPCANCEL"), out.tr("btn_cancel"))])
         save_state(mw, st)
+    elif mode == PAGE_TYPE:
+        _send_page_types(mw, st, out)
     elif mode == PHOTO:
         page = next((p for p in rec.pages if p.page_number == st.get("photo_page")), None)
         out.text(out.tr("retake_ask", n=st.get("photo_page") or 1, ptype=_page_type_label(page)))
