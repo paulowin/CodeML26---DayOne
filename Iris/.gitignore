@@ -24,3 +24,6 @@ data_defi/
 eval/preds/
 eval/cache/
 eval/ground_truth/*.local.json
+
+# données personnelles réelles : JAMAIS dans git
+data-perso/

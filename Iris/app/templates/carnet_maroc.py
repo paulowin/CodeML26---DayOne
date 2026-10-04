@@ -7,6 +7,7 @@ Les champs `identifiant=True` ne sont JAMAIS extraits ni stockés : ils ne sont
 décrits ici que pour reconnaître (et écarter) leur zone sur la page.
 """
 from .base import FieldDef as F, PageType, SectionDef, TableDef, Template, ch
+from . import carnet_vaccination_oms as vaccination
 from .vocabulaire import PROVINCES_MAROC
 
 
@@ -318,7 +319,8 @@ TEMPLATE = Template(
     key="carnet_maroc",
     label_fr="Fiche de surveillance de la grossesse et du post-partum (Maroc)",
     sections=(COUVERTURE, IDENTIFICATION, ANTECEDENTS_FAMILIAUX, ANTECEDENTS_FEMME, ANTECEDENTS_OBSTETRICAUX,
-              GROSSESSE_ACTUELLE, ACCOUCHEMENT, PP_PRECOCE_MERE, PP_PRECOCE_NNE, PP_TARDIF_MERE, PP_TARDIF_NNE),
+              GROSSESSE_ACTUELLE, ACCOUCHEMENT, PP_PRECOCE_MERE, PP_PRECOCE_NNE, PP_TARDIF_MERE, PP_TARDIF_NNE,
+              *vaccination.SECTIONS),                 # carnet de vaccination OMS (fichier modèle séparé)
     priority=PRIORITE,
     page_types=(
         PageType("couverture", ("FICHE DE SURVEILLANCE DE LA GROSSESSE",), ("couverture",),
@@ -345,6 +347,7 @@ TEMPLATE = Template(
         PageType("pp_tardif_nne", ("POST-PARTUM TARDIF", "NOUVEAU-NÉ"), ("pp_tardif_nne",),
                  ("affection grave", "vitamine d", "allaitement maternel", "refus de teter"),
                  "Post-partum tardif – nouveau-né", ((0.66, 0.75),)),
+        *vaccination.PAGE_TYPES,
     ),
 )
 

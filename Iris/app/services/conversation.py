@@ -242,7 +242,7 @@ _FLAG_REASONS = (("plusieurs_cases_cochees", "why_boxes"), ("hors_plage", "why_r
                  ("ta_sys_inferieure_dia", "why_bp"), ("date_partielle", "why_partial"),
                  ("type_invalide", "why_format"), ("date_invalide", "why_format"), ("choix_inconnu", "why_format"),
                  ("libelle_retire", "why_label"),
-                 ("decimale_manquante", "why_digit"), ("date_chiffre_manquant", "why_digit"))
+                 ("decimale_manquante", "why_digit"), ("crayon_gris", "why_pencil"), ("date_chiffre_manquant", "why_digit"))
 
 
 def doubt_reason(key: str, f: FieldDef, ef: ExtractedField, disagreement: bool, lang: str) -> str:
@@ -722,7 +722,7 @@ PAGE_CHOICES = (("pt_identification", "identification_antecedents"),
                 ("pt_grossesse", "grossesse_actuelle"), ("pt_accouchement", "accouchement"),
                 ("pt_pp_precoce_mere", "pp_precoce_mere"), ("pt_pp_precoce_nne", "pp_precoce_nne"),
                 ("pt_pp_tardif_mere", "pp_tardif_mere"), ("pt_pp_tardif_nne", "pp_tardif_nne"),
-                ("pt_autre", "autre"))
+                ("pt_vaccinations", "vaccinations"), ("pt_autre", "autre"))
 PAGE_TYPE = "TYPE_PAGE"
 
 

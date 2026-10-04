@@ -358,6 +358,12 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
     states: dict[str, FieldState] = {}
     if page_type == UNKNOWN:
         return page_type, states, prep, tokens
+    if page_type == "vaccinations" and _easy is not None:      # carnet OMS : lecteur dédié (encre bleue)
+        from ai.vaccination import read_vaccination_states
+        states, _diag = read_vaccination_states(img, _easy, prep.bands, tokens)
+        return page_type, states, prep, tokens
+    if page_type == "vaccination_couverture":                   # identifiants directs : rien à extraire
+        return page_type, states, prep, tokens
     layout, conf_of = build_layout(tokens, img.size[0], img.size[1], page_type)
     heights = sorted(t.box[3] - t.box[1] for t in tokens)
     low_res = engine == "easyocr" and bool(heights) and heights[len(heights) // 2] < LOW_RES_LINE_PX

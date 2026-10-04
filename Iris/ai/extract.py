@@ -429,6 +429,8 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             ocr_date = "lecture_ocr" in st.flags and st.f.type == "date"
             critical = st.f.critique or vlm_box or ocr_date
             status = C.status(st.interp.status, conf, seuil, critical, st.evidence)
+            if "crayon_gris" in st.flags and status == "CONNU":
+                status = "A_REVISER"                    # date au crayon : rappel ? toujours à confirmer
             if (k in coherent and status == "A_REVISER" and not st.interp.flags and k not in vflags
                     and not st.evidence.disagreement and st.evidence.verified is not False):
                 conf, status = max(conf, 0.9), "CONNU"  # DDR/DPA/DDT confirmées entre elles
