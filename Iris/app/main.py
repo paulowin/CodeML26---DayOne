@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from app.config import get_settings
 from app.db import SessionLocal, init_db
-from app.routers import admin, privacy, records, webhook
+from app.routers import admin, privacy, records, verif, webhook
 from app.services import ai_worker, ingest, outbox, processing, sync
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -94,6 +94,7 @@ app.include_router(webhook.router)
 app.include_router(records.router)
 app.include_router(privacy.router)
 app.include_router(admin.router)
+app.include_router(verif.router)
 
 
 @app.get("/health")

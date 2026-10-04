@@ -160,6 +160,7 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
     conversation.on_record_ready(db, rec)                    # résumé + [Vérifier] (bloc 4)
     db.commit()
     log.info("Dossier %s lu : %d champs, %d à vérifier", rec.id[:8], lus, a_verifier)
+    log.info("Vérifier l'extraction : http://127.0.0.1:8000/verif/%s", rec.id)
     return rec.id
 
 
