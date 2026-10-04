@@ -43,7 +43,8 @@ VACCINATION_COUVERTURE = SectionDef("vaccination_couverture", "Certificat de vac
 SECTIONS = (VACCINATIONS, VACCINATION_COUVERTURE)
 PAGE_TYPES = (
     PageType("vaccinations", ("AUTRES VACCINATIONS", "OTHER VACCINATIONS"), ("vaccinations",),
-             ("vaccinations", "vaccine", "dose", "signature du medecin", "lot"), "Autres vaccinations"),
+             ("vaccinations", "vaccine", "dose", "signature du medecin", "lot",
+              "signature of supervising clinician", "batch"), "Autres vaccinations"),
     PageType("vaccination_couverture", ("CERTIFICAT INTERNATIONAL DE VACCINATION",
                                         "INTERNATIONAL CERTIFICATE OF VACCINATION"),
              ("vaccination_couverture",), ("certificat", "passeport", "passport"), "Certificat de vaccination"),
