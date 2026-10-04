@@ -259,9 +259,8 @@ def test_saisie_manuelle_puis_creation_patiente(client, fake_wa):
         db.commit()
         rid = rec.id
     run_maintenance_cycle()
-    intro = fake_wa.sent[-1]
-    assert "saisie guidée" in body_of(intro)
-    press(client, find_id(intro, "MAN"))
+    assert "saisie guidée" in body_of(fake_wa.sent[-2])
+    assert "Question 1/" in body_of(fake_wa.sent[-1])                 # 1re question envoyée directement
     queue = state()["queue"]
     assert len(queue) > 5 and all(conv.T.fields[k].table is None for k in queue)
     say(client, "n'importe quoi")                                           # 1re question : invalide

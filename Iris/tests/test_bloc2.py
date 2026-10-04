@@ -169,14 +169,17 @@ def test_worker_reprise_echec_traitement(client, fake_wa):
         retry = _record(db, S.ECHEC_TRAITEMENT, attempts=1)
         manual = _record(db, S.ECHEC_TRAITEMENT, attempts=3)
         db.commit()
+        from datetime import timedelta
+        retry.updated_at = datetime.now(timezone.utc) - timedelta(minutes=10)   # attente écoulée
+        db.commit()
         retry_id, manual_id = retry.id, manual.id
     run_maintenance_cycle()
     with SessionLocal() as db:
         assert db.get(Record, retry_id).status == S.EN_ATTENTE_IA
         assert db.get(Record, manual_id).status == S.REVISION_MANUELLE_REQUISE
         assert db.scalar(select(OutboundMessage)) is not None
-    assert len(fake_wa.sent) == 2                      # + proposition de saisie guidée (bloc 4)
-    assert fake_wa.sent[1]["type"] == "interactive"
+    assert len(fake_wa.sent) == 3                      # + saisie guidée : introduction + 1re question (bloc 4)
+    assert "Question 1/" in fake_wa.sent[2]["text"]["body"]
     assert f"dossier {manual_id[:8]}" in fake_wa.sent[0]["text"]["body"]
     assert "saisir ensemble" in fake_wa.sent[0]["text"]["body"]
 
@@ -298,3 +301,20 @@ def test_api_admin_acces_par_role(client):
     board = client.get("/api/tableau", headers={"X-API-Key": "admin"}).json()
     assert board["par_etat"]["SYNCHRONISE"] == 1
     assert board["derniers_evenements"][0]["vers"] == "SYNCHRONISE"
+
+
+
+def test_attente_croissante_entre_tentatives_ia(client):
+    from datetime import timedelta
+    from app.services.processing import retry_delay, retry_failed_processing
+    assert [retry_delay(n).seconds for n in (1, 2, 3)] == [60, 120, 240]
+    with SessionLocal() as db:
+        rec = _record(db, S.ECHEC_TRAITEMENT, attempts=1)
+        db.commit()
+        rid = rec.id
+        retry_failed_processing(db)                         # échec à l'instant : on attend
+        assert db.get(Record, rid).status == S.ECHEC_TRAITEMENT
+        db.get(Record, rid).updated_at = datetime.now(timezone.utc) - timedelta(minutes=2)
+        db.commit()
+        retry_failed_processing(db)
+        assert db.get(Record, rid).status == S.EN_ATTENTE_IA

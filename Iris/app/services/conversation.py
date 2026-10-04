@@ -743,12 +743,11 @@ def manual_fields(rec: Record) -> list[str]:
 
 
 def _manual_intro(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
+    """Saisie guidée : introduction PUIS directement la première question (pas de bouton à presser)."""
     queue = manual_fields(rec)
-    st.update(mode=MANUEL, record_id=rec.id, queue=queue, idx=-1, paused=False)
-    _bump(st)
-    out.buttons(out.tr("manual_intro", rid=rec.id[:8], n=plural(out.lang, len(queue), "pl_key_field")),
-                [(_bid(st, "MAN"), out.tr("btn_start")), (_bid(st, "LATER"), out.tr("btn_later"))])
-    save_state(mw, st)
+    st.update(mode=MANUEL, record_id=rec.id, queue=queue, idx=0, paused=False)
+    out.text(out.tr("manual_intro", rid=rec.id[:8], n=plural(out.lang, len(queue), "pl_key_field")))
+    _manual_ask(db, mw, rec, st, out)
 
 
 def _manual_ask(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
