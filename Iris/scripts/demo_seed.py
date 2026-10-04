@@ -122,7 +122,8 @@ def seed(wa_id: str, send: bool = True) -> str:
             except Exception as e:  # noqa: BLE001  (hors ligne : le worker enverra plus tard)
                 print(f"Envoi différé ({type(e).__name__}) : le worker enverra le message.")
         print(f"Sage-femme {wa_id} : patientes {CODE} (3 visites) et A64128 (1 visite) ; "
-              f"dossier {rec.id[:8]} en A_REVISER ({len(rec.fields)} champs, {len(DOUBTS)} douteux).")
+              f"dossier {rec.id[:8]} en A_REVISER ({len(rec.fields)} champs, {len(DOUBTS)} douteux) "
+              "(dossier de démonstration).")
         return rec.id
 
 

@@ -637,3 +637,28 @@ def test_resume_lisible_patiente4_sans_nom(client, fake_wa):
     # commande RESUME : renvoie ce que j'ai lu
     say(client, "RESUME")
     assert any(body_of(m).startswith("Voici ce que j'ai lu (page 1") for m in fake_wa.sent[-3:])
+
+
+
+def test_demo_reset_cible_la_sage_femme_de_demo(client, fake_wa):
+    from app.models import ExtractedField, OutboundMessage
+    from scripts.demo_reset import reset_all, reset_demo
+    seeded(fake_wa)
+    with SessionLocal() as db:                              # une autre sage-femme : ne doit pas être touchée
+        other = Midwife(wa_id="2120009999")
+        db.add(other)
+        db.flush()
+        db.add(Record(midwife_id=other.id, status=S.CAPTURE))
+        outbox.enqueue(db, {"to": "2120009999", "type": "text", "text": {"body": "x"}})
+        db.commit()
+    counts = reset_demo()
+    assert counts["records"] == 5 and counts["patients"] == 2 and counts["outbound_messages"] >= 1
+    with SessionLocal() as db:
+        mw = db.scalar(select(Midwife).where(Midwife.wa_id == MIDWIFE))
+        assert mw.conversation_state is None
+        assert db.scalars(select(Record).where(Record.midwife_id == mw.id)).all() == []
+        assert len(db.scalars(select(Record)).all()) == 1                 # l'autre sage-femme reste
+        assert len(db.scalars(select(OutboundMessage)).all()) == 1
+    counts = reset_all()
+    with SessionLocal() as db:
+        assert db.scalars(select(Record)).all() == [] and db.scalars(select(ExtractedField)).all() == []
