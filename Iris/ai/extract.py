@@ -24,7 +24,7 @@ from typing import Any
 from ai import confidence as C
 from ai.classify import UNKNOWN, classify
 from ai.ollama_client import OllamaClient, OllamaError, OllamaUnavailable
-from ai.preprocess import ImageError, prepare
+from ai.preprocess import ImageError, load_image, prepare
 from ai.prompts import BOOL_OPTION, ETATS, PageSpec, build_prompt, build_schema, output_budget, page_spec
 from ai.validate import validate
 from app.registry_schema import sanitize_extraction
@@ -282,7 +282,31 @@ def apply_verify(st: FieldState) -> None:
 
 
 # ------------------------------------------------------------------ pipeline
+def add_checkbox_readings(states: dict[str, FieldState], results, bands, page_height_px: int) -> None:
+    """Résultats de ai/checkboxes.py -> une lecture par champ case à cocher (drapeau `lecture_cv` :
+    vision classique, pas d'IA ; incertaine -> confiance 0.4 -> A_REVISER)."""
+    from ai.checkboxes import to_readings
+    by_key = to_readings(results)
+    ys = {}
+    for r in results:
+        ys.setdefault(r.key, (r.box_px[1] + r.box_px[3]) / 2)
+    for key, (codes, conf, unsure) in by_key.items():
+        if key not in T.stored_fields:
+            continue
+        st = states.setdefault(key, FieldState(T.fields[key]))
+        st.readings = [rd for rd in st.readings if not st.f.is_checkbox]   # le VLM ne lit plus les cases
+        st.flags.append("lecture_cv")
+        if unsure:
+            st.flags.append("case_incertaine")
+            conf = min(conf, 0.4)
+        y_rel = ys.get(key, 0) / max(1, page_height_px)
+        band = next((b.index for b in bands if b.y0 <= y_rel <= b.y1), 0)
+        st.readings.append(Reading(key, codes, "LISIBLE", conf, band))
+
+
 def _needs_verify(st: FieldState, seuil: float) -> bool:
+    if "lecture_cv" in st.flags:                       # case lue par vision classique : pas de 2e avis VLM
+        return False
     if st.interp is None or st.interp.status or st.chosen is None or st.chosen.etat != "LISIBLE":
         return False
     prelim = C.score(st.evidence)
@@ -337,9 +361,11 @@ def _collect(spec: PageSpec, data: dict, band: int, labels: set[str], states: di
 
 
 def _second_opinion(client, page_type: str, bands, model: str, use_cache: bool,
-                    states: dict[str, FieldState], seuil: float) -> None:
+                    states: dict[str, FieldState], seuil: float, critical_only: bool = False) -> None:
     by_band: dict[int, set[str]] = {}
     for k, st in states.items():
+        if critical_only and not st.f.critique:
+            continue                                   # mode OCR : 2e avis Ollama sur les critiques seulement
         if _needs_verify(st, seuil) and st.chosen.band is not None:
             by_band.setdefault(st.chosen.band, set()).add(k)
     for band_idx, keys in sorted(by_band.items()):
@@ -447,12 +473,26 @@ def extract_pages(images: list[bytes], *, client: OllamaClient | None = None, ma
         if hint:
             res.page_type, res.classification = hint, "impose"
         else:
-            res.page_type, res.classification = classify(client, main_model, prep.thumb, T, use_cache)
+            try:
+                res.page_type, res.classification = classify(client, main_model, prep.thumb, T, use_cache)
+            except OllamaError as e:             # ex. 500 répétés : la page est signalée, les autres continuent
+                res.error, res.duration_s = f"classification impossible : {e}", time.monotonic() - t0
+                continue
         if res.page_type == UNKNOWN:
             res.error = "type de page non reconnu"
             res.duration_s = time.monotonic() - t0
             continue
         spec = page_spec(res.page_type)
+        if s.ai_cases_cv and spec.checks:              # cases : vision classique (ai/checkboxes.py)
+            try:
+                from ai.checkboxes import read_checkboxes
+                img = load_image(data)
+                boxes, method = read_checkboxes(img, res.page_type)
+                add_checkbox_readings(states, boxes, prep.bands, img.size[1])
+                res.models["cases"] = f"opencv:{method}"
+                spec.checks = {}                       # le VLM ne lit plus que le texte
+            except Exception as e:  # noqa: BLE001  (OCR des libellés indisponible : le VLM garde les cases)
+                log.warning("Cases par vision classique impossibles : %s", e)
         errors = _read_page(client, spec, prep.bands, main_model, use_cache, _printed_labels(res.page_type), states)
         if errors:                              # toutes les requêtes ont échoué
             res.error = "; ".join(errors)

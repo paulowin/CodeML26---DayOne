@@ -4,6 +4,7 @@ data/
 
 # Environnement Python
 .venv/
+.venv-ocr/
 venv/
 __pycache__/
 *.pyc

@@ -7,7 +7,7 @@ sans modèle génératif pour la lecture.
 3. rattachement géométrique RÉUTILISÉ de scripts/build_ground_truth.py (`PageGT` : libellé
    le plus proche à gauche / au-dessus, ligne + colonne pour les tableaux), dans le repère
    du spécimen (points PDF, 595 pt de large) ;
-4. cases à cocher : carrés détectés par OpenCV + taux d'encre à l'intérieur (pas d'IA) ;
+4. cases à cocher : ai/checkboxes.py (homographie sur les libellés lus + taux d'encre, pas d'IA) ;
 5. confiance / statuts : mêmes règles qu'en 3b (`ai.confidence`), 2e avis Ollama
    UNIQUEMENT sur les champs critiques (et douteux).
 
@@ -44,7 +44,6 @@ log = logging.getLogger("iris.ocr")
 T = get_template()
 ROOT = Path(__file__).resolve().parent.parent
 PT_WIDTH = 595.2756                 # largeur d'une page du spécimen en points PDF
-INK_MARKED = 0.10                   # taux d'encre au-delà duquel une case est cochée
 
 
 @dataclass
@@ -112,27 +111,46 @@ def _ratio(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 
+def _best_label(n: str, labels: list[str], min_ratio: float) -> str | None:
+    """Libellé le plus proche (exact d'abord, sinon meilleur score) : « Date de l'accouchement »
+    ne doit pas être pris pour « Mode de l'accouchement » parce qu'il arrive premier dans la liste."""
+    best, score = None, 0.0
+    for lab in labels:
+        nl = norm_label(lab)
+        if n == nl:
+            return lab
+        if len(nl) > 3:
+            r = _ratio(n, nl)
+            if r >= min_ratio and r > score:
+                best, score = lab, r
+    return best
+
+
 def split_label(text: str, labels: list[str]) -> tuple[str | None, str]:
     """-> (libellé reconnu ou None, reste = valeur manuscrite éventuelle)."""
+    text = text.replace("：", ":").replace("□", " ").strip()     # deux-points pleine largeur (PaddleOCR)
     n = norm_label(text)
     if not n:
         return None, text
-    for lab in labels:                                   # du plus long au plus court
-        nl = norm_label(lab)
-        if len(nl) <= 3:
-            if n == nl:
-                return lab, ""
-            continue
-        if n == nl or _ratio(n, nl) >= 0.86:
-            return lab, ""
-        head = n[:len(nl)]
-        if len(n) > len(nl) + 1 and (head == nl or _ratio(head, nl) >= 0.88):
-            # coupe dans le texte d'origine : après le « : » s'il y en a un, sinon à la longueur du libellé
-            if ":" in text[:len(lab) + 4]:
-                rest = text.split(":", 1)[1]
-            else:
-                rest = text[len(lab):]
+    if ":" in text:                                      # « DDR:26/04/2025 » : libellé avant le deux-points
+        head, rest = text.split(":", 1)
+        lab = _best_label(norm_label(head), labels, 0.86)
+        if lab is not None:
             return lab, rest.strip(" :.")
+    lab = _best_label(n, labels, 0.86)
+    if lab is not None:
+        return lab, ""
+    best, score, rest_text = None, 0.0, ""
+    for lab in labels:                                   # libellé en tête, valeur derrière
+        nl = norm_label(lab)
+        if len(nl) <= 3 or len(n) <= len(nl) + 1:
+            continue
+        r = 1.0 if n[:len(nl)] == nl else _ratio(n[:len(nl)], nl)
+        if r >= 0.88 and r > score:
+            best, score = lab, r
+            rest_text = text[len(lab):]
+    if best is not None:
+        return best, rest_text.strip(" :.")
     return None, text
 
 
@@ -148,10 +166,12 @@ def _word(text: str, x0: float, x1: float, y_top: float, y_bot: float, hand: boo
 
 
 def build_layout(tokens: list[Token], img_w: int, img_h: int, page_type: str) -> tuple[PageLayout, dict]:
-    """Tokens OCR (pixels) -> PageLayout en points PDF ; libellés = imprimé, le reste = manuscrit."""
+    """Tokens OCR (pixels) -> PageLayout en points PDF ; libellés = imprimé, le reste = manuscrit.
+    `conf_of[id(mot)]` = confiance OCR ; `ORIG[id(mot)]` = texte OCR d'origine (en-têtes de tableaux)."""
     s = PT_WIDTH / img_w
     labels = page_labels(page_type)
     words, conf_of = [], {}
+    ORIG.clear()
     for tok in tokens:
         x0, y0, x1, y1 = (v * s for v in tok.box)
         lab, rest = split_label(tok.text, labels)
@@ -167,7 +187,9 @@ def build_layout(tokens: list[Token], img_w: int, img_h: int, page_type: str) ->
                     words.append(w)
                     conf_of[id(w)] = tok.conf
             else:
-                words.append(_word(lab, x0, x1, y0, y1, hand=False))
+                w = _word(lab, x0, x1, y0, y1, hand=False)
+                ORIG[id(w)] = tok.text
+                words.append(w)
         else:
             parts = tok.text.split()
             xs = np.linspace(x0, x1, len(parts) + 1) if parts else []
@@ -175,44 +197,115 @@ def build_layout(tokens: list[Token], img_w: int, img_h: int, page_type: str) ->
                 w = _word(p, a, b - 1, y0, y1, hand=True)
                 words.append(w)
                 conf_of[id(w)] = tok.conf
+    for w in words:                                       # en-têtes isolés (« Visite », « 7ème mois »...)
+        ORIG.setdefault(id(w), w.text)
     return PageLayout(0.0, PT_WIDTH, img_h * s, words, [], []), conf_of
 
 
-# ------------------------------------------------------------------ cases à cocher (vision classique)
-def detect_checkboxes(img: Image.Image) -> list[tuple[Stroke, float]]:
-    """Carrés de ~8 pt -> (case en points PDF, taux d'encre à l'intérieur)."""
-    g = np.asarray(img.convert("L"))
-    h, w = g.shape
-    s = PT_WIDTH / w
-    lo, hi = 5.0 / s, 12.0 / s                        # côté d'une case en pixels
-    bw = cv2.adaptiveThreshold(g, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 25, 15)
-    contours, _ = cv2.findContours(bw, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    found = []
-    for c in contours:
-        x, y, cw, ch = cv2.boundingRect(c)
-        if not (lo <= cw <= hi and lo <= ch <= hi and 0.75 <= cw / ch <= 1.33):
-            continue
-        approx = cv2.approxPolyDP(c, 0.12 * cv2.arcLength(c, True), True)
-        if len(approx) != 4:
-            continue
-        if any(abs(x - fx) < cw * 0.5 and abs(y - fy) < ch * 0.5 for fx, fy, _, _, _ in found):
-            continue                                    # contours intérieur / extérieur du même carré
-        mx, my = int(cw * 0.22), int(ch * 0.22)
-        inner = bw[y + my:y + ch - my, x + mx:x + cw - mx]
-        ink = float(inner.mean() / 255) if inner.size else 0.0
-        found.append((x, y, cw, ch, ink))
-    return [(Stroke(x * s, y * s, (x + cw) * s, (y + ch) * s, []), ink) for x, y, cw, ch, ink in found]
+ORIG: dict[int, str] = {}
+
+
+def _digits(s: str) -> str:
+    return "".join(ch for ch in s if ch.isdigit())
+
+
+def header_match(txt: str, cand: str) -> bool:
+    """En-tête de colonne lu par l'OCR ~ attendu. Si l'attendu porte un chiffre (« Visite 1 »,
+    « 7ème mois »), le chiffre doit être lu : sinon « Visites » (de « Prestations / Visites »)
+    passait pour « Visite 1 » et décalait tout le tableau d'une colonne."""
+    if txt == cand:
+        return True
+    dc = _digits(cand)
+    if dc:
+        return _digits(txt) == dc and _ratio(txt, cand) >= 0.7
+    return len(cand) > 3 and _ratio(txt, cand) >= 0.75
+
+
+def ocr_page_gt(layout: PageLayout, page_type: str):
+    """`PageGT` (3a) avec une détection d'en-têtes de tableaux TOLÉRANTE aux erreurs d'OCR :
+    correspondance approchée dans l'ordre, colonnes manquantes interpolées entre leurs voisines."""
+    from scripts.build_ground_truth import PageGT, ROW_TOL
+    from eval.pdf_layout import text_lines
+
+    class OcrPageGT(PageGT):
+        def _grid(self, sec, t):
+            best = None
+            for line in text_lines(self.L.words, 4.0):
+                found: dict[int, float] = {}
+                i = 0
+                for w in line:
+                    txt = norm_label(ORIG.get(id(w), w.text))
+                    for j in range(i, len(t.cols)):
+                        code, label = t.cols[j]
+                        cands = [norm_label(l) for l in (label, *t.col_aliases.get(code, ()))]
+                        if any(header_match(txt, c) for c in cands):
+                            found[j] = w.x0
+                            i = j + 1
+                            break
+                if len(found) >= max(2, int(0.6 * len(t.cols))) and (best is None or len(found) > len(best[1])):
+                    best = (line, found)
+            if best is None:
+                return None
+            line, found = best
+            idx = sorted(found)
+            xs = []
+            for j in range(len(t.cols)):                  # interpolation / extrapolation linéaire
+                if j in found:
+                    xs.append(found[j])
+                    continue
+                lo = max((k for k in idx if k < j), default=None)
+                hi = min((k for k in idx if k > j), default=None)
+                if lo is not None and hi is not None:
+                    xs.append(found[lo] + (found[hi] - found[lo]) * (j - lo) / (hi - lo))
+                else:
+                    a, b = (idx[0], idx[1]) if hi is not None else (idx[-2], idx[-1])
+                    step = (found[b] - found[a]) / (b - a)
+                    xs.append(found[a] + step * (j - a))
+            cols = [{"code": code, "x0": x} for (code, _), x in zip(t.cols, xs)]
+            y = line[0].y
+            rows = []
+            for r in t.rows:
+                for h in self.find_print(r.labels):
+                    if h.y > y and h.x0 < cols[0]["x0"] - 5:
+                        rows.append({"code": r.key, "y": h.y})
+            if t.rows:
+                bottom = max((r["y"] for r in rows), default=y) + ROW_TOL
+            else:
+                below = [w for w in self.prints if w.y > y + 4 and w.x1 > cols[0]["x0"]]
+                bottom = min((w.y for w in below), default=self.L.height) - 4
+            return {"section": sec, "table": t, "y": y, "cols": cols, "rows": rows,
+                    "left": cols[0]["x0"] - 8, "bottom": bottom}
+
+    return OcrPageGT(layout, page_type)
 
 
 # ------------------------------------------------------------------ pipeline
+# réponses fréquentes du carnet : une faute de frappe d'OCR proche est corrigée, avec une confiance
+# plafonnée (A_REVISER) — mesuré : « Nbrmaux », « Ou; » sortaient en CONNU (erreurs silencieuses)
+VOCABULARY = ("RAS", "Normaux", "Normales", "Normal", "Oui", "Non", "Neg", "Pos", "Immune", "Non immune",
+              "Fermé", "Céphalique", "Aucun", "Aucune", "Néant", "Pâles", "Voie basse", "Non fait")
+
+
+def snap_vocabulary(raw: str) -> str:
+    import re
+    n = re.sub(r"[^a-z0-9 ]", "", norm_label(raw)).strip()           # « Ou; » -> « ou »
+    if not n or any(norm_label(v) == n for v in VOCABULARY) or any(ch.isdigit() for ch in raw):
+        return raw
+    best, score = raw, 0.0
+    for v in VOCABULARY:
+        r = _ratio(n, norm_label(v))
+        if r > score:
+            best, score = v, r
+    return best if score >= 0.75 else raw
+
+
 def _band_of(y_rel: float, bands) -> int:
     inside = [b for b in bands if b.y0 <= y_rel <= b.y1]
     return min(inside, key=lambda b: abs((b.y0 + b.y1) / 2 - y_rel)).index if inside else 0
 
 
-def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None):
+def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, debug_path=None):
     """OCR + rattachement -> (type de page, lectures par champ, page préparée, tokens)."""
-    from scripts.build_ground_truth import PageGT        # géométrie de la vérité terrain (3a)
     img = load_image(img_bytes)
     prep = prepare(img_bytes)
     tokens = ENGINES[engine](img)
@@ -222,7 +315,7 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None):
     if page_type == UNKNOWN:
         return page_type, states, prep, tokens
     layout, conf_of = build_layout(tokens, img.size[0], img.size[1], page_type)
-    gt = PageGT(layout, page_type)
+    gt = ocr_page_gt(layout, page_type)                  # géométrie de la vérité terrain (3a)
     grids = gt.table_grids()
     assigned, _ = gt.assign_hand(grids)
     for key, words in assigned.items():
@@ -232,31 +325,20 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None):
         words.sort(key=lambda w: (round(w.y / 4), w.x0))
         raw = " ".join(w.text for w in words)
         conf = float(np.mean([conf_of.get(id(w), 0.5) for w in words]))
+        if f.type in ("str", "enum"):
+            fixed = snap_vocabulary(raw)
+            if fixed != raw:                     # « Nbrmaux » -> « Normaux » : corrigé MAIS à vérifier
+                raw, conf = fixed, min(conf, 0.6)
         band = _band_of(np.mean([w.cy for w in words]) / layout.height, prep.bands)
         st = states.setdefault(key, FieldState(f))
         st.readings.append(Reading(key, raw, _cell_etat(raw), conf, band))
-    # cases : taux d'encre (aucune IA)
-    for box, ink in detect_checkboxes(img):
-        cy = (box.top + box.bottom) / 2
-        label = gt._box_label(box, cy)
-        hit = gt._box_field(label, cy) if label else None
-        if not hit:
-            continue
-        key, f, code = hit
-        if key not in T.stored_fields:
-            continue
-        st = states.setdefault(key, FieldState(f))
-        st.flags.append("lecture_cv")
-        marked = ink >= INK_MARKED
-        conf = min(0.95, 0.55 + abs(ink - INK_MARKED) * 3)
-        codes = ["coche"] if (f.type == "bool" and marked) else ([code] if marked and code else [])
-        band = _band_of(cy / layout.height, prep.bands)
-        prev = next((r for r in st.readings if r.source == "main"), None)
-        if prev is None:
-            st.readings.append(Reading(key, codes, "LISIBLE", conf, band))
-        else:                                            # plusieurs cases du même groupe : union
-            prev.raw = sorted(set(prev.raw or []) | set(codes))
-            prev.conf = min(prev.conf or 1, conf)
+    # cases : vision classique (ai/checkboxes.py), avec les libellés déjà lus par l'OCR comme ancres
+    from ai.checkboxes import read_checkboxes
+    from ai.extract import add_checkbox_readings
+    for k in [k for k, st in states.items() if st.f.is_checkbox]:
+        del states[k]                                    # un mot OCR ne vaut pas une case cochée
+    boxes, _method = read_checkboxes(img, page_type, tokens=tokens, debug_path=debug_path)
+    add_checkbox_readings(states, boxes, prep.bands, img.size[1])
     return page_type, states, prep, tokens
 
 
@@ -285,7 +367,8 @@ def extract_pages_ocr(images: list[bytes], *, engine: str = "paddle", client=Non
         for st in states.values():
             merge(st)
         if verify_model and client is not None:          # 2e avis Ollama : champs critiques/douteux seulement
-            _second_opinion(client, page_type, prep.bands, verify_model, use_cache, states, seuil)
+            _second_opinion(client, page_type, prep.bands, verify_model, use_cache, states, seuil,
+                            critical_only=True)
         res.duration_s = time.monotonic() - t0
         pages.append((res, states))
     _finalize(pages, seuil)

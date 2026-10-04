@@ -1,0 +1,4233 @@
+{
+ "page_size": [
+  595.28,
+  841.89
+ ],
+ "pages": {
+  "couverture": {
+   "boxes": [
+    {
+     "key": "couverture.type_etablissement",
+     "code": "dr",
+     "label": "DR",
+     "box": [
+      90.0,
+      238.0,
+      98.0,
+      246.0
+     ]
+    },
+    {
+     "key": "couverture.type_etablissement",
+     "code": "csc",
+     "label": "CSC",
+     "box": [
+      230.0,
+      238.0,
+      238.0,
+      246.0
+     ]
+    },
+    {
+     "key": "couverture.type_etablissement",
+     "code": "csu",
+     "label": "CSU",
+     "box": [
+      350.0,
+      238.0,
+      358.0,
+      246.0
+     ]
+    },
+    {
+     "key": "couverture.type_etablissement",
+     "code": "csca",
+     "label": "CSCA",
+     "box": [
+      90.0,
+      268.0,
+      98.0,
+      276.0
+     ]
+    },
+    {
+     "key": "couverture.type_etablissement",
+     "code": "csua",
+     "label": "CSUA",
+     "box": [
+      230.0,
+      268.0,
+      238.0,
+      276.0
+     ]
+    },
+    {
+     "key": "couverture.mode_couverture",
+     "code": "fixe",
+     "label": "Fixe",
+     "box": [
+      90.0,
+      323.0,
+      98.0,
+      331.0
+     ]
+    },
+    {
+     "key": "couverture.mode_couverture",
+     "code": "mobile",
+     "label": "Mobile",
+     "box": [
+      230.0,
+      323.0,
+      238.0,
+      331.0
+     ]
+    },
+    {
+     "key": "couverture.grossesse_a_risque",
+     "code": null,
+     "label": "Grossesse classée à risque :",
+     "box": [
+      60.0,
+      441.0,
+      68.0,
+      449.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "anemie",
+     "label": "Anémie",
+     "box": [
+      65.0,
+      488.0,
+      73.0,
+      496.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "hta",
+     "label": "H.T.A",
+     "box": [
+      65.0,
+      506.0,
+      73.0,
+      514.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "diabete",
+     "label": "Diabète",
+     "box": [
+      65.0,
+      524.0,
+      73.0,
+      532.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "cardiopathie",
+     "label": "Cardiopathie",
+     "box": [
+      65.0,
+      542.0,
+      73.0,
+      550.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "metrorragie",
+     "label": "Métrorragie",
+     "box": [
+      290.0,
+      488.0,
+      298.0,
+      496.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      290.0,
+      506.0,
+      298.0,
+      514.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "pre_eclampsie",
+     "label": "Pré-éclampsie",
+     "box": [
+      290.0,
+      524.0,
+      298.0,
+      532.0
+     ]
+    },
+    {
+     "key": "couverture.type_risque",
+     "code": "eclampsie",
+     "label": "Eclampsie",
+     "box": [
+      290.0,
+      542.0,
+      298.0,
+      550.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "N° de la fiche :",
+     "x0": 50.0,
+     "x1": 104.36,
+     "cy": 107.19
+    },
+    {
+     "text": "Région :",
+     "x0": 50.0,
+     "x1": 82.04,
+     "cy": 142.19
+    },
+    {
+     "text": "Province :",
+     "x0": 320.0,
+     "x1": 357.82,
+     "cy": 142.19
+    },
+    {
+     "text": "Nom de l'établissement sanitaire :",
+     "x0": 50.0,
+     "x1": 172.04,
+     "cy": 177.19
+    },
+    {
+     "text": "Type de l'établissement sanitaire :",
+     "x0": 50.0,
+     "x1": 170.71,
+     "cy": 212.19
+    },
+    {
+     "text": "CSC",
+     "x0": 202.0,
+     "x1": 218.91,
+     "cy": 242.19
+    },
+    {
+     "text": "CSU",
+     "x0": 322.0,
+     "x1": 338.91,
+     "cy": 242.19
+    },
+    {
+     "text": "CSCA",
+     "x0": 62.0,
+     "x1": 84.25,
+     "cy": 272.19
+    },
+    {
+     "text": "CSUA",
+     "x0": 202.0,
+     "x1": 224.25,
+     "cy": 272.19
+    },
+    {
+     "text": "Fixe",
+     "x0": 102.0,
+     "x1": 117.14,
+     "cy": 327.2
+    },
+    {
+     "text": "Mobile",
+     "x0": 242.0,
+     "x1": 265.58,
+     "cy": 327.19
+    },
+    {
+     "text": "Nom/Prénom de la parturiente :",
+     "x0": 50.0,
+     "x1": 163.85,
+     "cy": 382.19
+    },
+    {
+     "text": "Grossesse classée à risque :",
+     "x0": 75.0,
+     "x1": 184.86,
+     "cy": 445.19
+    },
+    {
+     "text": "Si grossesse à risque, préciser le type de risque :",
+     "x0": 60.0,
+     "x1": 234.76,
+     "cy": 467.19
+    },
+    {
+     "text": "Anémie",
+     "x0": 77.0,
+     "x1": 104.14,
+     "cy": 492.19
+    },
+    {
+     "text": "Métrorragie",
+     "x0": 302.0,
+     "x1": 342.92,
+     "cy": 492.19
+    },
+    {
+     "text": "H.T.A",
+     "x0": 77.0,
+     "x1": 97.47,
+     "cy": 510.19
+    },
+    {
+     "text": "Infection",
+     "x0": 302.0,
+     "x1": 332.26,
+     "cy": 510.2
+    },
+    {
+     "text": "Diabète",
+     "x0": 77.0,
+     "x1": 104.59,
+     "cy": 528.19
+    },
+    {
+     "text": "Pré-éclampsie",
+     "x0": 302.0,
+     "x1": 353.14,
+     "cy": 528.19
+    },
+    {
+     "text": "Cardiopathie",
+     "x0": 77.0,
+     "x1": 122.38,
+     "cy": 546.19
+    },
+    {
+     "text": "Eclampsie",
+     "x0": 302.0,
+     "x1": 338.92,
+     "cy": 546.19
+    },
+    {
+     "text": "Autres à préciser : ......................................",
+     "x0": 290.0,
+     "x1": 441.67,
+     "cy": 565.19
+    }
+   ]
+  },
+  "identification_antecedents": {
+   "boxes": [
+    {
+     "key": "identification.consanguinite",
+     "code": null,
+     "label": "Consanguinité",
+     "box": [
+      48.0,
+      175.0,
+      56.0,
+      183.0
+     ]
+    },
+    {
+     "key": "identification.grossesse_desiree",
+     "code": null,
+     "label": "Grossesse désirée",
+     "box": [
+      300.0,
+      175.0,
+      308.0,
+      183.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vat",
+     "code": "dose_1",
+     "label": "1",
+     "box": [
+      75.0,
+      741.0,
+      83.0,
+      749.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vat",
+     "code": "dose_2",
+     "label": "2",
+     "box": [
+      115.0,
+      741.0,
+      123.0,
+      749.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vat",
+     "code": "dose_3",
+     "label": "3",
+     "box": [
+      155.0,
+      741.0,
+      163.0,
+      749.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vat",
+     "code": "dose_4",
+     "label": "4",
+     "box": [
+      195.0,
+      741.0,
+      203.0,
+      749.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vat",
+     "code": "dose_5",
+     "label": "5",
+     "box": [
+      235.0,
+      741.0,
+      243.0,
+      749.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vaccin_rubeole",
+     "code": null,
+     "label": "Vaccinée contre la rubéole",
+     "box": [
+      40.0,
+      761.0,
+      48.0,
+      769.0
+     ]
+    },
+    {
+     "key": "antecedents_obstetricaux.vaccin_hepatite_b",
+     "code": null,
+     "label": "Vaccinée contre l'hépatite B",
+     "box": [
+      40.0,
+      777.0,
+      48.0,
+      785.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Age :",
+     "x0": 48.0,
+     "x1": 68.96,
+     "cy": 87.19
+    },
+    {
+     "text": "CIN :",
+     "x0": 300.0,
+     "x1": 320.5,
+     "cy": 87.19
+    },
+    {
+     "text": "Niveau d'instruction :",
+     "x0": 48.0,
+     "x1": 124.28,
+     "cy": 109.19
+    },
+    {
+     "text": "Adresse :",
+     "x0": 48.0,
+     "x1": 84.07,
+     "cy": 131.19
+    },
+    {
+     "text": "Téléphone :",
+     "x0": 300.0,
+     "x1": 344.52,
+     "cy": 131.19
+    },
+    {
+     "text": "Nom du Mari :",
+     "x0": 48.0,
+     "x1": 100.51,
+     "cy": 153.18
+    },
+    {
+     "text": "Consanguinité",
+     "x0": 60.0,
+     "x1": 111.19,
+     "cy": 179.19
+    },
+    {
+     "text": "Grossesse désirée",
+     "x0": 312.0,
+     "x1": 378.74,
+     "cy": 179.19
+    },
+    {
+     "text": "Famille de la femme",
+     "x0": 135.0,
+     "x1": 193.55,
+     "cy": 221.71
+    },
+    {
+     "text": "Mari/famille",
+     "x0": 215.0,
+     "x1": 248.26,
+     "cy": 221.71
+    },
+    {
+     "text": "Médicaux",
+     "x0": 315.0,
+     "x1": 345.0,
+     "cy": 221.54
+    },
+    {
+     "text": "Chirurgicaux",
+     "x0": 380.0,
+     "x1": 419.33,
+     "cy": 221.54
+    },
+    {
+     "text": "Gynécologiques",
+     "x0": 458.0,
+     "x1": 508.24,
+     "cy": 221.54
+    },
+    {
+     "text": "HTA",
+     "x0": 44.0,
+     "x1": 59.05,
+     "cy": 244.36
+    },
+    {
+     "text": "Diabète",
+     "x0": 44.0,
+     "x1": 69.89,
+     "cy": 264.36
+    },
+    {
+     "text": "Maladies héréditaires",
+     "x0": 44.0,
+     "x1": 115.32,
+     "cy": 284.36
+    },
+    {
+     "text": "Malformations",
+     "x0": 44.0,
+     "x1": 91.14,
+     "cy": 304.36
+    },
+    {
+     "text": "Allergie(s)",
+     "x0": 44.0,
+     "x1": 77.8,
+     "cy": 324.36
+    },
+    {
+     "text": "Nombre",
+     "x0": 154.0,
+     "x1": 178.94,
+     "cy": 369.54
+    },
+    {
+     "text": "Lieu",
+     "x0": 334.0,
+     "x1": 347.27,
+     "cy": 369.54
+    },
+    {
+     "text": "Age gestationnel (SA)",
+     "x0": 424.0,
+     "x1": 492.13,
+     "cy": 369.54
+    },
+    {
+     "text": "Avortement",
+     "x0": 44.0,
+     "x1": 79.84,
+     "cy": 388.54
+    },
+    {
+     "text": "Accouchement prématuré",
+     "x0": 44.0,
+     "x1": 124.19,
+     "cy": 408.54
+    },
+    {
+     "text": "Mort fœtale in utéro",
+     "x0": 44.0,
+     "x1": 105.12,
+     "cy": 428.53
+    },
+    {
+     "text": "Autres à préciser :",
+     "x0": 44.0,
+     "x1": 100.84,
+     "cy": 448.54
+    },
+    {
+     "text": "Accouch. 1",
+     "x0": 153.0,
+     "x1": 185.2,
+     "cy": 494.72
+    },
+    {
+     "text": "Accouch. 2",
+     "x0": 234.0,
+     "x1": 266.2,
+     "cy": 494.72
+    },
+    {
+     "text": "Accouch. 3",
+     "x0": 315.0,
+     "x1": 347.2,
+     "cy": 494.72
+    },
+    {
+     "text": "Accouch. 4",
+     "x0": 396.0,
+     "x1": 428.2,
+     "cy": 494.72
+    },
+    {
+     "text": "Accouch. 5",
+     "x0": 477.0,
+     "x1": 509.2,
+     "cy": 494.72
+    },
+    {
+     "text": "Modalité d'extraction",
+     "x0": 44.0,
+     "x1": 103.44,
+     "cy": 565.71
+    },
+    {
+     "text": "Si césarienne : indication",
+     "x0": 44.0,
+     "x1": 116.29,
+     "cy": 593.71
+    },
+    {
+     "text": "Complication (type)",
+     "x0": 44.0,
+     "x1": 100.03,
+     "cy": 621.71
+    },
+    {
+     "text": "Poids nouveau-né(s)",
+     "x0": 44.0,
+     "x1": 104.01,
+     "cy": 649.71
+    },
+    {
+     "text": "Compl. nouveau-né (type)",
+     "x0": 44.0,
+     "x1": 119.18,
+     "cy": 677.71
+    },
+    {
+     "text": "Gestation :",
+     "x0": 40.0,
+     "x1": 80.96,
+     "cy": 722.19
+    },
+    {
+     "text": "Parité :",
+     "x0": 160.0,
+     "x1": 187.62,
+     "cy": 722.19
+    },
+    {
+     "text": "Nombre d'enfants vivants :",
+     "x0": 280.0,
+     "x1": 376.73,
+     "cy": 722.19
+    },
+    {
+     "text": "VAT :",
+     "x0": 40.0,
+     "x1": 60.06,
+     "cy": 745.19
+    },
+    {
+     "text": "Vaccinée contre la rubéole",
+     "x0": 52.0,
+     "x1": 146.76,
+     "cy": 765.19
+    },
+    {
+     "text": "Vaccinée contre l'hépatite B",
+     "x0": 52.0,
+     "x1": 150.96,
+     "cy": 781.19
+    },
+    {
+     "text": "Frottis cervical / IVA (moins de 3 ans) :",
+     "x0": 40.0,
+     "x1": 179.65,
+     "cy": 799.18
+    }
+   ]
+  },
+  "grossesse_actuelle": {
+   "boxes": [
+    {
+     "key": "grossesse_actuelle.groupage",
+     "code": "a",
+     "label": "A",
+     "box": [
+      375.0,
+      71.0,
+      383.0,
+      79.0
+     ]
+    },
+    {
+     "key": "grossesse_actuelle.groupage",
+     "code": "b",
+     "label": "B",
+     "box": [
+      407.0,
+      71.0,
+      415.0,
+      79.0
+     ]
+    },
+    {
+     "key": "grossesse_actuelle.groupage",
+     "code": "o",
+     "label": "O",
+     "box": [
+      439.0,
+      71.0,
+      447.0,
+      79.0
+     ]
+    },
+    {
+     "key": "grossesse_actuelle.groupage",
+     "code": "ab",
+     "label": "AB",
+     "box": [
+      471.0,
+      71.0,
+      479.0,
+      79.0
+     ]
+    },
+    {
+     "key": "grossesse_actuelle.rhesus",
+     "code": "negatif",
+     "label": "Rh-",
+     "box": [
+      505.0,
+      71.0,
+      513.0,
+      79.0
+     ]
+    },
+    {
+     "key": "grossesse_actuelle.rhesus",
+     "code": "positif",
+     "label": "Rh+",
+     "box": [
+      505.0,
+      85.0,
+      513.0,
+      93.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "DDR :",
+     "x0": 40.0,
+     "x1": 64.0,
+     "cy": 75.2
+    },
+    {
+     "text": "Taille :",
+     "x0": 190.0,
+     "x1": 215.79,
+     "cy": 75.2
+    },
+    {
+     "text": "Groupage :",
+     "x0": 320.0,
+     "x1": 360.03,
+     "cy": 75.2
+    },
+    {
+     "text": "Rh-",
+     "x0": 517.0,
+     "x1": 529.89,
+     "cy": 75.2
+    },
+    {
+     "text": "Rh+",
+     "x0": 517.0,
+     "x1": 531.9,
+     "cy": 89.2
+    },
+    {
+     "text": "DATE PRÉVUE D'ACCOUCHEMENT :",
+     "x0": 40.0,
+     "x1": 181.1,
+     "cy": 92.2
+    },
+    {
+     "text": "DATE DE DÉPASSEMENT DE TERME :",
+     "x0": 270.0,
+     "x1": 417.59,
+     "cy": 92.2
+    },
+    {
+     "text": "7ème mois",
+     "x0": 422.85,
+     "x1": 452.19,
+     "cy": 130.9
+    },
+    {
+     "text": "8ème mois",
+     "x0": 467.66,
+     "x1": 497.0,
+     "cy": 130.9
+    },
+    {
+     "text": "9ème mois",
+     "x0": 512.47,
+     "x1": 541.81,
+     "cy": 130.9
+    },
+    {
+     "text": "Rendez-vous",
+     "x0": 44.0,
+     "x1": 84.06,
+     "cy": 147.62
+    },
+    {
+     "text": "Venue le",
+     "x0": 44.0,
+     "x1": 70.84,
+     "cy": 165.42
+    },
+    {
+     "text": "Visites de relance",
+     "x0": 44.0,
+     "x1": 97.67,
+     "cy": 183.22
+    },
+    {
+     "text": "Age probable",
+     "x0": 44.0,
+     "x1": 84.45,
+     "cy": 201.02
+    },
+    {
+     "text": "Poids (kg)",
+     "x0": 44.0,
+     "x1": 74.61,
+     "cy": 236.62
+    },
+    {
+     "text": "Anomalies squelette",
+     "x0": 44.0,
+     "x1": 105.23,
+     "cy": 272.22
+    },
+    {
+     "text": "État des conjonctives",
+     "x0": 44.0,
+     "x1": 108.26,
+     "cy": 290.02
+    },
+    {
+     "text": "Examen des seins",
+     "x0": 44.0,
+     "x1": 99.56,
+     "cy": 307.82
+    },
+    {
+     "text": "Œdèmes",
+     "x0": 44.0,
+     "x1": 71.21,
+     "cy": 325.62
+    },
+    {
+     "text": "Mouvements actifs",
+     "x0": 44.0,
+     "x1": 100.69,
+     "cy": 343.42
+    },
+    {
+     "text": "HU (cm)",
+     "x0": 44.0,
+     "x1": 69.31,
+     "cy": 361.22
+    },
+    {
+     "text": "BCF",
+     "x0": 44.0,
+     "x1": 57.6,
+     "cy": 379.02
+    },
+    {
+     "text": "Examen au spéculum",
+     "x0": 44.0,
+     "x1": 109.38,
+     "cy": 396.82
+    },
+    {
+     "text": "TV : état du col",
+     "x0": 44.0,
+     "x1": 89.74,
+     "cy": 414.62
+    },
+    {
+     "text": "TV : présentation",
+     "x0": 44.0,
+     "x1": 95.78,
+     "cy": 432.42
+    },
+    {
+     "text": "TV : bassin",
+     "x0": 44.0,
+     "x1": 78.02,
+     "cy": 450.22
+    },
+    {
+     "text": "Glucosurie",
+     "x0": 44.0,
+     "x1": 76.5,
+     "cy": 485.82
+    },
+    {
+     "text": "Albuminurie",
+     "x0": 44.0,
+     "x1": 79.9,
+     "cy": 503.62
+    },
+    {
+     "text": "Rubéole",
+     "x0": 44.0,
+     "x1": 69.33,
+     "cy": 521.42
+    },
+    {
+     "text": "Toxoplasmose",
+     "x0": 44.0,
+     "x1": 88.22,
+     "cy": 539.22
+    },
+    {
+     "text": "Syphilis (TPHA/VDRL)",
+     "x0": 44.0,
+     "x1": 112.01,
+     "cy": 557.02
+    },
+    {
+     "text": "Ag HBs",
+     "x0": 44.0,
+     "x1": 67.05,
+     "cy": 574.82
+    },
+    {
+     "text": "Sérologie VIH",
+     "x0": 44.0,
+     "x1": 85.95,
+     "cy": 592.62
+    },
+    {
+     "text": "Hémoglobine",
+     "x0": 44.0,
+     "x1": 84.06,
+     "cy": 610.42
+    },
+    {
+     "text": "Plaquettes",
+     "x0": 44.0,
+     "x1": 76.13,
+     "cy": 628.22
+    },
+    {
+     "text": "Bilan glycémique",
+     "x0": 44.0,
+     "x1": 95.4,
+     "cy": 646.02
+    },
+    {
+     "text": "RAI (si Rh négatif)",
+     "x0": 44.0,
+     "x1": 99.55,
+     "cy": 663.82
+    },
+    {
+     "text": "Fer",
+     "x0": 44.0,
+     "x1": 54.2,
+     "cy": 699.42
+    }
+   ]
+  },
+  "accouchement": {
+   "boxes": [
+    {
+     "key": "accouchement.lieu",
+     "code": "en_milieu_surveille",
+     "label": "En milieu surveillé",
+     "box": [
+      40.0,
+      138.0,
+      48.0,
+      146.0
+     ]
+    },
+    {
+     "key": "accouchement.lieu_structure",
+     "code": "maison_d_accouchement",
+     "label": "Maison d'accouchement",
+     "box": [
+      215.0,
+      133.0,
+      223.0,
+      141.0
+     ]
+    },
+    {
+     "key": "accouchement.lieu_structure",
+     "code": "maternite",
+     "label": "Maternité",
+     "box": [
+      215.0,
+      149.0,
+      223.0,
+      157.0
+     ]
+    },
+    {
+     "key": "accouchement.lieu_structure",
+     "code": "clinique_privee",
+     "label": "Clinique privée",
+     "box": [
+      215.0,
+      165.0,
+      223.0,
+      173.0
+     ]
+    },
+    {
+     "key": "accouchement.lieu",
+     "code": "a_domicile",
+     "label": "A domicile",
+     "box": [
+      40.0,
+      228.0,
+      48.0,
+      236.0
+     ]
+    },
+    {
+     "key": "accouchement.domicile_assiste",
+     "code": null,
+     "label": "Assisté par un personnel qualifié",
+     "box": [
+      215.0,
+      228.0,
+      223.0,
+      236.0
+     ]
+    },
+    {
+     "key": "accouchement.mode",
+     "code": "voie_basse_non_instrumentale",
+     "label": "Voie basse non instrumentale",
+     "box": [
+      215.0,
+      343.0,
+      223.0,
+      351.0
+     ]
+    },
+    {
+     "key": "accouchement.mode",
+     "code": "voie_basse_instrumentale",
+     "label": "Voie basse instrumentale",
+     "box": [
+      215.0,
+      361.0,
+      223.0,
+      369.0
+     ]
+    },
+    {
+     "key": "accouchement.instrument",
+     "code": "forceps",
+     "label": "Forceps",
+     "box": [
+      250.0,
+      377.0,
+      258.0,
+      385.0
+     ]
+    },
+    {
+     "key": "accouchement.instrument",
+     "code": "ventouse",
+     "label": "Ventouse",
+     "box": [
+      250.0,
+      393.0,
+      258.0,
+      401.0
+     ]
+    },
+    {
+     "key": "accouchement.episiotomie",
+     "code": null,
+     "label": "Avec épisiotomie",
+     "box": [
+      250.0,
+      409.0,
+      258.0,
+      417.0
+     ]
+    },
+    {
+     "key": "accouchement.mode",
+     "code": "cesarienne_programmee",
+     "label": "Césarienne : Programmée",
+     "box": [
+      215.0,
+      429.0,
+      223.0,
+      437.0
+     ]
+    },
+    {
+     "key": "accouchement.mode",
+     "code": "cesarienne_urgence",
+     "label": "Urgence",
+     "box": [
+      390.0,
+      429.0,
+      398.0,
+      437.0
+     ]
+    },
+    {
+     "key": "accouchement.complications",
+     "code": null,
+     "label": "Présence de complications",
+     "box": [
+      190.0,
+      498.0,
+      198.0,
+      506.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_moment",
+     "code": "au_moment_de_l_accouchement",
+     "label": "Au moment de l'accouchement",
+     "box": [
+      215.0,
+      501.0,
+      223.0,
+      509.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_moment",
+     "code": "suites_de_couches",
+     "label": "Suites de couches",
+     "box": [
+      215.0,
+      517.0,
+      223.0,
+      525.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_type",
+     "code": "pre_eclampsie",
+     "label": "Pré-éclampsie",
+     "box": [
+      250.0,
+      553.0,
+      258.0,
+      561.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_type",
+     "code": "eclampsie",
+     "label": "Eclampsie",
+     "box": [
+      250.0,
+      568.0,
+      258.0,
+      576.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_type",
+     "code": "hemorragie",
+     "label": "Hémorragie",
+     "box": [
+      250.0,
+      583.0,
+      258.0,
+      591.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_type",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      250.0,
+      598.0,
+      258.0,
+      606.0
+     ]
+    },
+    {
+     "key": "accouchement.complications_type",
+     "code": "autres",
+     "label": "Autres",
+     "box": [
+      250.0,
+      613.0,
+      258.0,
+      621.0
+     ]
+    },
+    {
+     "key": "accouchement.etat_nne",
+     "code": "vivant",
+     "label": "Vivant",
+     "box": [
+      215.0,
+      678.0,
+      223.0,
+      686.0
+     ]
+    },
+    {
+     "key": "accouchement.etat_nne",
+     "code": "mort_ne",
+     "label": "Mort-né",
+     "box": [
+      285.0,
+      678.0,
+      293.0,
+      686.0
+     ]
+    },
+    {
+     "key": "accouchement.etat_nne",
+     "code": "deces_24h",
+     "label": "Décès < 24 heures",
+     "box": [
+      365.0,
+      678.0,
+      373.0,
+      686.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Patiente :",
+     "x0": 40.0,
+     "x1": 76.08,
+     "cy": 82.19
+    },
+    {
+     "text": "Lieu",
+     "x0": 40.0,
+     "x1": 58.57,
+     "cy": 121.84
+    },
+    {
+     "text": "Maison d'accouchement",
+     "x0": 227.0,
+     "x1": 313.07,
+     "cy": 137.18
+    },
+    {
+     "text": "En milieu surveillé",
+     "x0": 52.0,
+     "x1": 116.52,
+     "cy": 142.18
+    },
+    {
+     "text": "Maternité",
+     "x0": 227.0,
+     "x1": 260.4,
+     "cy": 153.18
+    },
+    {
+     "text": "Clinique privée",
+     "x0": 227.0,
+     "x1": 279.96,
+     "cy": 169.19
+    },
+    {
+     "text": "A domicile",
+     "x0": 52.0,
+     "x1": 88.95,
+     "cy": 232.18
+    },
+    {
+     "text": "Assisté par un personnel qualifié",
+     "x0": 227.0,
+     "x1": 342.67,
+     "cy": 232.19
+    },
+    {
+     "text": "Date de l'accouchement :",
+     "x0": 40.0,
+     "x1": 132.3,
+     "cy": 302.18
+    },
+    {
+     "text": "Mode de l'accouchement :",
+     "x0": 40.0,
+     "x1": 152.23,
+     "cy": 341.83
+    },
+    {
+     "text": "Voie basse non instrumentale",
+     "x0": 227.0,
+     "x1": 332.44,
+     "cy": 347.18
+    },
+    {
+     "text": "Voie basse instrumentale",
+     "x0": 227.0,
+     "x1": 316.87,
+     "cy": 365.18
+    },
+    {
+     "text": "Forceps",
+     "x0": 262.0,
+     "x1": 290.95,
+     "cy": 381.19
+    },
+    {
+     "text": "Ventouse",
+     "x0": 262.0,
+     "x1": 295.86,
+     "cy": 397.19
+    },
+    {
+     "text": "Avec épisiotomie",
+     "x0": 262.0,
+     "x1": 322.52,
+     "cy": 413.18
+    },
+    {
+     "text": "Césarienne : Programmée",
+     "x0": 227.0,
+     "x1": 320.87,
+     "cy": 433.18
+    },
+    {
+     "text": "Urgence",
+     "x0": 402.0,
+     "x1": 432.29,
+     "cy": 433.19
+    },
+    {
+     "text": "Préciser l'indication :",
+     "x0": 215.0,
+     "x1": 290.39,
+     "cy": 453.19
+    },
+    {
+     "text": "Présence de complications",
+     "x0": 40.0,
+     "x1": 156.11,
+     "cy": 501.83
+    },
+    {
+     "text": "Au moment de l'accouchement",
+     "x0": 227.0,
+     "x1": 336.63,
+     "cy": 505.18
+    },
+    {
+     "text": "Suites de couches",
+     "x0": 227.0,
+     "x1": 292.43,
+     "cy": 521.19
+    },
+    {
+     "text": "Type de complications :",
+     "x0": 215.0,
+     "x1": 299.09,
+     "cy": 539.18
+    },
+    {
+     "text": "Pré-éclampsie",
+     "x0": 262.0,
+     "x1": 313.18,
+     "cy": 557.18
+    },
+    {
+     "text": "Eclampsie",
+     "x0": 262.0,
+     "x1": 298.95,
+     "cy": 572.18
+    },
+    {
+     "text": "Hémorragie",
+     "x0": 262.0,
+     "x1": 303.84,
+     "cy": 587.18
+    },
+    {
+     "text": "Infection",
+     "x0": 262.0,
+     "x1": 292.3,
+     "cy": 602.19
+    },
+    {
+     "text": "Si autres à préciser : ...............................",
+     "x0": 250.0,
+     "x1": 394.59,
+     "cy": 637.19
+    },
+    {
+     "text": "Etat du nouveau-né :",
+     "x0": 40.0,
+     "x1": 129.07,
+     "cy": 681.83
+    },
+    {
+     "text": "Vivant",
+     "x0": 227.0,
+     "x1": 249.29,
+     "cy": 682.19
+    },
+    {
+     "text": "Mort-né",
+     "x0": 297.0,
+     "x1": 324.62,
+     "cy": 682.18
+    },
+    {
+     "text": "Décès < 24 heures",
+     "x0": 377.0,
+     "x1": 444.43,
+     "cy": 682.19
+    },
+    {
+     "text": "Sexe :",
+     "x0": 215.0,
+     "x1": 239.96,
+     "cy": 707.19
+    },
+    {
+     "text": "Poids à la naissance :",
+     "x0": 215.0,
+     "x1": 295.1,
+     "cy": 727.19
+    },
+    {
+     "text": "Périmètre crânien à la naissance :",
+     "x0": 215.0,
+     "x1": 338.22,
+     "cy": 747.18
+    },
+    {
+     "text": "Anomalie à préciser :",
+     "x0": 215.0,
+     "x1": 292.42,
+     "cy": 769.18
+    },
+    {
+     "text": "Âge gestationnel :",
+     "x0": 215.0,
+     "x1": 281.32,
+     "cy": 789.19
+    }
+   ]
+  },
+  "pp_precoce_mere": {
+   "boxes": [
+    {
+     "key": "pp_precoce_mere.moment",
+     "code": "dans_les_delais",
+     "label": "Entre le 7ème et 8ème jour après l'accouchement",
+     "box": [
+      250.0,
+      75.0,
+      258.0,
+      83.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.moment",
+     "code": "apres",
+     "label": "Après le 8ème jour de l'accouchement",
+     "box": [
+      250.0,
+      89.0,
+      258.0,
+      97.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.conjonctives",
+     "code": "normales",
+     "label": "Normales",
+     "box": [
+      160.0,
+      155.0,
+      168.0,
+      163.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.conjonctives",
+     "code": "decolorees",
+     "label": "Décolorées",
+     "box": [
+      250.0,
+      155.0,
+      258.0,
+      163.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.globe_uterin",
+     "code": null,
+     "label": "Présence du globe utérin",
+     "box": [
+      46.0,
+      173.0,
+      54.0,
+      181.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.lochies",
+     "code": "fade",
+     "label": "Fade",
+     "box": [
+      160.0,
+      191.0,
+      168.0,
+      199.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.lochies",
+     "code": "fetide",
+     "label": "fétide",
+     "box": [
+      230.0,
+      191.0,
+      238.0,
+      199.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.lochies",
+     "code": "claires",
+     "label": "claires",
+     "box": [
+      160.0,
+      207.0,
+      168.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.lochies",
+     "code": "sanglantes",
+     "label": "sanglantes",
+     "box": [
+      230.0,
+      207.0,
+      238.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.lochies",
+     "code": "jaunatres",
+     "label": "Jaunâtres",
+     "box": [
+      310.0,
+      207.0,
+      318.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.perinee",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      60.0,
+      243.0,
+      68.0,
+      251.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.perinee",
+     "code": "episiotomie",
+     "label": "Épisiotomie",
+     "box": [
+      60.0,
+      259.0,
+      68.0,
+      267.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.perinee",
+     "code": "dechirure",
+     "label": "Déchirure",
+     "box": [
+      60.0,
+      275.0,
+      68.0,
+      283.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.perinee",
+     "code": "reparee",
+     "label": "Réparée",
+     "box": [
+      200.0,
+      259.0,
+      208.0,
+      267.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.sphincters",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      230.0,
+      297.0,
+      238.0,
+      305.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.sphincters",
+     "code": "anormal",
+     "label": "Anormal",
+     "box": [
+      300.0,
+      297.0,
+      308.0,
+      305.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.cesarienne",
+     "code": null,
+     "label": "Césarienne :",
+     "box": [
+      46.0,
+      317.0,
+      54.0,
+      325.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.seins",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      130.0,
+      337.0,
+      138.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.seins",
+     "code": "lymphangite",
+     "label": "lymphangite",
+     "box": [
+      200.0,
+      337.0,
+      208.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.seins",
+     "code": "mastite_et_abces",
+     "label": "mastite et abcès",
+     "box": [
+      290.0,
+      337.0,
+      298.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.mollets",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      60.0,
+      373.0,
+      68.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.mollets",
+     "code": "rouges",
+     "label": "Rouges",
+     "box": [
+      130.0,
+      373.0,
+      138.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.mollets",
+     "code": "chauds",
+     "label": "Chauds",
+     "box": [
+      200.0,
+      373.0,
+      208.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.mollets",
+     "code": "douloureux_a_la_dorsiflexion",
+     "label": "Douloureux à la dorsiflexion",
+     "box": [
+      270.0,
+      373.0,
+      278.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complication",
+     "code": null,
+     "label": "Présence de complication :",
+     "box": [
+      190.0,
+      397.0,
+      198.0,
+      405.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "hemorragie",
+     "label": "Hémorragie",
+     "box": [
+      60.0,
+      415.0,
+      68.0,
+      423.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      60.0,
+      430.0,
+      68.0,
+      438.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "eclampsie",
+     "label": "Eclampsie",
+     "box": [
+      60.0,
+      445.0,
+      68.0,
+      453.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "phlebite",
+     "label": "Phlébite",
+     "box": [
+      60.0,
+      460.0,
+      68.0,
+      468.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "complications_mammaires",
+     "label": "Complications mammaires",
+     "box": [
+      220.0,
+      415.0,
+      228.0,
+      423.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "anemie",
+     "label": "Anémie",
+     "box": [
+      220.0,
+      430.0,
+      228.0,
+      438.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.complications_type",
+     "code": "autres",
+     "label": "Autres",
+     "box": [
+      220.0,
+      445.0,
+      228.0,
+      453.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.prise_medicaments",
+     "code": null,
+     "label": "Notion de prise de médicaments :",
+     "box": [
+      190.0,
+      481.0,
+      198.0,
+      489.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.traitement",
+     "code": "fer",
+     "label": "Fer",
+     "box": [
+      60.0,
+      533.0,
+      68.0,
+      541.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.traitement",
+     "code": "vitamine_a",
+     "label": "Vitamine A",
+     "box": [
+      140.0,
+      533.0,
+      148.0,
+      541.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.pf_desire",
+     "code": null,
+     "label": "Désire utiliser une méthode",
+     "box": [
+      46.0,
+      625.0,
+      54.0,
+      633.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.pf_methode",
+     "code": "pilule",
+     "label": "pilule",
+     "box": [
+      140.0,
+      643.0,
+      148.0,
+      651.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.pf_methode",
+     "code": "diu",
+     "label": "DIU",
+     "box": [
+      210.0,
+      643.0,
+      218.0,
+      651.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.pf_prescription",
+     "code": null,
+     "label": "Prescription faite",
+     "box": [
+      46.0,
+      661.0,
+      54.0,
+      669.0
+     ]
+    },
+    {
+     "key": "pp_precoce_mere.pf_referee",
+     "code": null,
+     "label": "Référée :",
+     "box": [
+      46.0,
+      677.0,
+      54.0,
+      685.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Entre le 7ème et 8ème jour après l'accouchement",
+     "x0": 40.0,
+     "x1": 216.29,
+     "cy": 79.19
+    },
+    {
+     "text": "Date de la consultation :",
+     "x0": 330.0,
+     "x1": 418.07,
+     "cy": 77.19
+    },
+    {
+     "text": "Après le 8ème jour de l'accouchement",
+     "x0": 40.0,
+     "x1": 175.83,
+     "cy": 93.19
+    },
+    {
+     "text": "Etat général :",
+     "x0": 46.0,
+     "x1": 96.7,
+     "cy": 121.19
+    },
+    {
+     "text": "Pouls",
+     "x0": 260.0,
+     "x1": 282.25,
+     "cy": 139.2
+    },
+    {
+     "text": "Poids",
+     "x0": 360.0,
+     "x1": 382.25,
+     "cy": 139.2
+    },
+    {
+     "text": "Etat des conjonctives :",
+     "x0": 46.0,
+     "x1": 126.06,
+     "cy": 159.19
+    },
+    {
+     "text": "Normales",
+     "x0": 172.0,
+     "x1": 206.25,
+     "cy": 159.19
+    },
+    {
+     "text": "Décolorées",
+     "x0": 262.0,
+     "x1": 302.48,
+     "cy": 159.19
+    },
+    {
+     "text": "Présence du globe utérin",
+     "x0": 58.0,
+     "x1": 146.96,
+     "cy": 177.19
+    },
+    {
+     "text": "Etat des lochies :",
+     "x0": 46.0,
+     "x1": 111.82,
+     "cy": 195.19
+    },
+    {
+     "text": "Fade",
+     "x0": 172.0,
+     "x1": 190.25,
+     "cy": 195.2
+    },
+    {
+     "text": "fétide",
+     "x0": 242.0,
+     "x1": 261.59,
+     "cy": 195.2
+    },
+    {
+     "text": "claires",
+     "x0": 172.0,
+     "x1": 195.13,
+     "cy": 211.2
+    },
+    {
+     "text": "sanglantes",
+     "x0": 242.0,
+     "x1": 280.71,
+     "cy": 211.2
+    },
+    {
+     "text": "Jaunâtres",
+     "x0": 322.0,
+     "x1": 357.15,
+     "cy": 211.2
+    },
+    {
+     "text": "Etat du périnée :",
+     "x0": 46.0,
+     "x1": 108.7,
+     "cy": 231.19
+    },
+    {
+     "text": "Épisiotomie",
+     "x0": 72.0,
+     "x1": 113.37,
+     "cy": 263.19
+    },
+    {
+     "text": "Réparée",
+     "x0": 212.0,
+     "x1": 242.7,
+     "cy": 263.19
+    },
+    {
+     "text": "Déchirure",
+     "x0": 72.0,
+     "x1": 106.69,
+     "cy": 279.19
+    },
+    {
+     "text": "Etat des sphincters (anal et urétral) :",
+     "x0": 46.0,
+     "x1": 174.97,
+     "cy": 301.19
+    },
+    {
+     "text": "Anormal",
+     "x0": 312.0,
+     "x1": 341.81,
+     "cy": 301.19
+    },
+    {
+     "text": "Césarienne :",
+     "x0": 58.0,
+     "x1": 103.37,
+     "cy": 321.19
+    },
+    {
+     "text": "Etat de la cicatrice :",
+     "x0": 180.0,
+     "x1": 249.83,
+     "cy": 321.19
+    },
+    {
+     "text": "Etat des seins :",
+     "x0": 46.0,
+     "x1": 100.72,
+     "cy": 341.19
+    },
+    {
+     "text": "lymphangite",
+     "x0": 212.0,
+     "x1": 255.15,
+     "cy": 341.19
+    },
+    {
+     "text": "mastite et abcès",
+     "x0": 302.0,
+     "x1": 360.27,
+     "cy": 341.19
+    },
+    {
+     "text": "Etat des mollets :",
+     "x0": 46.0,
+     "x1": 107.38,
+     "cy": 361.19
+    },
+    {
+     "text": "Rouges",
+     "x0": 142.0,
+     "x1": 169.59,
+     "cy": 377.19
+    },
+    {
+     "text": "Chauds",
+     "x0": 212.0,
+     "x1": 239.59,
+     "cy": 377.19
+    },
+    {
+     "text": "Douloureux à la dorsiflexion",
+     "x0": 282.0,
+     "x1": 380.73,
+     "cy": 377.19
+    },
+    {
+     "text": "Présence de complication :",
+     "x0": 46.0,
+     "x1": 149.61,
+     "cy": 401.19
+    },
+    {
+     "text": "Hémorragie",
+     "x0": 72.0,
+     "x1": 113.81,
+     "cy": 419.19
+    },
+    {
+     "text": "Complications mammaires",
+     "x0": 232.0,
+     "x1": 326.25,
+     "cy": 419.19
+    },
+    {
+     "text": "Infection",
+     "x0": 72.0,
+     "x1": 102.26,
+     "cy": 434.2
+    },
+    {
+     "text": "Anémie",
+     "x0": 232.0,
+     "x1": 259.14,
+     "cy": 434.19
+    },
+    {
+     "text": "Eclampsie",
+     "x0": 72.0,
+     "x1": 108.92,
+     "cy": 449.19
+    },
+    {
+     "text": "Autres",
+     "x0": 232.0,
+     "x1": 255.14,
+     "cy": 449.19
+    },
+    {
+     "text": "Phlébite",
+     "x0": 72.0,
+     "x1": 100.93,
+     "cy": 464.19
+    },
+    {
+     "text": "Notion de prise de médicaments :",
+     "x0": 46.0,
+     "x1": 165.18,
+     "cy": 485.19
+    },
+    {
+     "text": "Traitement prescrit :",
+     "x0": 46.0,
+     "x1": 117.15,
+     "cy": 521.19
+    },
+    {
+     "text": "Fer",
+     "x0": 72.0,
+     "x1": 84.02,
+     "cy": 537.19
+    },
+    {
+     "text": "Vitamine A",
+     "x0": 152.0,
+     "x1": 190.7,
+     "cy": 537.19
+    },
+    {
+     "text": "Autres à préciser : ..........................................",
+     "x0": 46.0,
+     "x1": 206.57,
+     "cy": 557.19
+    },
+    {
+     "text": "Prochain rendez-vous le",
+     "x0": 46.0,
+     "x1": 134.5,
+     "cy": 571.19
+    },
+    {
+     "text": "Désire utiliser une méthode",
+     "x0": 58.0,
+     "x1": 155.39,
+     "cy": 629.19
+    },
+    {
+     "text": "Si oui, laquelle :",
+     "x0": 46.0,
+     "x1": 102.49,
+     "cy": 647.19
+    },
+    {
+     "text": "pilule",
+     "x0": 152.0,
+     "x1": 170.69,
+     "cy": 647.2
+    },
+    {
+     "text": "DIU",
+     "x0": 222.0,
+     "x1": 235.8,
+     "cy": 647.19
+    },
+    {
+     "text": "Autre à préciser : ..........................",
+     "x0": 280.0,
+     "x1": 400.98,
+     "cy": 647.2
+    },
+    {
+     "text": "Prescription faite",
+     "x0": 58.0,
+     "x1": 117.6,
+     "cy": 665.19
+    },
+    {
+     "text": "Référée :",
+     "x0": 58.0,
+     "x1": 90.92,
+     "cy": 681.19
+    },
+    {
+     "text": "Si la mère ne désire pas une méthode contraceptive : Pourquoi ?",
+     "x0": 46.0,
+     "x1": 276.36,
+     "cy": 699.19
+    }
+   ]
+  },
+  "pp_precoce_nne": {
+   "boxes": [
+    {
+     "key": "pp_precoce_nne.premature",
+     "code": null,
+     "label": "Nouveau-né prématuré",
+     "box": [
+      46.0,
+      153.0,
+      54.0,
+      161.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.hypotrophe",
+     "code": null,
+     "label": "Nouveau-né hypotrophe",
+     "box": [
+      190.0,
+      153.0,
+      198.0,
+      161.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.allaitement",
+     "code": "exclusif",
+     "label": "exclusivement au sein",
+     "box": [
+      110.0,
+      175.0,
+      118.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.allaitement",
+     "code": "artificiel",
+     "label": "Artificiel",
+     "box": [
+      250.0,
+      175.0,
+      258.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.allaitement",
+     "code": "mixte",
+     "label": "mixte",
+     "box": [
+      330.0,
+      175.0,
+      338.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "convulsions",
+     "label": "Convulsions",
+     "box": [
+      50.0,
+      217.0,
+      58.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "refus_de_teter",
+     "label": "Refus de téter",
+     "box": [
+      175.0,
+      217.0,
+      183.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "hematemeses",
+     "label": "Hématémèses",
+     "box": [
+      300.0,
+      217.0,
+      308.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "melaenas",
+     "label": "Mélaenas",
+     "box": [
+      425.0,
+      217.0,
+      433.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "diarrhee",
+     "label": "Diarrhée",
+     "box": [
+      50.0,
+      235.0,
+      58.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "ictere",
+     "label": "Ictère",
+     "box": [
+      175.0,
+      235.0,
+      183.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "tirage_sous_costal",
+     "label": "Tirage sous costal",
+     "box": [
+      300.0,
+      235.0,
+      308.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "toux",
+     "label": "Toux",
+     "box": [
+      425.0,
+      235.0,
+      433.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "rythme_respiratoire_anormal",
+     "label": "Rythme respiratoire anormal",
+     "box": [
+      50.0,
+      253.0,
+      58.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "fievre",
+     "label": "Fièvre",
+     "box": [
+      175.0,
+      253.0,
+      183.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.signes_graves",
+     "code": "hypothermie",
+     "label": "Hypothermie",
+     "box": [
+      300.0,
+      253.0,
+      308.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.traumatismes",
+     "code": "bosse_cephalohematome",
+     "label": "Bosse sérosanguine ou céphalohématome",
+     "box": [
+      60.0,
+      325.0,
+      68.0,
+      333.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.traumatismes",
+     "code": "luxation_hanche",
+     "label": "Luxation congénitale de la hanche",
+     "box": [
+      60.0,
+      341.0,
+      68.0,
+      349.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.traumatismes",
+     "code": "mobilite_membre",
+     "label": "Diminution ou absence de la mobilité d'un membre",
+     "box": [
+      60.0,
+      357.0,
+      68.0,
+      365.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.evaluation_allaitement",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      250.0,
+      405.0,
+      258.0,
+      413.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.evaluation_allaitement",
+     "code": "a_problemes",
+     "label": "A problèmes",
+     "box": [
+      320.0,
+      405.0,
+      328.0,
+      413.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.vaccins",
+     "code": "bcg",
+     "label": "BCG",
+     "box": [
+      190.0,
+      443.0,
+      198.0,
+      451.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.vaccins",
+     "code": "hb",
+     "label": "HB",
+     "box": [
+      250.0,
+      443.0,
+      258.0,
+      451.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.vitamine_d",
+     "code": null,
+     "label": "Supplémentation en vitamine D",
+     "box": [
+      46.0,
+      463.0,
+      54.0,
+      471.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "ictere",
+     "label": "Ictère",
+     "box": [
+      60.0,
+      507.0,
+      68.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      140.0,
+      507.0,
+      148.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "conjonctivite",
+     "label": "Conjonctivite",
+     "box": [
+      220.0,
+      507.0,
+      228.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "traumatisme",
+     "label": "Traumatisme",
+     "box": [
+      60.0,
+      525.0,
+      68.0,
+      533.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "malformation",
+     "label": "Malformation",
+     "box": [
+      140.0,
+      525.0,
+      148.0,
+      533.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.complications",
+     "code": "autres",
+     "label": "Autres",
+     "box": [
+      60.0,
+      543.0,
+      68.0,
+      551.0
+     ]
+    },
+    {
+     "key": "pp_precoce_nne.transfert",
+     "code": null,
+     "label": "Transfert",
+     "box": [
+      46.0,
+      678.0,
+      54.0,
+      686.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Date de la consultation :",
+     "x0": 330.0,
+     "x1": 418.09,
+     "cy": 77.19
+    },
+    {
+     "text": "Age",
+     "x0": 46.0,
+     "x1": 62.5,
+     "cy": 113.19
+    },
+    {
+     "text": "Température",
+     "x0": 190.0,
+     "x1": 238.06,
+     "cy": 113.19
+    },
+    {
+     "text": "Poids",
+     "x0": 380.0,
+     "x1": 402.27,
+     "cy": 113.19
+    },
+    {
+     "text": "Taille",
+     "x0": 46.0,
+     "x1": 67.38,
+     "cy": 135.19
+    },
+    {
+     "text": "Périmètre crânien",
+     "x0": 190.0,
+     "x1": 255.39,
+     "cy": 135.19
+    },
+    {
+     "text": "Nouveau-né prématuré",
+     "x0": 58.0,
+     "x1": 140.3,
+     "cy": 157.19
+    },
+    {
+     "text": "Nouveau-né hypotrophe",
+     "x0": 202.0,
+     "x1": 287.86,
+     "cy": 157.19
+    },
+    {
+     "text": "Allaitement :",
+     "x0": 46.0,
+     "x1": 94.05,
+     "cy": 179.19
+    },
+    {
+     "text": "exclusivement au sein",
+     "x0": 122.0,
+     "x1": 200.74,
+     "cy": 179.19
+    },
+    {
+     "text": "Artificiel",
+     "x0": 262.0,
+     "x1": 290.04,
+     "cy": 179.19
+    },
+    {
+     "text": "mixte",
+     "x0": 342.0,
+     "x1": 361.15,
+     "cy": 179.19
+    },
+    {
+     "text": "Signes d'une affection grave :",
+     "x0": 46.0,
+     "x1": 159.53,
+     "cy": 201.19
+    },
+    {
+     "text": "Convulsions",
+     "x0": 62.0,
+     "x1": 102.88,
+     "cy": 221.37
+    },
+    {
+     "text": "Refus de téter",
+     "x0": 187.0,
+     "x1": 234.14,
+     "cy": 221.37
+    },
+    {
+     "text": "Hématémèses",
+     "x0": 312.0,
+     "x1": 360.38,
+     "cy": 221.36
+    },
+    {
+     "text": "Mélaenas",
+     "x0": 437.0,
+     "x1": 469.55,
+     "cy": 221.36
+    },
+    {
+     "text": "Diarrhée",
+     "x0": 62.0,
+     "x1": 90.79,
+     "cy": 239.37
+    },
+    {
+     "text": "Tirage sous costal",
+     "x0": 312.0,
+     "x1": 372.89,
+     "cy": 239.37
+    },
+    {
+     "text": "Toux",
+     "x0": 437.0,
+     "x1": 453.71,
+     "cy": 239.37
+    },
+    {
+     "text": "Rythme respiratoire anormal",
+     "x0": 62.0,
+     "x1": 156.64,
+     "cy": 257.36
+    },
+    {
+     "text": "Fièvre",
+     "x0": 187.0,
+     "x1": 207.87,
+     "cy": 257.37
+    },
+    {
+     "text": "Hypothermie",
+     "x0": 312.0,
+     "x1": 354.55,
+     "cy": 257.36
+    },
+    {
+     "text": "Contusions, lésions traumatiques et malformations :",
+     "x0": 46.0,
+     "x1": 246.08,
+     "cy": 309.19
+    },
+    {
+     "text": "Bosse sérosanguine ou céphalohématome",
+     "x0": 72.0,
+     "x1": 223.67,
+     "cy": 329.19
+    },
+    {
+     "text": "Luxation congénitale de la hanche",
+     "x0": 72.0,
+     "x1": 193.45,
+     "cy": 345.19
+    },
+    {
+     "text": "Diminution ou absence de la mobilité d'un membre",
+     "x0": 72.0,
+     "x1": 251.42,
+     "cy": 361.19
+    },
+    {
+     "text": "Evaluation de l'allaitement maternel :",
+     "x0": 46.0,
+     "x1": 186.66,
+     "cy": 409.19
+    },
+    {
+     "text": "Normal",
+     "x0": 262.0,
+     "x1": 287.82,
+     "cy": 409.19
+    },
+    {
+     "text": "A problèmes",
+     "x0": 332.0,
+     "x1": 376.94,
+     "cy": 409.19
+    },
+    {
+     "text": "Vaccins administrés ce jour :",
+     "x0": 60.0,
+     "x1": 161.85,
+     "cy": 447.19
+    },
+    {
+     "text": "BCG",
+     "x0": 202.0,
+     "x1": 219.38,
+     "cy": 447.19
+    },
+    {
+     "text": "Supplémentation en vitamine D",
+     "x0": 58.0,
+     "x1": 169.2,
+     "cy": 467.19
+    },
+    {
+     "text": "Présence de complications et de malformation :",
+     "x0": 46.0,
+     "x1": 227.87,
+     "cy": 491.19
+    },
+    {
+     "text": "Infection",
+     "x0": 152.0,
+     "x1": 182.28,
+     "cy": 511.19
+    },
+    {
+     "text": "Conjonctivite",
+     "x0": 232.0,
+     "x1": 277.83,
+     "cy": 511.19
+    },
+    {
+     "text": "Traumatisme",
+     "x0": 72.0,
+     "x1": 118.71,
+     "cy": 529.19
+    },
+    {
+     "text": "Malformation",
+     "x0": 152.0,
+     "x1": 198.27,
+     "cy": 529.19
+    },
+    {
+     "text": "Autres",
+     "x0": 72.0,
+     "x1": 95.16,
+     "cy": 547.19
+    },
+    {
+     "text": "Vu par :",
+     "x0": 46.0,
+     "x1": 76.28,
+     "cy": 587.19
+    },
+    {
+     "text": "Décision prise :",
+     "x0": 46.0,
+     "x1": 102.94,
+     "cy": 617.19
+    },
+    {
+     "text": "Traitement prescrit :",
+     "x0": 46.0,
+     "x1": 119.39,
+     "cy": 647.19
+    },
+    {
+     "text": "Transfert",
+     "x0": 58.0,
+     "x1": 90.05,
+     "cy": 682.19
+    },
+    {
+     "text": "Préciser l'établissement de référence :",
+     "x0": 120.0,
+     "x1": 258.06,
+     "cy": 682.19
+    },
+    {
+     "text": "Revenir pour une visite de suivi nécessaire le",
+     "x0": 46.0,
+     "x1": 208.77,
+     "cy": 767.19
+    }
+   ]
+  },
+  "pp_tardif_mere": {
+   "boxes": [
+    {
+     "key": "pp_tardif_mere.moment",
+     "code": "dans_les_delais",
+     "label": "Entre le 40ème et 50ème jour après l'accouchement",
+     "box": [
+      270.0,
+      75.0,
+      278.0,
+      83.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.moment",
+     "code": "apres",
+     "label": "Après le 50ème jour de l'accouchement",
+     "box": [
+      250.0,
+      89.0,
+      258.0,
+      97.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.conjonctives",
+     "code": "normales",
+     "label": "Normales",
+     "box": [
+      160.0,
+      155.0,
+      168.0,
+      163.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.conjonctives",
+     "code": "decolorees",
+     "label": "Décolorées",
+     "box": [
+      250.0,
+      155.0,
+      258.0,
+      163.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.globe_uterin",
+     "code": null,
+     "label": "Présence du globe utérin",
+     "box": [
+      46.0,
+      173.0,
+      54.0,
+      181.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.lochies",
+     "code": "fade",
+     "label": "Fade",
+     "box": [
+      160.0,
+      191.0,
+      168.0,
+      199.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.lochies",
+     "code": "fetide",
+     "label": "fétide",
+     "box": [
+      230.0,
+      191.0,
+      238.0,
+      199.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.lochies",
+     "code": "claires",
+     "label": "claires",
+     "box": [
+      160.0,
+      207.0,
+      168.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.lochies",
+     "code": "sanglantes",
+     "label": "sanglantes",
+     "box": [
+      230.0,
+      207.0,
+      238.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.lochies",
+     "code": "jaunatres",
+     "label": "Jaunâtres",
+     "box": [
+      310.0,
+      207.0,
+      318.0,
+      215.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.perinee",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      60.0,
+      243.0,
+      68.0,
+      251.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.perinee",
+     "code": "episiotomie",
+     "label": "Épisiotomie",
+     "box": [
+      60.0,
+      259.0,
+      68.0,
+      267.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.perinee",
+     "code": "dechirure",
+     "label": "Déchirure",
+     "box": [
+      60.0,
+      275.0,
+      68.0,
+      283.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.perinee",
+     "code": "reparee",
+     "label": "Réparée",
+     "box": [
+      200.0,
+      259.0,
+      208.0,
+      267.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.sphincters",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      230.0,
+      297.0,
+      238.0,
+      305.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.sphincters",
+     "code": "anormal",
+     "label": "Anormal",
+     "box": [
+      300.0,
+      297.0,
+      308.0,
+      305.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.cesarienne",
+     "code": null,
+     "label": "Césarienne :",
+     "box": [
+      46.0,
+      317.0,
+      54.0,
+      325.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.seins",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      130.0,
+      337.0,
+      138.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.seins",
+     "code": "lymphangite",
+     "label": "lymphangite",
+     "box": [
+      200.0,
+      337.0,
+      208.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.seins",
+     "code": "mastite_et_abces",
+     "label": "mastite et abcès",
+     "box": [
+      290.0,
+      337.0,
+      298.0,
+      345.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.mollets",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      60.0,
+      373.0,
+      68.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.mollets",
+     "code": "rouges",
+     "label": "Rouges",
+     "box": [
+      130.0,
+      373.0,
+      138.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.mollets",
+     "code": "chauds",
+     "label": "Chauds",
+     "box": [
+      200.0,
+      373.0,
+      208.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.mollets",
+     "code": "douloureux_a_la_dorsiflexion",
+     "label": "Douloureux à la dorsiflexion",
+     "box": [
+      270.0,
+      373.0,
+      278.0,
+      381.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complication",
+     "code": null,
+     "label": "Présence de complication :",
+     "box": [
+      190.0,
+      397.0,
+      198.0,
+      405.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "hemorragie",
+     "label": "Hémorragie",
+     "box": [
+      60.0,
+      415.0,
+      68.0,
+      423.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      60.0,
+      430.0,
+      68.0,
+      438.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "eclampsie",
+     "label": "Eclampsie",
+     "box": [
+      60.0,
+      445.0,
+      68.0,
+      453.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "phlebite",
+     "label": "Phlébite",
+     "box": [
+      60.0,
+      460.0,
+      68.0,
+      468.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "complications_mammaires",
+     "label": "Complications mammaires",
+     "box": [
+      220.0,
+      415.0,
+      228.0,
+      423.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "anemie",
+     "label": "Anémie",
+     "box": [
+      220.0,
+      430.0,
+      228.0,
+      438.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.complications_type",
+     "code": "autres",
+     "label": "Autres",
+     "box": [
+      220.0,
+      445.0,
+      228.0,
+      453.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.prise_medicaments",
+     "code": null,
+     "label": "Notion de prise de médicaments :",
+     "box": [
+      190.0,
+      481.0,
+      198.0,
+      489.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.traitement",
+     "code": "fer",
+     "label": "Fer",
+     "box": [
+      60.0,
+      533.0,
+      68.0,
+      541.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.traitement",
+     "code": "vitamine_a",
+     "label": "Vitamine A",
+     "box": [
+      140.0,
+      533.0,
+      148.0,
+      541.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.pf_desire",
+     "code": null,
+     "label": "Désire utiliser une méthode",
+     "box": [
+      46.0,
+      625.0,
+      54.0,
+      633.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.pf_methode",
+     "code": "pilule",
+     "label": "pilule",
+     "box": [
+      140.0,
+      643.0,
+      148.0,
+      651.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.pf_methode",
+     "code": "diu",
+     "label": "DIU",
+     "box": [
+      210.0,
+      643.0,
+      218.0,
+      651.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.pf_prescription",
+     "code": null,
+     "label": "Prescription faite",
+     "box": [
+      46.0,
+      661.0,
+      54.0,
+      669.0
+     ]
+    },
+    {
+     "key": "pp_tardif_mere.pf_referee",
+     "code": null,
+     "label": "Référée :",
+     "box": [
+      46.0,
+      677.0,
+      54.0,
+      685.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Entre le 40ème et 50ème jour après l'accouchement",
+     "x0": 40.0,
+     "x1": 225.22,
+     "cy": 79.18
+    },
+    {
+     "text": "Date de la consultation :",
+     "x0": 330.0,
+     "x1": 418.1,
+     "cy": 77.19
+    },
+    {
+     "text": "Après le 50ème jour de l'accouchement",
+     "x0": 40.0,
+     "x1": 180.31,
+     "cy": 93.18
+    },
+    {
+     "text": "Etat général :",
+     "x0": 46.0,
+     "x1": 96.74,
+     "cy": 121.19
+    },
+    {
+     "text": "Pouls",
+     "x0": 260.0,
+     "x1": 282.29,
+     "cy": 139.19
+    },
+    {
+     "text": "Poids",
+     "x0": 360.0,
+     "x1": 382.29,
+     "cy": 139.19
+    },
+    {
+     "text": "Etat des conjonctives :",
+     "x0": 46.0,
+     "x1": 126.1,
+     "cy": 159.19
+    },
+    {
+     "text": "Normales",
+     "x0": 172.0,
+     "x1": 206.28,
+     "cy": 159.18
+    },
+    {
+     "text": "Décolorées",
+     "x0": 262.0,
+     "x1": 302.51,
+     "cy": 159.19
+    },
+    {
+     "text": "Présence du globe utérin",
+     "x0": 58.0,
+     "x1": 146.99,
+     "cy": 177.19
+    },
+    {
+     "text": "Etat des lochies :",
+     "x0": 46.0,
+     "x1": 111.86,
+     "cy": 195.19
+    },
+    {
+     "text": "Fade",
+     "x0": 172.0,
+     "x1": 190.29,
+     "cy": 195.19
+    },
+    {
+     "text": "fétide",
+     "x0": 242.0,
+     "x1": 261.62,
+     "cy": 195.19
+    },
+    {
+     "text": "claires",
+     "x0": 172.0,
+     "x1": 195.17,
+     "cy": 211.19
+    },
+    {
+     "text": "sanglantes",
+     "x0": 242.0,
+     "x1": 280.74,
+     "cy": 211.19
+    },
+    {
+     "text": "Jaunâtres",
+     "x0": 322.0,
+     "x1": 357.18,
+     "cy": 211.19
+    },
+    {
+     "text": "Etat du périnée :",
+     "x0": 46.0,
+     "x1": 108.74,
+     "cy": 231.19
+    },
+    {
+     "text": "Épisiotomie",
+     "x0": 72.0,
+     "x1": 113.4,
+     "cy": 263.18
+    },
+    {
+     "text": "Réparée",
+     "x0": 212.0,
+     "x1": 242.74,
+     "cy": 263.19
+    },
+    {
+     "text": "Déchirure",
+     "x0": 72.0,
+     "x1": 106.73,
+     "cy": 279.19
+    },
+    {
+     "text": "Etat des sphincters (anal et urétral) :",
+     "x0": 46.0,
+     "x1": 175.0,
+     "cy": 301.19
+    },
+    {
+     "text": "Anormal",
+     "x0": 312.0,
+     "x1": 341.84,
+     "cy": 301.18
+    },
+    {
+     "text": "Césarienne :",
+     "x0": 58.0,
+     "x1": 103.41,
+     "cy": 321.19
+    },
+    {
+     "text": "Etat de la cicatrice :",
+     "x0": 180.0,
+     "x1": 249.86,
+     "cy": 321.19
+    },
+    {
+     "text": "Etat des seins :",
+     "x0": 46.0,
+     "x1": 100.75,
+     "cy": 341.19
+    },
+    {
+     "text": "lymphangite",
+     "x0": 212.0,
+     "x1": 255.18,
+     "cy": 341.18
+    },
+    {
+     "text": "mastite et abcès",
+     "x0": 302.0,
+     "x1": 360.3,
+     "cy": 341.18
+    },
+    {
+     "text": "Etat des mollets :",
+     "x0": 46.0,
+     "x1": 107.42,
+     "cy": 361.18
+    },
+    {
+     "text": "Rouges",
+     "x0": 142.0,
+     "x1": 169.62,
+     "cy": 377.19
+    },
+    {
+     "text": "Chauds",
+     "x0": 212.0,
+     "x1": 239.62,
+     "cy": 377.19
+    },
+    {
+     "text": "Douloureux à la dorsiflexion",
+     "x0": 282.0,
+     "x1": 380.76,
+     "cy": 377.19
+    },
+    {
+     "text": "Présence de complication :",
+     "x0": 46.0,
+     "x1": 149.65,
+     "cy": 401.18
+    },
+    {
+     "text": "Hémorragie",
+     "x0": 72.0,
+     "x1": 113.84,
+     "cy": 419.18
+    },
+    {
+     "text": "Complications mammaires",
+     "x0": 232.0,
+     "x1": 326.29,
+     "cy": 419.18
+    },
+    {
+     "text": "Infection",
+     "x0": 72.0,
+     "x1": 102.3,
+     "cy": 434.19
+    },
+    {
+     "text": "Anémie",
+     "x0": 232.0,
+     "x1": 259.18,
+     "cy": 434.18
+    },
+    {
+     "text": "Eclampsie",
+     "x0": 72.0,
+     "x1": 108.95,
+     "cy": 449.18
+    },
+    {
+     "text": "Autres",
+     "x0": 232.0,
+     "x1": 255.18,
+     "cy": 449.19
+    },
+    {
+     "text": "Phlébite",
+     "x0": 72.0,
+     "x1": 100.96,
+     "cy": 464.19
+    },
+    {
+     "text": "Notion de prise de médicaments :",
+     "x0": 46.0,
+     "x1": 165.22,
+     "cy": 485.18
+    },
+    {
+     "text": "Traitement prescrit :",
+     "x0": 46.0,
+     "x1": 117.18,
+     "cy": 521.18
+    },
+    {
+     "text": "Fer",
+     "x0": 72.0,
+     "x1": 84.06,
+     "cy": 537.19
+    },
+    {
+     "text": "Vitamine A",
+     "x0": 152.0,
+     "x1": 190.73,
+     "cy": 537.18
+    },
+    {
+     "text": "Autres à préciser : ..........................................",
+     "x0": 46.0,
+     "x1": 206.6,
+     "cy": 557.19
+    },
+    {
+     "text": "Prochain rendez-vous le",
+     "x0": 46.0,
+     "x1": 134.53,
+     "cy": 571.19
+    },
+    {
+     "text": "Désire utiliser une méthode",
+     "x0": 58.0,
+     "x1": 155.42,
+     "cy": 629.18
+    },
+    {
+     "text": "Si oui, laquelle :",
+     "x0": 46.0,
+     "x1": 102.53,
+     "cy": 647.19
+    },
+    {
+     "text": "pilule",
+     "x0": 152.0,
+     "x1": 170.73,
+     "cy": 647.19
+    },
+    {
+     "text": "DIU",
+     "x0": 222.0,
+     "x1": 235.83,
+     "cy": 647.19
+    },
+    {
+     "text": "Autre à préciser : ..........................",
+     "x0": 280.0,
+     "x1": 401.01,
+     "cy": 647.19
+    },
+    {
+     "text": "Prescription faite",
+     "x0": 58.0,
+     "x1": 117.63,
+     "cy": 665.19
+    },
+    {
+     "text": "Référée :",
+     "x0": 58.0,
+     "x1": 90.96,
+     "cy": 681.19
+    },
+    {
+     "text": "Si la mère ne désire pas une méthode contraceptive : Pourquoi ?",
+     "x0": 46.0,
+     "x1": 276.39,
+     "cy": 699.18
+    }
+   ]
+  },
+  "pp_tardif_nne": {
+   "boxes": [
+    {
+     "key": "pp_tardif_nne.premature",
+     "code": null,
+     "label": "Nouveau-né prématuré",
+     "box": [
+      46.0,
+      153.0,
+      54.0,
+      161.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.hypotrophe",
+     "code": null,
+     "label": "Nouveau-né hypotrophe",
+     "box": [
+      190.0,
+      153.0,
+      198.0,
+      161.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.allaitement",
+     "code": "exclusif",
+     "label": "exclusivement au sein",
+     "box": [
+      110.0,
+      175.0,
+      118.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.allaitement",
+     "code": "artificiel",
+     "label": "Artificiel",
+     "box": [
+      250.0,
+      175.0,
+      258.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.allaitement",
+     "code": "mixte",
+     "label": "mixte",
+     "box": [
+      330.0,
+      175.0,
+      338.0,
+      183.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "convulsions",
+     "label": "Convulsions",
+     "box": [
+      50.0,
+      217.0,
+      58.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "refus_de_teter",
+     "label": "Refus de téter",
+     "box": [
+      175.0,
+      217.0,
+      183.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "hematemeses",
+     "label": "Hématémèses",
+     "box": [
+      300.0,
+      217.0,
+      308.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "melaenas",
+     "label": "Mélaenas",
+     "box": [
+      425.0,
+      217.0,
+      433.0,
+      225.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "diarrhee",
+     "label": "Diarrhée",
+     "box": [
+      50.0,
+      235.0,
+      58.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "ictere",
+     "label": "Ictère",
+     "box": [
+      175.0,
+      235.0,
+      183.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "tirage_sous_costal",
+     "label": "Tirage sous costal",
+     "box": [
+      300.0,
+      235.0,
+      308.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "toux",
+     "label": "Toux",
+     "box": [
+      425.0,
+      235.0,
+      433.0,
+      243.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "rythme_respiratoire_anormal",
+     "label": "Rythme respiratoire anormal",
+     "box": [
+      50.0,
+      253.0,
+      58.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "fievre",
+     "label": "Fièvre",
+     "box": [
+      175.0,
+      253.0,
+      183.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.signes_graves",
+     "code": "hypothermie",
+     "label": "Hypothermie",
+     "box": [
+      300.0,
+      253.0,
+      308.0,
+      261.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.traumatismes",
+     "code": "bosse_cephalohematome",
+     "label": "Bosse sérosanguine ou céphalohématome",
+     "box": [
+      60.0,
+      325.0,
+      68.0,
+      333.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.traumatismes",
+     "code": "luxation_hanche",
+     "label": "Luxation congénitale de la hanche",
+     "box": [
+      60.0,
+      341.0,
+      68.0,
+      349.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.traumatismes",
+     "code": "mobilite_membre",
+     "label": "Diminution ou absence de la mobilité d'un membre",
+     "box": [
+      60.0,
+      357.0,
+      68.0,
+      365.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.evaluation_allaitement",
+     "code": "normal",
+     "label": "Normal",
+     "box": [
+      250.0,
+      405.0,
+      258.0,
+      413.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.evaluation_allaitement",
+     "code": "a_problemes",
+     "label": "A problèmes",
+     "box": [
+      320.0,
+      405.0,
+      328.0,
+      413.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.vaccins",
+     "code": "bcg",
+     "label": "BCG",
+     "box": [
+      190.0,
+      443.0,
+      198.0,
+      451.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.vaccins",
+     "code": "hb",
+     "label": "HB",
+     "box": [
+      250.0,
+      443.0,
+      258.0,
+      451.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.vitamine_d",
+     "code": null,
+     "label": "Supplémentation en vitamine D",
+     "box": [
+      46.0,
+      463.0,
+      54.0,
+      471.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "ictere",
+     "label": "Ictère",
+     "box": [
+      60.0,
+      507.0,
+      68.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "infection",
+     "label": "Infection",
+     "box": [
+      140.0,
+      507.0,
+      148.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "conjonctivite",
+     "label": "Conjonctivite",
+     "box": [
+      220.0,
+      507.0,
+      228.0,
+      515.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "traumatisme",
+     "label": "Traumatisme",
+     "box": [
+      60.0,
+      525.0,
+      68.0,
+      533.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "malformation",
+     "label": "Malformation",
+     "box": [
+      140.0,
+      525.0,
+      148.0,
+      533.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.complications",
+     "code": "autres",
+     "label": "Autres",
+     "box": [
+      60.0,
+      543.0,
+      68.0,
+      551.0
+     ]
+    },
+    {
+     "key": "pp_tardif_nne.transfert",
+     "code": null,
+     "label": "Transfert",
+     "box": [
+      46.0,
+      678.0,
+      54.0,
+      686.0
+     ]
+    }
+   ],
+   "anchors": [
+    {
+     "text": "Date de la consultation :",
+     "x0": 330.0,
+     "x1": 418.11,
+     "cy": 77.18
+    },
+    {
+     "text": "Age",
+     "x0": 46.0,
+     "x1": 62.52,
+     "cy": 113.19
+    },
+    {
+     "text": "Température",
+     "x0": 190.0,
+     "x1": 238.08,
+     "cy": 113.18
+    },
+    {
+     "text": "Poids",
+     "x0": 380.0,
+     "x1": 402.3,
+     "cy": 113.19
+    },
+    {
+     "text": "Taille",
+     "x0": 46.0,
+     "x1": 67.4,
+     "cy": 135.19
+    },
+    {
+     "text": "Périmètre crânien",
+     "x0": 190.0,
+     "x1": 255.42,
+     "cy": 135.18
+    },
+    {
+     "text": "Nouveau-né prématuré",
+     "x0": 58.0,
+     "x1": 140.32,
+     "cy": 157.18
+    },
+    {
+     "text": "Nouveau-né hypotrophe",
+     "x0": 202.0,
+     "x1": 287.89,
+     "cy": 157.18
+    },
+    {
+     "text": "Allaitement :",
+     "x0": 46.0,
+     "x1": 94.07,
+     "cy": 179.18
+    },
+    {
+     "text": "exclusivement au sein",
+     "x0": 122.0,
+     "x1": 200.76,
+     "cy": 179.18
+    },
+    {
+     "text": "Artificiel",
+     "x0": 262.0,
+     "x1": 290.06,
+     "cy": 179.19
+    },
+    {
+     "text": "mixte",
+     "x0": 342.0,
+     "x1": 361.18,
+     "cy": 179.18
+    },
+    {
+     "text": "Signes d'une affection grave :",
+     "x0": 46.0,
+     "x1": 159.55,
+     "cy": 201.19
+    },
+    {
+     "text": "Convulsions",
+     "x0": 62.0,
+     "x1": 102.9,
+     "cy": 221.36
+    },
+    {
+     "text": "Refus de téter",
+     "x0": 187.0,
+     "x1": 234.17,
+     "cy": 221.36
+    },
+    {
+     "text": "Hématémèses",
+     "x0": 312.0,
+     "x1": 360.4,
+     "cy": 221.36
+    },
+    {
+     "text": "Mélaenas",
+     "x0": 437.0,
+     "x1": 469.57,
+     "cy": 221.36
+    },
+    {
+     "text": "Diarrhée",
+     "x0": 62.0,
+     "x1": 90.81,
+     "cy": 239.36
+    },
+    {
+     "text": "Tirage sous costal",
+     "x0": 312.0,
+     "x1": 372.91,
+     "cy": 239.36
+    },
+    {
+     "text": "Toux",
+     "x0": 437.0,
+     "x1": 453.73,
+     "cy": 239.36
+    },
+    {
+     "text": "Rythme respiratoire anormal",
+     "x0": 62.0,
+     "x1": 156.66,
+     "cy": 257.36
+    },
+    {
+     "text": "Fièvre",
+     "x0": 187.0,
+     "x1": 207.89,
+     "cy": 257.36
+    },
+    {
+     "text": "Hypothermie",
+     "x0": 312.0,
+     "x1": 354.57,
+     "cy": 257.36
+    },
+    {
+     "text": "Contusions, lésions traumatiques et malformations :",
+     "x0": 46.0,
+     "x1": 246.1,
+     "cy": 309.18
+    },
+    {
+     "text": "Bosse sérosanguine ou céphalohématome",
+     "x0": 72.0,
+     "x1": 223.7,
+     "cy": 329.18
+    },
+    {
+     "text": "Luxation congénitale de la hanche",
+     "x0": 72.0,
+     "x1": 193.47,
+     "cy": 345.19
+    },
+    {
+     "text": "Diminution ou absence de la mobilité d'un membre",
+     "x0": 72.0,
+     "x1": 251.44,
+     "cy": 361.18
+    },
+    {
+     "text": "Evaluation de l'allaitement maternel :",
+     "x0": 46.0,
+     "x1": 186.68,
+     "cy": 409.18
+    },
+    {
+     "text": "Normal",
+     "x0": 262.0,
+     "x1": 287.84,
+     "cy": 409.18
+    },
+    {
+     "text": "A problèmes",
+     "x0": 332.0,
+     "x1": 376.97,
+     "cy": 409.18
+    },
+    {
+     "text": "Vaccins administrés ce jour :",
+     "x0": 60.0,
+     "x1": 161.87,
+     "cy": 447.18
+    },
+    {
+     "text": "BCG",
+     "x0": 202.0,
+     "x1": 219.4,
+     "cy": 447.18
+    },
+    {
+     "text": "Supplémentation en vitamine D",
+     "x0": 58.0,
+     "x1": 169.22,
+     "cy": 467.18
+    },
+    {
+     "text": "Présence de complications et de malformation :",
+     "x0": 46.0,
+     "x1": 227.9,
+     "cy": 491.18
+    },
+    {
+     "text": "Infection",
+     "x0": 152.0,
+     "x1": 182.3,
+     "cy": 511.19
+    },
+    {
+     "text": "Conjonctivite",
+     "x0": 232.0,
+     "x1": 277.86,
+     "cy": 511.18
+    },
+    {
+     "text": "Traumatisme",
+     "x0": 72.0,
+     "x1": 118.74,
+     "cy": 529.18
+    },
+    {
+     "text": "Malformation",
+     "x0": 152.0,
+     "x1": 198.3,
+     "cy": 529.18
+    },
+    {
+     "text": "Autres",
+     "x0": 72.0,
+     "x1": 95.18,
+     "cy": 547.19
+    },
+    {
+     "text": "Vu par :",
+     "x0": 46.0,
+     "x1": 76.3,
+     "cy": 587.19
+    },
+    {
+     "text": "Décision prise :",
+     "x0": 46.0,
+     "x1": 102.97,
+     "cy": 617.18
+    },
+    {
+     "text": "Traitement prescrit :",
+     "x0": 46.0,
+     "x1": 119.42,
+     "cy": 647.18
+    },
+    {
+     "text": "Transfert",
+     "x0": 58.0,
+     "x1": 90.07,
+     "cy": 682.19
+    },
+    {
+     "text": "Préciser l'établissement de référence :",
+     "x0": 120.0,
+     "x1": 258.09,
+     "cy": 682.18
+    },
+    {
+     "text": "Revenir pour une visite de suivi nécessaire le",
+     "x0": 46.0,
+     "x1": 208.79,
+     "cy": 767.18
+    }
+   ]
+  }
+ }
+}

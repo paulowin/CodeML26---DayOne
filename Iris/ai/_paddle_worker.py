@@ -19,7 +19,7 @@ def main() -> None:
     out = []
     if major >= 3:
         ocr = PaddleOCR(lang="fr", use_doc_orientation_classify=False, use_doc_unwarping=False,
-                        use_textline_orientation=False)
+                        use_textline_orientation=False, enable_mkldnn=False)  # oneDNN : bug Windows CPU
         for res in ocr.predict(img[:, :, ::-1]):           # BGR attendu
             r = res.json.get("res", res.json) if hasattr(res, "json") else res
             for text, score, box in zip(r["rec_texts"], r["rec_scores"], r["rec_boxes"]):

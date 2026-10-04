@@ -21,6 +21,7 @@ os.environ.update({
     "WHATSAPP_PHONE_NUMBER_ID": "123",
     "WORKER_ENABLED": "false",
     "AI_ENABLED": "false",
+    "AI_CASES_CV": "false",          # les tests de cases fournissent leurs propres tokens OCR
 })
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
