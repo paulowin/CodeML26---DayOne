@@ -53,11 +53,8 @@ class WhatsAppClient:
         return r.json()["messages"][0]["id"]
 
 
-def get_client():
-    """Retourne le transport configuré (simulateur local ou vrai WhatsApp)."""
-    if get_settings().whatsapp_mode == "simulateur":
-        from app.simulator import SimulatorClient
-        return SimulatorClient()
+def get_client() -> "WhatsAppClient":
+    """Client WhatsApp Cloud API (seul transport)."""
     return WhatsAppClient()
 
 

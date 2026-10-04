@@ -11,10 +11,6 @@ class Settings(BaseSettings):
     # --- Base de données (SQLite par défaut, PostgreSQL via DATABASE_URL) ---
     database_url: str = "sqlite:///./data/dayone.db"
 
-    # --- Transport : "simulateur" (page web locale, aucun service externe) ou "reel" (Meta) ---
-    whatsapp_mode: str = "reel"
-    # Code d'accès demandé par la page simulateur (réseau local)
-    sim_access_code: str = "dayone"
     # Contact affiché sur la page /confidentialite (optionnel)
     contact_email: str = ""
 

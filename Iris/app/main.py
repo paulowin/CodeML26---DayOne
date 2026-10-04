@@ -42,21 +42,20 @@ def check_config():
     problems = []
     if not s.storage_encryption_key:
         problems.append("STORAGE_ENCRYPTION_KEY vide (python scripts/gen_key.py)")
-    if s.whatsapp_mode == "reel":
-        if not s.whatsapp_app_secret and not s.whatsapp_skip_signature:
-            problems.append("WHATSAPP_APP_SECRET vide : tous les webhooks seront refusés (401)")
-        if not s.whatsapp_access_token.startswith("EAA"):
-            problems.append("WHATSAPP_ACCESS_TOKEN ne commence pas par 'EAA' : ce n'est pas un jeton Meta")
-        if not s.whatsapp_phone_number_id.isdigit():
-            problems.append("WHATSAPP_PHONE_NUMBER_ID doit être l'identifiant numérique, pas le numéro (+1...)")
-        if s.whatsapp_access_token == s.whatsapp_verify_token:
-            problems.append("WHATSAPP_ACCESS_TOKEN identique au VERIFY_TOKEN : ce sont deux valeurs différentes")
+    if not s.whatsapp_app_secret and not s.whatsapp_skip_signature:
+        problems.append("WHATSAPP_APP_SECRET vide : tous les webhooks seront refusés (401)")
+    if not s.whatsapp_access_token.startswith("EAA"):
+        problems.append("WHATSAPP_ACCESS_TOKEN ne commence pas par 'EAA' : ce n'est pas un jeton Meta")
+    if not s.whatsapp_phone_number_id.isdigit():
+        problems.append("WHATSAPP_PHONE_NUMBER_ID doit être l'identifiant numérique, pas le numéro (+1...)")
+    if s.whatsapp_access_token == s.whatsapp_verify_token:
+        problems.append("WHATSAPP_ACCESS_TOKEN identique au VERIFY_TOKEN : ce sont deux valeurs différentes")
     if s.ai_enabled:
         problems += _check_ai(s)
     for p in problems:
         log.error("CONFIG .env : %s", p)
     if not problems:
-        log.info("Configuration .env OK (mode %s)", s.whatsapp_mode)
+        log.info("Configuration .env OK")
     return problems
 
 
