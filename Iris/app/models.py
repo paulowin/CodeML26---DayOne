@@ -175,6 +175,8 @@ class Page(Base):
     # JSON : clés des identifiants NON enregistrés pour cette page (ex. ["nom_parturiente"]),
     # pour dire à la sage-femme ce qui a été volontairement écarté — jamais la valeur
     identifiers_excluded: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # type de page IMPOSÉ par la sage-femme (page non reconnue) : la lecture suivante l'utilise
+    page_type_force: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
 
     record: Mapped[Record] = relationship(back_populates="pages")
 

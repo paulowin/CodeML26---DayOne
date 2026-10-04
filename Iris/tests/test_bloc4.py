@@ -677,3 +677,70 @@ def test_emojis_coherents_et_boutons_sobres():
     assert t("fr", "btn_all_right") == f"{OK} Tout est juste"
     assert t("fr", "unreadable") == f"{KO} Je n'arrive pas à lire cette case."
     assert t("fr", "page_received", n=2, rid="e2447f76").startswith("📷 Page 2 reçue")
+
+
+# ------------------------------------------------------------------ page non reconnue
+def _record_en_attente_ia(n_pages=1) -> str:
+    from app.storage import get_store
+    with SessionLocal() as db:
+        mw = db.scalar(select(Midwife).where(Midwife.wa_id == MIDWIFE)) or Midwife(wa_id=MIDWIFE)
+        db.add(mw)
+        db.flush()
+        rec = Record(midwife_id=mw.id, status=S.EN_ATTENTE_IA)
+        db.add(rec)
+        db.flush()
+        for i in range(n_pages):
+            key, sha = get_store().save(b"\xff\xd8page" + bytes([i]))
+            rec.pages.append(Page(page_number=i + 1, storage_key=key, sha256=sha, mime_type="image/jpeg",
+                                  size_bytes=6, wa_message_id=f"w-{uuid.uuid4().hex}",
+                                  captured_at=datetime.now(timezone.utc)))
+        db.commit()
+        return rec.id
+
+
+def test_page_non_reconnue_puis_type_impose_puis_saisie_guidee(client, fake_wa):
+    from ai.extract import PageResult
+    from app.services import ai_worker
+    calls = []
+
+    def unreadable(images, page_types=None):                # 1-4 / 1-5 : écriture cursive, rien de lisible
+        calls.append(page_types)
+        return [PageResult(0, page_types[0] if page_types else "inconnu")]
+
+    rid = _record_en_attente_ia()
+    with SessionLocal() as db:
+        ai_worker.process_next(db, extractor=unreadable)
+    flush(fake_wa)
+    q = fake_wa.sent[-1]
+    assert body_of(q) == "🟠 Je ne reconnais pas cette page (page 1). De quelle page s'agit-il ?"
+    titles = [r["title"] for r in q["interactive"]["action"]["sections"][0]["rows"]]
+    assert titles[:4] == ["Identification", "Antécédents", "Grossesse", "Accouchement"] and titles[-1] == "Autre"
+    assert all(len(t) <= 24 for t in titles)
+    with SessionLocal() as db:
+        assert db.get(Record, rid).status == S.A_REVISER
+
+    press(client, next(i for i in ids(q) if i.endswith(":grossesse_actuelle|" + i.split("|")[3])))
+    assert body_of(fake_wa.sent[-1]).startswith("⏳ Merci : je relis la page 1 comme « Grossesse »")
+    with SessionLocal() as db:
+        rec = db.get(Record, rid)
+        assert rec.status == S.EN_ATTENTE_IA
+        assert rec.pages[0].page_type == "grossesse_actuelle" and rec.pages[0].page_type_force
+        ai_worker.process_next(db, extractor=unreadable)
+    assert calls[-1] == ["grossesse_actuelle"]                # relu avec le type imposé
+    flush(fake_wa)
+    with SessionLocal() as db:
+        assert db.get(Record, rid).status == S.REVISION_MANUELLE_REQUISE
+    assert "Question 1/" in body_of(fake_wa.sent[-1])        # toujours rien : saisie guidée
+
+
+def test_page_non_reconnue_autre_saisie_guidee_directe(client, fake_wa):
+    from ai.extract import PageResult
+    from app.services import ai_worker
+    rid = _record_en_attente_ia()
+    with SessionLocal() as db:
+        ai_worker.process_next(db, extractor=lambda images, page_types=None: [PageResult(0, "inconnu")])
+    flush(fake_wa)
+    press(client, next(i for i in ids(fake_wa.sent[-1]) if ":autre|" in i))
+    with SessionLocal() as db:
+        assert db.get(Record, rid).status == S.REVISION_MANUELLE_REQUISE
+    assert "Question 1/" in body_of(fake_wa.sent[-1])

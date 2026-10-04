@@ -30,6 +30,7 @@ from app.whatsapp import text_message
 
 log = logging.getLogger("iris.ai_worker")
 ACTOR = "system:ia"
+UNKNOWN = "inconnu"
 _thread: threading.Thread | None = None
 _lock = threading.Lock()
 
@@ -40,11 +41,11 @@ def _default_extractor() -> Callable[[list[bytes]], list]:
         from ai.ocr_classique import extract_pages_ocr
         from ai.ollama_client import OllamaClient
 
-        def run(images: list[bytes]):
+        def run(images: list[bytes], page_types=None):
             client = OllamaClient(s.ollama_url, timeout=s.ai_timeout_seconds, num_ctx=s.ai_num_ctx,
                                   num_predict=s.ai_num_predict) if s.ai_model_verify else None
             return extract_pages_ocr(images, engine=s.ai_ocr_engine, client=client,
-                                     verify_model=s.ai_model_verify or None)
+                                     verify_model=s.ai_model_verify or None, page_types=page_types)
         return run
     from ai.extract import extract_pages                    # import paresseux (opencv, numpy)
     return extract_pages
@@ -125,7 +126,9 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
     try:
         active = sorted((p for p in rec.pages if not p.replaced), key=lambda p: p.page_number)
         images = [get_store().load(p.storage_key) for p in active]       # en mémoire uniquement
-        results = (extractor or _default_extractor())(images)
+        hints = [p.page_type if p.page_type_force else None for p in active]
+        run = extractor or _default_extractor()
+        results = run(images, page_types=hints) if any(hints) else run(images)
     except OllamaUnavailable as e:
         _fail(db, rec, f"IA locale indisponible : {e}")
         return rec.id
@@ -137,15 +140,20 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         _fail(db, rec, f"erreur IA : {type(e).__name__}")
         return rec.id
 
-    if results and all(r.error and not r.fields for r in results):
+    # vraie panne (pas une page non reconnue : celle-là, on demande son type à la sage-femme)
+    if results and all(r.error and not r.fields and r.page_type != UNKNOWN for r in results):
         _fail(db, rec, "; ".join(f"page {r.index + 1} : {r.error}" for r in results))
         return rec.id
 
     pages = active
     bad = []
+    unknown, forced_empty = [], []
     for page, res in zip(pages, results):
         page.quality_json = json.dumps(res.quality, ensure_ascii=False) if res.quality else None
-        page.page_type = res.page_type
+        if res.page_type == UNKNOWN or not res.fields:
+            (forced_empty if page.page_type_force else unknown).append(page)
+        if not page.page_type_force:
+            page.page_type = None if res.page_type == UNKNOWN else res.page_type
         page.identifiers_excluded = json.dumps(excluded_identifiers(res.page_type, res.removed_keys))
         if res.quality and not res.quality.get("ok", True):
             bad.append((page.page_number, res.quality.get("raisons") or []))
@@ -159,7 +167,17 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         _notify(db, rec, t(mw.language if mw else "fr", "bad_photo", n=n,
                            reasons=" et ".join(reasons) or "de mauvaise qualité"))
     from app.services import conversation
-    conversation.on_record_ready(db, rec)                    # résumé + [Vérifier] (bloc 4)
+    unknown = [p for p in unknown if not p.page_type]        # vraiment non reconnues
+    if unknown:
+        # 🟠 « Je ne reconnais pas cette page » : la sage-femme choisit le type, on relit
+        conversation.ask_page_type(db, rec, unknown[0])
+    elif forced_empty and len(forced_empty) == len(pages) and lus == 0:
+        # même avec le type imposé, rien de lisible : saisie guidée des champs prioritaires
+        transition(db, rec, RecordStatus.REVISION_MANUELLE_REQUISE, ACTOR,
+                   reason="page illisible même avec le type indiqué par la sage-femme")
+        conversation.on_manual_required(db, rec)
+    else:
+        conversation.on_record_ready(db, rec)                # résumé + [Vérifier] (bloc 4)
     db.commit()
     log.info("Dossier %s lu : %d champs, %d à vérifier", rec.id[:8], lus, a_verifier)
     log.info("Vérifier l'extraction : http://127.0.0.1:8000/verif/%s", rec.id)

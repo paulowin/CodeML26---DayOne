@@ -713,6 +713,50 @@ def _page_type_label(p: Page | None) -> str:
         return p.page_type
 
 
+# Type de page proposé quand la lecture ne reconnaît pas la page (libellé i18n -> type du template)
+PAGE_CHOICES = (("pt_identification", "identification_antecedents"),
+                ("pt_antecedents", "identification_antecedents"),
+                ("pt_grossesse", "grossesse_actuelle"), ("pt_accouchement", "accouchement"),
+                ("pt_pp_precoce_mere", "pp_precoce_mere"), ("pt_pp_precoce_nne", "pp_precoce_nne"),
+                ("pt_pp_tardif_mere", "pp_tardif_mere"), ("pt_pp_tardif_nne", "pp_tardif_nne"),
+                ("pt_autre", "autre"))
+PAGE_TYPE = "TYPE_PAGE"
+
+
+def ask_page_type(db: Session, rec: Record, page: Page) -> None:
+    """« 🟠 Je ne reconnais pas cette page. De quelle page s'agit-il ? » (liste) au lieu d'une saisie
+    guidée silencieuse ; la réponse relance la lecture avec ce type imposé."""
+    mw = db.get(Midwife, rec.midwife_id)
+    st, out = load_state(mw), Out(db, mw)
+    if st["mode"] != IDLE and st.get("record_id") not in (None, rec.id):
+        return                                            # demandé après le dossier en cours
+    st = _reset(st)
+    st.update(mode=PAGE_TYPE, record_id=rec.id, page=page.page_number)
+    _bump(st)
+    rows = [(_bid(st, "PTYPE", f"{page.page_number}:{ptype}"), out.tr(key),
+             out.tr("pt_autre_d") if ptype == "autre" else "") for key, ptype in PAGE_CHOICES]
+    out.rows(out.tr("page_unknown", n=page.page_number), rows)
+    save_state(mw, st)
+
+
+def _choose_page_type(db: Session, mw: Midwife, rec: Record, st: dict, out: Out, key: str) -> None:
+    n, _, ptype = key.partition(":")
+    page = next((p for p in rec.pages if str(p.page_number) == n), None)
+    if page is None or rec.status != RecordStatus.A_REVISER:
+        out.text(out.tr("stale"))
+        return
+    if ptype == "autre":                                  # pas une page connue : saisie guidée
+        transition(db, rec, RecordStatus.REVISION_MANUELLE_REQUISE, f"midwife:{mw.id}",
+                   reason="page indiquée « autre » par la sage-femme")
+        _manual_intro(db, mw, rec, _reset(st), out)
+        return
+    page.page_type, page.page_type_force = ptype, True
+    transition(db, rec, RecordStatus.EN_ATTENTE_IA, f"midwife:{mw.id}", f"page {n} : type {ptype} imposé")
+    label = next((out.tr(k) for k, p in PAGE_CHOICES if p == ptype), ptype)
+    out.text(out.tr("page_forced", n=n, ptype=label))
+    save_state(mw, _reset(st))
+
+
 def awaiting_photo(mw: Midwife) -> bool:
     return load_state(mw)["mode"] == PHOTO
 
@@ -1101,6 +1145,8 @@ def _handle_button(db: Session, mw: Midwife, st: dict, out: Out, action: str, ri
             _reask(db, mw, st, out)
     elif action == "PHOTO":
         _ask_photo(db, mw, rec, st, out, key)
+    elif action == "PTYPE":
+        _choose_page_type(db, mw, rec, st, out, key)
     elif action == "PHOTOPAGE":
         page = next((p for p in rec.pages if str(p.page_number) == key), None)
         st.update(mode=PHOTO, photo_page=page.page_number if page else None)
