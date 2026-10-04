@@ -154,6 +154,9 @@ décision de correspondance patiente.
       (exact / confusions O0 I1 S5 B8 / 1 erreur), jamais de création automatique, « Je ne sais
       pas » -> `link_pending` + `POST /api/records/{id}/rattacher` (superviseur) + `a_rattacher`
       dans `/api/tableau` ; doublon -> [Mettre à jour][Nouvelle visite][Annuler].
+      Aperçu de la zone douteuse : bande de la photo jointe à la question (identités masquées
+      par `PageType.identifier_zones`, image fabriquée en mémoire à l'envoi par l'outbox,
+      `WHATSAPP_APERCUS`) ; piste : recadrage précis à la case (positions du template + recalage).
       Démo : `scripts/demo_reset.py`, `scripts/demo_seed.py`. 135 tests verts.
       Limites : la saisie guidée ne couvre pas le tableau des visites ; « Mettre à jour » un
       dossier déjà SYNCHRONISE modifie la copie locale sans le renvoyer au serveur central

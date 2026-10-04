@@ -6,7 +6,7 @@ Flux : webhook -> persist_inbound() (rapide, 200 OK à Meta) -> process_inbound(
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -109,10 +109,26 @@ def close_session(db: Session, record: Record, actor: str):
 
 
 # ------------------------------------------------------------------ traitement
+STALE_CLAIM = timedelta(minutes=2)
+
+
+def claim_inbound(db: Session, inbound_id: int) -> bool:
+    """Réserve le message pour CE traitement (tâche de fond du webhook OU worker) : un seul gagnant.
+    Sans cela, une photo (2 s de téléchargement) était traitée deux fois -> deux réponses."""
+    res = db.execute(update(InboundMessage)
+                     .where(InboundMessage.id == inbound_id,
+                            InboundMessage.status.in_([InboundStatus.RECU, InboundStatus.ECHEC]))
+                     .values(status=InboundStatus.EN_COURS, claimed_at=datetime.now(timezone.utc)))
+    db.commit()
+    return res.rowcount == 1
+
+
 def process_inbound(db: Session, inbound_id: int, client: WhatsAppClient | None = None) -> None:
-    msg = db.get(InboundMessage, inbound_id)
-    if not msg or msg.status in (InboundStatus.TRAITE, InboundStatus.IGNORE):
+    if not claim_inbound(db, inbound_id):
+        log.info("Entrant #%s déjà traité ou en cours : ignoré (pas de double traitement)", inbound_id)
         return
+    msg = db.get(InboundMessage, inbound_id, populate_existing=True)
+    log.info("Traitement de l'entrant #%s (%s, wamid …%s)", msg.id, msg.msg_type, msg.wa_message_id[-12:])
     try:
         midwife = get_or_create_midwife(db, msg.wa_from)
         if msg.msg_type == "image":
@@ -130,7 +146,7 @@ def process_inbound(db: Session, inbound_id: int, client: WhatsAppClient | None 
         db.commit()
     except Exception as e:  # on ne perd rien : ECHEC -> retenté par le worker
         db.rollback()
-        msg = db.get(InboundMessage, inbound_id)
+        msg = db.get(InboundMessage, inbound_id, populate_existing=True)
         msg.attempts += 1              # l'incrément précédent a été annulé par le rollback
         msg.status = InboundStatus.ECHEC
         msg.last_error = f"{type(e).__name__}: {e}"[:500]
@@ -227,6 +243,14 @@ def auto_close_stale_sessions(db: Session) -> int:
 
 
 def retry_failed_inbound(db: Session, client: WhatsAppClient | None = None) -> int:
+    # un traitement tué en plein milieu (redémarrage) libère sa réservation après 2 min
+    stale = db.execute(update(InboundMessage)
+                       .where(InboundMessage.status == InboundStatus.EN_COURS,
+                              InboundMessage.claimed_at < datetime.now(timezone.utc) - STALE_CLAIM)
+                       .values(status=InboundStatus.ECHEC, last_error="réservation expirée"))
+    db.commit()
+    if stale.rowcount:
+        log.warning("%d entrant(s) bloqué(s) en EN_COURS remis en échec pour reprise", stale.rowcount)
     ids = db.scalars(select(InboundMessage.id).where(InboundMessage.status.in_([InboundStatus.RECU, InboundStatus.ECHEC]))
                      .order_by(InboundMessage.wa_timestamp, InboundMessage.id)).all()
     for i in ids:

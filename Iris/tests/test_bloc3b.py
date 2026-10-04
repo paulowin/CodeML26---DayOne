@@ -144,10 +144,10 @@ def test_filtre_telephone_et_cin():
         "identification.cin": {"value": "CB609814", "raw_text": "CB609814", "candidates": [], "flags": []},
         "accouchement.poids_naissance_g": {"value": 3587, "raw_text": "3587 g", "candidates": [], "flags": []},
     }
-    kept, removed = privacy_filter(fields)
+    kept, removed, rejected_keys = privacy_filter(fields)
     assert set(kept) == {V + "seins", "accouchement.poids_naissance_g"}
     assert kept[V + "seins"]["raw_text"] is None and "identifiant_retire" in kept[V + "seins"]["flags"]
-    assert removed == 3
+    assert removed == 3 and rejected_keys == ["identification.cin"]
 
 
 def test_prompt_sans_identifiants_et_restreint_au_type_de_page():

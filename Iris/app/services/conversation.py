@@ -29,7 +29,7 @@ from app.state_machine import date_reference, find_duplicate, transition
 from app.templates import get_template
 from app.templates.base import FieldDef
 from app.templates.normalize import clean_text, fold, interpret, to_date
-from app.whatsapp import buttons_message, list_message, text_message
+from app.whatsapp import buttons_message, list_message, preview_message, text_message
 
 log = logging.getLogger(__name__)
 T = get_template()
@@ -47,7 +47,12 @@ INVALID_FLAGS = {"type_invalide", "hors_plage", "date_invalide", "date_partielle
 
 CMD_OK = {"OK", "OUI", "YES", "CONFIRMER", "CONFIRM"}
 CMD_PAUSE = {"PLUS TARD", "STOP", "PAUSE", "LATER"}
-CMD_RESUME = {"REPRENDRE", "RESUME", "CONTINUER", "CONTINUE"}
+CMD_RESUME = {"REPRENDRE", "CONTINUER", "CONTINUE"}
+CMD_SUMMARY = {"RESUME", "RÉSUMÉ", "RESUMÉ", "SUMMARY"}         # renvoie « ce que j'ai lu »
+CMD_PHOTO = {"PHOTO", "REPRENDRE PHOTO", "RETAKE"}
+LIGNE = "CHOIX_LIGNE"
+LINES_PER_PAGE = 15
+WA_TEXT_MAX = 4096
 CMD_HELP = {"AIDE", "HELP", "?"}
 WORDS_BLANK = {"vide", "blank", "passer", "skip", "rien", "-", "—"}
 WORDS_ILLEGIBLE = {"illisible", "illegible"}
@@ -95,6 +100,9 @@ class Out:
 
     def buttons(self, body: str, buttons: list[tuple[str, str]]) -> None:
         outbox.enqueue(self.db, buttons_message(self.mw.wa_id, body[:1024], buttons))
+
+    def preview(self, caption: str, record_id: str, page_number: int, zone) -> None:
+        outbox.enqueue(self.db, preview_message(self.mw.wa_id, caption, record_id, page_number, zone))
 
     def rows(self, body: str, rows: list[tuple[str, str, str]]) -> None:
         outbox.enqueue(self.db, list_message(self.mw.wa_id, body[:1024], self.tr("list_choose"), rows[:10]))
@@ -366,12 +374,178 @@ def _summary(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
     others = len(_pending_records(db, mw, exclude=rec.id))
     if others:
         body += "\n" + out.tr("others_waiting", n=plural(out.lang, others, "pl_record_other"))
-    buttons = [(_bid(st, "REV"), out.tr("btn_verify")), (_bid(st, "PHOTO"), out.tr("btn_retake")),
-               (_bid(st, "LATER"), out.tr("btn_later"))]
-    if retake_first:                           # > 80 % incertain : reprendre la photo d'abord
-        buttons[0], buttons[1] = buttons[1], buttons[0]
-    out.buttons(body, buttons)
+    st.update(lu=readable_keys(rec), lu_off=None)
+    st["lu_off"] = [0] * len(st["lu"])
+    shown = _send_readable(rec, st, out, first=True)
+    st["summary_body"] = body
+    if hard or retake_first or not shown:
+        buttons = [(_bid(st, "REV"), out.tr("btn_verify")), (_bid(st, "PHOTO"), out.tr("btn_retake")),
+                   (_bid(st, "LATER"), out.tr("btn_later"))]
+        if retake_first:                       # > 80 % incertain : reprendre la photo d'abord
+            buttons[0], buttons[1] = buttons[1], buttons[0]
+        out.buttons(body, buttons)
+    else:
+        _summary_buttons(st, out)
     save_state(mw, st)
+
+
+# ------------------------------------------------------------------ résumé lisible
+def _page_of(rec: Record, n: int | None) -> Page | None:
+    return next((p for p in rec.pages if p.page_number == n), None) if n is not None else None
+
+
+def readable_keys(rec: Record) -> list[dict]:
+    """Par page du carnet : clés des champs LUS AVEC CERTITUDE (CONNU), priorité clinique d'abord.
+    Cases non cochées : seulement les importantes (liste PRIORITE)."""
+    by_page: dict = {}
+    for k, ef in current_fields(rec).items():
+        f = T.fields.get(k)
+        if f is None or ef.status != FieldStatus.CONNU:
+            continue
+        v = _value(ef)
+        important = T.priority_rank(k) < len(T.priority)
+        if v is None or ((v is False or v == []) and not important):
+            continue
+        by_page.setdefault(ef.page_number, []).append(k)
+    pages = []
+    for n in sorted(by_page, key=lambda x: (x is None, x or 0)):
+        keys = sorted(by_page[n], key=lambda k: (T.priority_rank(k), ORDER.get(k, 10**6)))
+        pages.append({"page": n, "keys": keys})
+    return pages
+
+
+def short_label(key: str, page_type: str | None = None) -> str:
+    """Libellé sans la section principale de la page (déjà dans l'en-tête) ; les autres sections
+    restent pour garder le contexte (« Antécédents de la femme · Médicaux »)."""
+    parts = field_label(key).split(" · ")
+    main = None
+    if page_type and page_type in {p.key for p in T.page_types}:
+        main = T.page_type(page_type).sections[0]
+    if main is None or key.split(".", 1)[0] == main:
+        return " · ".join(parts[1:]) or parts[0]
+    return " · ".join(parts)
+
+
+def _line_value(f: FieldDef, value, lang: str) -> str:
+    if f.type == "bool" and value is False:
+        return t(lang, "not_ticked")
+    if f.type == "checkbox_group" and value == []:
+        return t(lang, "none_ticked")
+    return fmt_value(f, value, lang)
+
+
+def _excluded_types(rec: Record, page_number, lang: str) -> list[str]:
+    page = _page_of(rec, page_number)
+    try:
+        keys = json.loads(page.identifiers_excluded) if page is not None and page.identifiers_excluded else []
+    except ValueError:
+        keys = []
+    from app.i18n import MESSAGES
+    order = {fk.split(".")[-1]: ORDER.get(fk, 10**6) for fk in reversed(list(T.identifier_fields))}
+    labels = []
+    for k in sorted(keys, key=lambda k: order.get(k, 10**6)):   # TYPE seulement, ordre du carnet
+        if f"id_{k}" in MESSAGES["fr"]:
+            lab = t(lang, f"id_{k}")
+            if lab not in labels:
+                labels.append(lab)
+    return labels
+
+
+def _send_readable(rec: Record, st: dict, out: Out, first: bool = False) -> int:
+    """Envoie « Voici ce que j'ai lu » : 15 lignes max par page du carnet (puis « Voir plus »),
+    numérotées pour « CORRIGER n ». Renvoie le nombre de lignes envoyées."""
+    fields = current_fields(rec)
+    pages, offs = st.get("lu") or [], st.get("lu_off") or []
+    base, sent = 0, 0
+    msgs = []
+    for i, pg in enumerate(pages):
+        keys, off = pg["keys"], offs[i]
+        chunk = keys[off:off + LINES_PER_PAGE]
+        if chunk or (first and _excluded_types(rec, pg["page"], out.lang)):
+            page = _page_of(rec, pg["page"])
+            head = (out.tr("read_head", n=pg["page"], ptype=accentue(_page_type_label(page)))
+                    if pg["page"] is not None else out.tr("read_head_nopage"))
+            lines = [head]
+            for j, k in enumerate(chunk, base + off + 1):
+                ef = fields.get(k)
+                val = _line_value(T.fields[k], _value(ef), out.lang) if ef is not None else "—"
+                lines.append(f"{j}. {short_label(k, page.page_type if page else None)} : {val}")
+            rest = len(keys) - off - len(chunk)
+            if rest > 0:
+                lines.append(out.tr("read_more", n=rest))
+            excluded = _excluded_types(rec, pg["page"], out.lang)
+            if first and excluded:
+                lines.append(out.tr("not_stored", types=", ".join(excluded)))
+            msgs.append(lines)
+            offs[i] = off + len(chunk)
+            sent += len(chunk)
+        base += len(keys)
+    if first and st.get("queue"):
+        labels = ", ".join(short_label(k) for k in st["queue"][:6]) + (" …" if len(st["queue"]) > 6 else "")
+        n_check = len(st["queue"]) + len(st.get("overflow") or [])
+        if msgs:
+            msgs[-1].append(out.tr("to_check", n=n_check, labels=labels))
+        else:
+            msgs.append([out.tr("to_check", n=n_check, labels=labels)])
+    for lines in msgs:
+        body = "\n".join(lines)
+        while len(body) > WA_TEXT_MAX and len(lines) > 2:          # limite WhatsApp (texte)
+            lines.pop(-2)
+            body = "\n".join(lines)
+        out.text(body)
+    st["lu_off"] = offs
+    return sent
+
+
+def _remaining_lines(st: dict) -> int:
+    return sum(len(pg["keys"]) - off for pg, off in zip(st.get("lu") or [], st.get("lu_off") or []))
+
+
+def _summary_buttons(st: dict, out: Out) -> None:
+    _bump(st)
+    body = (st.get("summary_body") or "") + "\n" + out.tr("summary_ask")
+    buttons = [(_bid(st, "OKLU"), out.tr("btn_all_right")), (_bid(st, "CORRLU"), out.tr("btn_correct"))]
+    if _remaining_lines(st) > 0:
+        buttons.append((_bid(st, "MORE"), out.tr("btn_more")))
+    out.buttons(body.strip(), buttons)
+
+
+def _flat_lines(st: dict) -> list[str]:
+    return [k for pg in st.get("lu") or [] for k in pg["keys"]]
+
+
+def _shown_lines(st: dict) -> list[str]:
+    return [k for pg, off in zip(st.get("lu") or [], st.get("lu_off") or []) for k in pg["keys"][:off]]
+
+
+def _confirm_shown(db: Session, rec: Record, st: dict) -> None:
+    """« Tout est juste » : les lignes MONTRÉES deviennent des valeurs confirmées par la sage-femme."""
+    fields = current_fields(rec)
+    for k in _shown_lines(st):
+        ef = fields.get(k)
+        if ef is not None and ef.source == FieldSource.IA:
+            set_field(db, rec, k, _value(ef), ef.status, FieldSource.SAGE_FEMME, 1.0, ef.raw_text,
+                      _details(ef) or None)
+
+
+def send_summary_again(db: Session, mw: Midwife, out: Out) -> None:
+    """Commande « RESUME » : renvoie ce que j'ai lu pour le dossier en cours (ou le dernier)."""
+    st = load_state(mw)
+    rec = db.get(Record, st.get("record_id") or "")
+    if rec is None:
+        rec = db.scalars(select(Record).where(Record.midwife_id == mw.id, Record.fields.any())
+                         .order_by(Record.updated_at.desc()).limit(1)).first()
+    if rec is None:
+        out.text(out.tr("no_summary"))
+        return
+    tmp = {"lu": readable_keys(rec), "queue": st.get("queue") if st.get("record_id") == rec.id else []}
+    tmp["lu_off"] = [0] * len(tmp["lu"])
+    if not _send_readable(rec, tmp, out, first=True):
+        out.text(out.tr("no_summary"))
+    if st["mode"] == RESUME and st.get("record_id") == rec.id:
+        st["lu_off"] = tmp["lu_off"]
+        _summary_buttons(st, out)
+        save_state(mw, st)
 
 
 def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
@@ -388,6 +562,7 @@ def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> Non
     f = T.fields[key]
     st["mode"] = REVISION
     _bump(st)
+    _send_preview(rec, ef, key, out)
     lines = [out.tr("question", i=st["idx"] + 1, n=len(queue), label=field_label(key))]
     value = proposed_value(f, ef)
     cands = [c for c in _details(ef).get("candidates") or [] if c is not None]
@@ -413,6 +588,18 @@ def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> Non
                                        (_bid(st, "CORR", key), out.tr("btn_correct")),
                                        (_bid(st, "ILL", key), out.tr("btn_illegible"))])
     save_state(mw, st)
+
+
+def _send_preview(rec: Record, ef: ExtractedField, key: str, out: Out) -> None:
+    """Joint l'aperçu de la zone douteuse (bande de la photo) si l'IA sait où elle a lu."""
+    from app.config import get_settings
+    zone = _details(ef).get("zone")
+    if not get_settings().whatsapp_apercus or not zone or ef.page_number is None:
+        return
+    page = next((p for p in rec.pages if p.page_number == ef.page_number), None)
+    if page is None or page.replaced:
+        return
+    out.preview(out.tr("preview_caption", label=field_label(key)), rec.id, page.page_number, zone)
 
 
 def _ask_correction(mw: Midwife, st: dict, out: Out, key: str, back: str) -> None:
@@ -746,6 +933,9 @@ def handle_text(db: Session, mw: Midwife, text: str) -> bool:
         st["paused"] = False
         _reask(db, mw, st, out)
         return True
+    if cmd in CMD_SUMMARY:
+        send_summary_again(db, mw, out)
+        return True
 
     rec = db.get(Record, st.get("record_id") or "")
     mode = st["mode"]
@@ -757,6 +947,18 @@ def handle_text(db: Session, mw: Midwife, text: str) -> bool:
         return True
     if mode == CODE and rec is not None:
         start_linking(db, mw, rec, st, out, code=raw)
+        return True
+    if cmd in CMD_PHOTO and rec is not None and rec.status == RecordStatus.A_REVISER:
+        _ask_photo(db, mw, rec, st, out)
+        return True
+    m_line = re.fullmatch(r"(?:(?:CORRIGER|CORRECT)\s+)?(\d+)", cmd)
+    if m_line and mode in (LIGNE, RESUME) and rec is not None and (mode == LIGNE or cmd[0].isalpha()):
+        keys = _flat_lines(st)
+        i = int(m_line.group(1)) - 1
+        if 0 <= i < len(keys):
+            _ask_correction(mw, st, out, keys[i], back=RESUME)
+        else:
+            out.text(out.tr("which_line"))
         return True
     m = re.fullmatch(r"(?:CORRIGER|CORRECT)\s+(\d+)", cmd)
     if m and mode == FIN and rec is not None:
@@ -810,6 +1012,8 @@ def _reask(db: Session, mw: Midwife, st: dict, out: Out) -> None:
         return
     if mode == RESUME:
         _summary(db, mw, rec, st, out)
+    elif mode == LIGNE:
+        out.text(out.tr("which_line"))
     elif mode == REVISION:
         _ask_field(db, mw, rec, st, out)
     elif mode == CORRECTION:
@@ -850,6 +1054,10 @@ def _correction_answer(db: Session, mw: Midwife, rec: Record, st: dict, out: Out
     st.pop("pending", None)
     if back == FIN:
         _view(db, mw, rec, st, out, 0) if st.get("view") else _final(db, mw, rec, st, out)
+    elif back == RESUME:
+        st["mode"] = RESUME
+        _summary_buttons(st, out)
+        save_state(mw, st)
     else:
         _next_question(db, mw, rec, st, out)
 
@@ -868,6 +1076,18 @@ def _handle_button(db: Session, mw: Midwife, st: dict, out: Out, action: str, ri
     elif action == "REV":
         st["idx"] = 0
         _ask_field(db, mw, rec, st, out)
+    elif action == "OKLU":                                 # « Tout est juste » sur le résumé lisible
+        _confirm_shown(db, rec, st)
+        st["idx"] = 0
+        _ask_field(db, mw, rec, st, out)
+    elif action == "CORRLU":
+        st["mode"] = LIGNE
+        out.text(out.tr("which_line"))
+        save_state(mw, st)
+    elif action == "MORE":
+        _send_readable(rec, st, out)
+        _summary_buttons(st, out)
+        save_state(mw, st)
     elif action == "GO":                                   # reprise depuis le message d'accueil
         if st["mode"] == RESUME:
             st["idx"] = 0

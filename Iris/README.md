@@ -285,6 +285,12 @@ SF   : Patiente 1
 Iris : Dossier 3f2a9c1b enregistré pour la patiente code A64125 ✅
 ```
 
+- Résumé lisible avant les questions : « Voici ce que j'ai lu (page N – <type>) : » avec les
+  champs lus avec certitude (« Libellé : valeur », 15 lignes max par page, champs cliniques
+  d'abord : `PRIORITE` dans le template, puis « … et N autres »), « À vérifier : … » et
+  « Non enregistré (confidentialité) : nom de la patiente » (le TYPE, jamais la valeur).
+  [Tout est juste] confirme les lignes affichées, [Corriger] demande le numéro de ligne,
+  [Voir plus] envoie la suite ; commande `RESUME` pour le revoir.
 - Questions : champs A_REVISER/ILLISIBLE de l'IA, critiques d'abord, 10 au maximum (le reste
   est confié au superviseur : `champs_a_verifier_superviseur` dans `/api/tableau`). Chaque
   question dit POURQUOI il y a doute (écriture peu lisible, lectures divergentes, hors plage,
@@ -292,6 +298,12 @@ Iris : Dossier 3f2a9c1b enregistré pour la patiente code A64125 ✅
   champ a été jugé illisible. Plus de 15 doutes : « Cette page est difficile à lire
   automatiquement (N champs lus avec certitude). Je vais vous poser les 10 questions les plus
   importantes. » ; plus de 80 % de doutes : [Reprendre photo] proposé en premier, avec un conseil.
+- Aperçu : avant chaque question, la sage-femme reçoit l'image de la BANDE de la photo où
+  l'IA a lu le champ (« Zone où j'ai un doute : … »), avec les zones d'identité masquées
+  (nom, CIN, adresse, téléphone, « Vu par », « Examen fait par » : `PageType.identifier_zones`).
+  L'image n'est fabriquée qu'au moment de l'envoi, en mémoire, par l'outbox (seule la référence
+  dossier/page/zone est stockée) ; masquage approximatif si la photo est cadrée très
+  différemment ; `WHATSAPP_APERCUS=false` pour désactiver.
 - Message libre (« bonjour ») alors qu'un dossier attend : « Bonjour ! Un dossier attend votre
   vérification (5 questions). » [Vérifier] [Plus tard]. Libellés accentués à l'affichage
   (« Âge probable », « État des lochies ») ; accords singulier/pluriel sans « (s) ».
@@ -338,6 +350,15 @@ minutes de lecture IA. Scénario : couper le réseau central (`/api/admin/reseau
 sur le téléphone (corriger la DDR, choisir la TA, déclarer l'hémoglobine illisible) → Tout
 confirmer → choisir « Patiente 1 » (A64128 est aussi proposée, code proche) → dossier
 ENREGISTRE en ECHEC_SYNCHRO → rallumer le réseau → SYNCHRONISE.
+
+## Fiabilité des envois
+
+La tâche de fond du webhook ET le worker (20 s) traitent les messages : chaque message entrant
+et sortant est RÉSERVÉ de façon atomique (`UPDATE … SET status='EN_COURS' WHERE status IN
+('RECU','ECHEC')`, resp. `ENVOI_EN_COURS`), un verrou sérialise les vidages de l'outbox, et une
+réservation de plus de 2 min (processus tué) est libérée. Constaté au test réel : une photo
+(2 s de téléchargement) était traitée deux fois -> « Page 1 reçue » puis « Cette photo a déjà
+été reçue ». Logs : `Outbox #id envoyé -> wamid`, `Entrant #id déjà traité ou en cours`.
 
 ## Choix de conception
 

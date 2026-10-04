@@ -68,7 +68,7 @@ def seeded(fake_wa) -> str:
             key, sha = get_store().save(b"\xff\xd8demo")
             rec.pages.append(Page(page_number=1, storage_key=key, sha256=sha, mime_type="image/jpeg",
                                   size_bytes=6, wa_message_id=f"demo-{rid}", captured_at=datetime.now(timezone.utc),
-                                  page_type="grossesse_actuelle"))
+                                  page_type="grossesse_actuelle", identifiers_excluded='["examen_fait_par"]'))
             db.commit()
     flush(fake_wa)
     return rid
@@ -93,11 +93,15 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
     summary = fake_wa.sent[-1]
     assert "5 à vérifier (environ 1 minute)" in body_of(summary) and "(s)" not in body_of(summary)
     assert "champs lus" in body_of(summary)
-    assert [b.split("|")[0] for b in ids(summary)] == ["REV", "PHOTO", "LATER"]
+    assert [b.split("|")[0] for b in ids(summary)] == ["OKLU", "CORRLU", "MORE"]
     for b in summary["interactive"]["action"]["buttons"]:
         assert len(b["reply"]["title"]) <= 20
+    lu = body_of(fake_wa.sent[-2])                                     # « Voici ce que j'ai lu »
+    assert lu.startswith("Voici ce que j'ai lu (page 1 – Grossesse actuelle) :")
+    assert "1. Couverture · N° de la fiche : A64125" in lu and "… et " in lu and "À vérifier : 5 –" in lu
+    assert "Non enregistré (confidentialité) : nom du soignant" in lu
 
-    press(client, find_id(summary, "REV"))
+    press(client, find_id(summary, "OKLU"))
     queue = state()["queue"]
     assert len(queue) == 5 and queue[0] == "grossesse_actuelle.ddr"           # critiques d'abord
     assert queue[-1] in (V + "T2V3.poids_kg", V + "M8.age_probable_sa")
@@ -170,7 +174,7 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
 
 def test_bouton_perime_et_autre_dossier_ignores(client, fake_wa):
     seeded(fake_wa)
-    rev = find_id(fake_wa.sent[-1], "REV")
+    rev = find_id(fake_wa.sent[-1], "OKLU")
     press(client, rev)
     q = fake_wa.sent[-1]
     press(client, rev)                                                      # déjà utilisé
@@ -184,7 +188,7 @@ def test_bouton_perime_et_autre_dossier_ignores(client, fake_wa):
 
 def test_pause_puis_reprise(client, fake_wa):
     seeded(fake_wa)
-    press(client, find_id(fake_wa.sent[-1], "REV"))
+    press(client, find_id(fake_wa.sent[-1], "OKLU"))
     old = fake_wa.sent[-1]
     say(client, "plus tard")
     assert "REPRENDRE" in body_of(fake_wa.sent[-1]) and state()["paused"]
@@ -201,9 +205,10 @@ def test_anglais_puis_francais(client, fake_wa):
     seeded(fake_wa)
     say(client, "EN")
     assert body_of(fake_wa.sent[-1]) == "Language: English."
-    say(client, "RESUME")
+    say(client, "CONTINUE")
     s = fake_wa.sent[-1]
-    assert body_of(s).startswith("Reading done") and s["interactive"]["action"]["buttons"][0]["reply"]["title"] == "Review"
+    assert body_of(s).startswith("Reading done") and s["interactive"]["action"]["buttons"][0]["reply"]["title"] == "All correct"
+    assert body_of(fake_wa.sent[-2]).startswith("Here is what I read (page 1")
     say(client, "AIDE")
     assert body_of(fake_wa.sent[-1]).startswith("Commands")
     say(client, "FR")
@@ -212,7 +217,7 @@ def test_anglais_puis_francais(client, fake_wa):
 
 def test_reprendre_la_photo(client, fake_wa):
     rid = seeded(fake_wa)
-    press(client, find_id(fake_wa.sent[-1], "PHOTO"))
+    say(client, "PHOTO")
     assert "Envoyez la nouvelle photo de la page 1" in body_of(fake_wa.sent[-1])
     fake_wa.media["m-new"] = b"\xff\xd8nouvelle photo"
     post_webhook(client, wa_payload(image_msg("wamid.newphoto", "m-new", _ts())))
@@ -309,7 +314,7 @@ def test_liaison_code_proche_puis_je_ne_sais_pas_puis_superviseur(client, fake_w
     assert rows[0]["description"].startswith("code A64125")                 # confusion I/1 : score 1
     assert rows[1]["description"].startswith("code A64128")                 # 1 caractère d'écart
     press(client, rows[3]["id"])                                            # Je ne sais pas
-    assert "superviseur" in body_of(fake_wa.sent[-2] if "Lecture" in body_of(fake_wa.sent[-1]) else fake_wa.sent[-1])
+    assert any("superviseur" in body_of(m) for m in fake_wa.sent[-4:])
     with SessionLocal() as db:
         rec = db.get(Record, rid)
         assert rec.status == S.VALIDE and rec.link_pending
@@ -465,3 +470,170 @@ def test_page_difficile_a_lire(client, fake_wa):
     m = fake_wa.sent[-1]
     assert [i.split("|")[0] for i in ids(m)] == ["PHOTO", "REV", "LATER"]   # > 80 % : photo d'abord
     assert "photo bien droite, page entière, bonne lumière." in body_of(m).lower()
+
+
+
+# ------------------------------------------------------------------ aperçu de la zone douteuse
+def _page_png() -> bytes:
+    """Fausse page 600x1000 : rouge partout (pour vérifier le masquage)."""
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (600, 1000), (220, 20, 20)).save(buf, "PNG")
+    return buf.getvalue()
+
+
+def test_apercu_joint_a_la_question_avec_identites_masquees(client, fake_wa):
+    import io
+    from PIL import Image
+    from app.storage import get_store
+    with SessionLocal() as db:
+        mw = Midwife(wa_id=MIDWIFE)
+        db.add(mw)
+        db.flush()
+        rec = Record(midwife_id=mw.id, status=S.A_REVISER)
+        db.add(rec)
+        db.flush()
+        key, sha = get_store().save(_page_png())
+        rec.pages.append(Page(page_number=1, storage_key=key, sha256=sha, mime_type="image/png", size_bytes=10,
+                              wa_message_id="wamid.apercu", captured_at=datetime.now(timezone.utc),
+                              page_type="grossesse_actuelle"))
+        db.flush()
+        ef = conv.set_field(db, rec, V + "T1V1.hemoglobine", None, FieldStatus.ILLISIBLE, FieldSource.IA, 0.3,
+                            raw_text="11.8 g/dL", details={"zone": [0.6296, 1.0]})
+        ef.page_number = 1
+        conv.set_field(db, rec, V + "T1V1.poids_kg", 60.0, FieldStatus.A_REVISER, FieldSource.IA, 0.5)  # sans zone
+        conv.on_record_ready(db, rec)
+        db.commit()
+    flush(fake_wa)
+    press(client, find_id(fake_wa.sent[-1], "REV"))
+    preview, question = fake_wa.sent[-2], fake_wa.sent[-1]
+    assert preview["type"] == "image" and preview["image"]["id"] == "media.1"
+    assert preview["image"]["caption"].startswith("Zone où j'ai un doute : Grossesse actuelle")
+    assert "_preview" not in preview                                      # référence interne jamais envoyée
+    assert "Question 1/2" in body_of(question)
+    img = Image.open(io.BytesIO(fake_wa.uploads[0])).convert("RGB")
+    w, h = img.size
+    # bande 0.63-1.0 (+ marge 3 %) : la ligne « Examen fait par » (0.82-0.91) est masquée en gris
+    top = 0.6296 - 0.03
+    y_mask = int((0.86 - top) / (1 - top) * h)
+    assert img.getpixel((w // 2, y_mask))[0] < 160 and abs(img.getpixel((w // 2, y_mask))[1] - 120) < 20
+    assert img.getpixel((w // 2, 5))[0] > 180                              # hors zone d'identité : intact
+    # question suivante : champ sans zone connue -> pas d'aperçu
+    n_uploads = len(fake_wa.uploads)
+    press(client, find_id(question, "CONF"))
+    assert fake_wa.sent[-1]["type"] == "interactive" and len(fake_wa.uploads) == n_uploads
+
+
+def test_apercu_reference_seule_en_base_et_desactivable(client, fake_wa, monkeypatch):
+    from app.config import get_settings
+    from app.models import OutboundMessage
+    seeded(fake_wa)
+    with SessionLocal() as db:                          # la démo donne une zone à chaque champ douteux
+        rec = db.scalar(select(Record).where(Record.status == S.A_REVISER))
+        for f in rec.fields:
+            if f.is_current and f.source == FieldSource.IA and f.status != FieldStatus.CONNU:
+                f.page_number = 1
+        db.commit()
+    press(client, find_id(fake_wa.sent[-1], "OKLU"))
+    assert fake_wa.sent[-2]["type"] == "image" and len(fake_wa.uploads) == 1
+    with SessionLocal() as db:
+        stored = [json.loads(m.payload_json) for m in db.scalars(select(OutboundMessage)).all()
+                  if json.loads(m.payload_json)["type"] == "image"]
+    assert stored and set(stored[0]["_preview"]) == {"record_id", "page_number", "zone"}
+    assert "id" not in stored[0]["image"] and len(json.dumps(stored[0])) < 600   # aucune image en base
+    monkeypatch.setattr(get_settings(), "whatsapp_apercus", False)
+    n = len(fake_wa.sent)
+    press(client, find_id(fake_wa.sent[-1], "CONF"))
+    assert all(m["type"] != "image" for m in fake_wa.sent[n:])
+
+
+
+# ------------------------------------------------------------------ résumé lisible (« Voici ce que j'ai lu »)
+def _record_from_gt(pages: list[int], removed: dict[int, list[str]] | None = None) -> str:
+    """Dossier A_REVISER construit comme par l'ai_worker depuis la vérité terrain (champs CONNU),
+    avec un doute sur le premier champ texte de la dernière page."""
+    from app.services.ai_worker import excluded_identifiers
+    from app.storage import get_store
+    from app.templates.normalize import interpret
+    with SessionLocal() as db:
+        mw = db.scalar(select(Midwife).where(Midwife.wa_id == MIDWIFE)) or Midwife(wa_id=MIDWIFE)
+        db.add(mw)
+        db.flush()
+        rec = Record(midwife_id=mw.id, status=S.A_REVISER)
+        db.add(rec)
+        db.flush()
+        for n, pdf_page in enumerate(pages, 1):
+            gt = json.loads((GT_DIR / f"specimen_p{pdf_page:02d}.json").read_text(encoding="utf-8"))
+            key, sha = get_store().save(b"\xff\xd8" + bytes([n]))
+            rec.pages.append(Page(page_number=n, storage_key=key, sha256=sha, mime_type="image/jpeg", size_bytes=3,
+                                  wa_message_id=f"gt-{uuid.uuid4().hex}", captured_at=datetime.now(timezone.utc),
+                                  page_type=gt["page_type"], identifiers_excluded=json.dumps(
+                                      excluded_identifiers(gt["page_type"], (removed or {}).get(n, [])))))
+            for k, v in gt["fields"].items():
+                f = conv.T.fields[k]
+                raw = gt["raw"].get(k)
+                value = interpret(f, raw).value if raw is not None and not f.is_checkbox else v
+                ef = conv.set_field(db, rec, k, value, FieldStatus.CONNU, FieldSource.IA, 0.9, raw_text=raw)
+                ef.page_number = n
+        doubt = next(k for k in gt["fields"] if conv.T.fields[k].type == "int")
+        ef = conv.set_field(db, rec, doubt, None, FieldStatus.A_REVISER, FieldSource.IA, 0.4, raw_text="?")
+        ef.page_number = len(pages)
+        db.flush()
+        conv.on_record_ready(db, rec)
+        db.commit()
+        return rec.id
+
+
+def test_resume_lisible_patiente4_sans_nom(client, fake_wa):
+    rid = _record_from_gt([25, 26], removed={1: ["couverture.nom_parturiente"]})
+    flush(fake_wa)
+    texts = [body_of(m) for m in fake_wa.sent if m["type"] == "text"]
+    p1 = next(t for t in texts if t.startswith("Voici ce que j'ai lu (page 1 – Couverture)"))
+    for expected in ("N° de la fiche : 2026-995-004", "Province : Azilal",
+                     "Nom de l'établissement sanitaire : CSCA Ait Mhamed",
+                     "Type de l'établissement sanitaire : CSCA", "Mode de la couverture : Fixe",
+                     "Grossesse classée à risque : non cochée",
+                     "Non enregistré (confidentialité) : nom de la patiente"):
+        assert expected in p1, expected
+    assert p1.index("N° de la fiche") < p1.index("Province")                 # priorité clinique
+    p2 = next(t for t in texts if t.startswith("Voici ce que j'ai lu (page 2 – Identification et antécédents)"))
+    assert "Âge : 26 ans" in p2 and "Antécédents obstétricaux · Gestation : 5" in p2
+    assert "Antécédents de la femme · Médicaux : RAS" in p2
+    assert len(p2.splitlines()) <= 1 + 15 + 3 and "… et " in p2              # 15 lignes max + « … et N autres »
+    assert "Non enregistré (confidentialité) : CIN, adresse, téléphone, nom du mari" in p2
+    assert "À vérifier : 1 –" in p2
+    assert all(len(t) <= 4096 for t in texts)
+    buttons = fake_wa.sent[-1]
+    assert [i.split("|")[0] for i in ids(buttons)] == ["OKLU", "CORRLU", "MORE"]
+    # le nom (et les autres identifiants) n'apparaissent NULLE PART
+    idents = set()
+    for n in (25, 26, 27, 28):
+        idents |= {v for v in json.loads((GT_DIR / f"specimen_p{n:02d}.json").read_text(encoding="utf-8"))[
+            "_identifiants"].values() if v}
+    assert "Benali Nadia" in idents
+    assert find_leaks({"fields": {}, "messages": fake_wa.sent}, idents) == []
+    assert all("Benali" not in json.dumps(m, ensure_ascii=False) for m in fake_wa.sent)
+
+    # Voir plus : les lignes suivantes, numérotation continue
+    press(client, find_id(buttons, "MORE"))
+    more = body_of(fake_wa.sent[-2])
+    first_num = int(more.splitlines()[1].split(".")[0])
+    assert more.startswith("Voici ce que j'ai lu (page 2") and first_num > 16
+    # Corriger une ligne : numéro -> nouvelle valeur -> retour au résumé
+    press(client, find_id(fake_wa.sent[-1], "CORRLU"))
+    assert "numéro de la ligne" in body_of(fake_wa.sent[-1])
+    say(client, "2")                                                          # ligne 2 = Région
+    assert "Tapez la bonne valeur pour : Couverture · Région" in body_of(fake_wa.sent[-1])
+    say(client, "Béni Mellal-Khénifra")
+    assert [i.split("|")[0] for i in ids(fake_wa.sent[-1])][:2] == ["OKLU", "CORRLU"]
+    # Tout est juste : les lignes montrées sont confirmées, puis la question restante
+    press(client, find_id(fake_wa.sent[-1], "OKLU"))
+    assert "Question 1/1" in body_of(fake_wa.sent[-1])
+    f = current(rid)
+    assert f["couverture.region"].source == FieldSource.SAGE_FEMME
+    assert json.loads(f["couverture.region"].value_json) == "Béni Mellal-Khénifra"
+    assert f["couverture.province"].source == FieldSource.SAGE_FEMME              # montrée -> confirmée
+    # commande RESUME : renvoie ce que j'ai lu
+    say(client, "RESUME")
+    assert any(body_of(m).startswith("Voici ce que j'ai lu (page 1") for m in fake_wa.sent[-3:])

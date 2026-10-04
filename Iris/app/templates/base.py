@@ -157,6 +157,9 @@ class PageType:
     sections: tuple[str, ...]
     keywords: tuple[str, ...] = ()             # mots-clés propres à la page (classification par texte lu)
     label_fr: str = ""
+    # bandes (y0, y1) relatives à la hauteur de la photo où se trouvent des identifiants (nom, CIN,
+    # « Vu par »...) : masquées dans les aperçus envoyés à la sage-femme (marge large)
+    identifier_zones: tuple[tuple[float, float], ...] = ()
 
 
 @dataclass
@@ -165,6 +168,8 @@ class Template:
     label_fr: str
     sections: tuple[SectionDef, ...]
     page_types: tuple[PageType, ...] = ()
+    # champs cliniques à montrer en premier dans le résumé lisible (motifs fnmatch)
+    priority: tuple[str, ...] = ()
     fields: dict[str, FieldDef] = field(init=False)        # "section.clé" -> FieldDef (identifiants inclus)
 
     def __post_init__(self):
@@ -174,6 +179,10 @@ class Template:
                 full = f"{s.key}.{f.key}"
                 assert full not in self.fields, f"clé en double : {full}"
                 self.fields[full] = f
+
+    def priority_rank(self, key: str) -> int:
+        from fnmatch import fnmatchcase
+        return next((i for i, pat in enumerate(self.priority) if fnmatchcase(key, pat)), len(self.priority))
 
     def section(self, key: str) -> SectionDef:
         return next(s for s in self.sections if s.key == key)

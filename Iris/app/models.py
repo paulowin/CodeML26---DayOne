@@ -82,6 +82,7 @@ class FieldSource(str, enum.Enum):
 
 class InboundStatus(str, enum.Enum):
     RECU = "RECU"          # persisté, pas encore traité
+    EN_COURS = "EN_COURS"  # réservé par UN traitement (tâche de fond du webhook OU worker)
     TRAITE = "TRAITE"
     IGNORE = "IGNORE"
     ECHEC = "ECHEC"        # sera retenté par le worker
@@ -89,6 +90,7 @@ class InboundStatus(str, enum.Enum):
 
 class OutboundStatus(str, enum.Enum):
     EN_ATTENTE = "EN_ATTENTE"
+    ENVOI_EN_COURS = "ENVOI_EN_COURS"   # réservé par UN envoi (anti double envoi)
     ENVOYE = "ENVOYE"
     ECHEC = "ECHEC"        # abandon après N tentatives
 
@@ -170,6 +172,9 @@ class Page(Base):
     # « Reprendre la photo » (bloc 4) : l'ancienne page est conservée mais marquée remplacée
     replaced: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
     replaces_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # JSON : clés des identifiants NON enregistrés pour cette page (ex. ["nom_parturiente"]),
+    # pour dire à la sage-femme ce qui a été volontairement écarté — jamais la valeur
+    identifiers_excluded: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     record: Mapped[Record] = relationship(back_populates="pages")
 
@@ -231,6 +236,7 @@ class InboundMessage(Base):
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     received_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
     processed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
 class OutboundMessage(Base):
@@ -245,6 +251,7 @@ class OutboundMessage(Base):
     wa_message_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now)
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
 
 # --------------------------------------------------------------------------- synchronisation

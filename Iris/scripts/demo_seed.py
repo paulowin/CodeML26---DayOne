@@ -37,6 +37,12 @@ DOUBTS = {                          # clé -> (statut, confiance, candidats, dra
 }
 
 
+# bandes (y0, y1) de la page spécimen grossesse où se trouvent les champs douteux (3 bandes, 15 %)
+BANDS = ((0.0, 0.3704), (0.3148, 0.6852), (0.6296, 1.0))
+DEMO_ZONES = {V + "T2V2.ta": BANDS[0], V + "T2V3.poids_kg": BANDS[0], V + "T1V2.hemoglobine": BANDS[2],
+              "grossesse_actuelle.ddr": BANDS[0], V + "M8.age_probable_sa": BANDS[0]}
+
+
 def _field(rec: Record, key: str, value, status=FieldStatus.CONNU, conf=0.9, source=FieldSource.IA,
            raw=None, details=None, page=1):
     section, fk = key.split(".", 1)
@@ -82,9 +88,11 @@ def seed(wa_id: str, send: bool = True) -> str:
         if png is not None:
             from app.storage import get_store
             key, sha = get_store().save(png.read_bytes())
+            from app.services.ai_worker import excluded_identifiers
             rec.pages.append(Page(page_number=1, storage_key=key, sha256=sha, mime_type="image/png",
                                   size_bytes=png.stat().st_size, wa_message_id=f"demo-{rec.id}", captured_at=now,
-                                  page_type="grossesse_actuelle"))
+                                  page_type="grossesse_actuelle",
+                                  identifiers_excluded=json.dumps(excluded_identifiers("grossesse_actuelle", []))))
         _field(rec, "couverture.numero_fiche", CODE, raw=CODE, conf=0.85)
         for key, v in gt["fields"].items():
             f = T.fields.get(key)
@@ -96,7 +104,7 @@ def seed(wa_id: str, send: bool = True) -> str:
                 status, conf, cands, flags = DOUBTS[key]
                 if status == FieldStatus.ILLISIBLE:
                     value = None
-                details = {"candidates": cands, "flags": flags}
+                details = {"candidates": cands, "flags": flags, "zone": DEMO_ZONES.get(key)}
                 _field(rec, key, cands[0] if cands else value, status, conf, raw=raw, details=details)
             else:
                 _field(rec, key, value, conf=0.9, raw=raw)

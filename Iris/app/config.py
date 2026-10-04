@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     whatsapp_graph_url: str = "https://graph.facebook.com"
     # Désactiver la vérification de signature UNIQUEMENT en dev local
     whatsapp_skip_signature: bool = False
+    # Aperçu de la zone douteuse (bande de la photo, identités masquées) joint aux questions
+    whatsapp_apercus: bool = True
 
     # --- Stockage chiffré des images ---
     storage_dir: Path = Path("./data/images")

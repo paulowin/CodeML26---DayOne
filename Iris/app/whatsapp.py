@@ -44,6 +44,16 @@ class WhatsAppClient:
                 raise WhatsAppError(f"media download {blob.status_code}")
             return blob.content, info.get("mime_type", "image/jpeg")
 
+    def upload_media(self, data: bytes, mime: str = "image/jpeg") -> str:
+        """POST /{phone_number_id}/media -> id du média (pour un message image)."""
+        with httpx.Client(timeout=self._timeout) as c:
+            r = c.post(f"{self.base}/{self.phone_number_id}/media", headers=self._headers,
+                       data={"messaging_product": "whatsapp", "type": mime},
+                       files={"file": ("apercu.jpg", data, mime)})
+        if r.status_code >= 300:
+            raise WhatsAppError(f"upload {r.status_code}: {r.text[:300]}", r.status_code)
+        return r.json()["id"]
+
     def send(self, payload: dict) -> str:
         """Envoie un message ; retourne le wamid. Lève WhatsAppError si échec."""
         with httpx.Client(timeout=self._timeout) as c:
@@ -62,6 +72,13 @@ def get_client() -> "WhatsAppClient":
 def text_message(to: str, body: str) -> dict:
     return {"messaging_product": "whatsapp", "to": to, "type": "text",
             "text": {"preview_url": False, "body": body[:4096]}}
+
+
+def preview_message(to: str, caption: str, record_id: str, page_number: int, zone) -> dict:
+    """Message image dont l'image n'est fabriquée qu'à l'envoi (outbox) : seule la référence
+    (dossier, page, zone) est persistée, jamais l'image déchiffrée."""
+    return {"messaging_product": "whatsapp", "to": to, "type": "image", "image": {"caption": caption[:1024]},
+            "_preview": {"record_id": record_id, "page_number": page_number, "zone": list(zone)}}
 
 
 def buttons_message(to: str, body: str, buttons: list[tuple[str, str]]) -> dict:

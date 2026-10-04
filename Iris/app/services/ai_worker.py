@@ -39,6 +39,19 @@ def _default_extractor() -> Callable[[list[bytes]], list]:
     return extract_pages
 
 
+def excluded_identifiers(page_type: str | None, removed_keys: list[str]) -> list[str]:
+    """Identifiants NON enregistrés pour cette page : ceux que la page contient par construction
+    (jamais demandés à l'IA) + ceux que la liste blanche a rejetés. Clés seulement."""
+    from app.templates import get_template
+    t = get_template()
+    keys = set()
+    if page_type and page_type in {p.key for p in t.page_types}:
+        for sec in t.page_type(page_type).sections:
+            keys |= {k.split(".")[-1] for k, f in t.section_fields([sec]).items() if f.identifiant}
+    keys |= {k.split(".")[-1] for k in removed_keys}      # filtré à l'affichage (types connus seulement)
+    return sorted(keys)
+
+
 def next_record(db: Session) -> Record | None:
     return db.scalars(select(Record).where(Record.status == RecordStatus.EN_ATTENTE_IA)
                       .order_by(Record.last_page_at, Record.created_at).limit(1)).first()
@@ -78,8 +91,8 @@ def _write_fields(db: Session, rec: Record, results, pages) -> tuple[int, int]:
             raw_text=d.get("raw_text"), status=status, confidence=d["confidence"], source=FieldSource.IA,
             page_number=pages[d["page"] - 1].page_number if d.get("page") and d["page"] <= len(pages) else None,
             is_current=True,
-            details_json=json.dumps({"candidates": d.get("candidates") or [], "flags": d.get("flags") or []},
-                                    ensure_ascii=False)))
+            details_json=json.dumps({"candidates": d.get("candidates") or [], "flags": d.get("flags") or [],
+                                     "zone": d.get("zone")}, ensure_ascii=False)))
         lus += d["value"] is not None
         a_verifier += status in (FieldStatus.A_REVISER, FieldStatus.ILLISIBLE)
     return lus, a_verifier
@@ -122,6 +135,7 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
     for page, res in zip(pages, results):
         page.quality_json = json.dumps(res.quality, ensure_ascii=False) if res.quality else None
         page.page_type = res.page_type
+        page.identifiers_excluded = json.dumps(excluded_identifiers(res.page_type, res.removed_keys))
         if res.quality and not res.quality.get("ok", True):
             bad.append((page.page_number, res.quality.get("raisons") or []))
     rec.extraction_model = (s.ai_model_main or "")[:80]

@@ -39,6 +39,7 @@ class FakeWhatsApp:
     def __init__(self):
         self.media: dict[str, bytes] = {}
         self.sent: list[dict] = []
+        self.uploads: list[bytes] = []
         self.online = True
         self._n = 0
 
@@ -46,6 +47,12 @@ class FakeWhatsApp:
         if not self.online:
             raise WhatsAppError("réseau coupé")
         return self.media[media_id], "image/jpeg"
+
+    def upload_media(self, _self_client, data, mime="image/jpeg"):
+        if not self.online:
+            raise WhatsAppError("réseau coupé")
+        self.uploads.append(data)
+        return f"media.{len(self.uploads)}"
 
     def send(self, _self_client, payload):
         if not self.online:
@@ -60,6 +67,7 @@ def fake_wa(monkeypatch):
     fake = FakeWhatsApp()
     monkeypatch.setattr(WhatsAppClient, "download_media", lambda s, m: fake.download_media(s, m))
     monkeypatch.setattr(WhatsAppClient, "send", lambda s, p: fake.send(s, p))
+    monkeypatch.setattr(WhatsAppClient, "upload_media", lambda s, d, m="image/jpeg": fake.upload_media(s, d, m))
     return fake
 
 

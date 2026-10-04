@@ -80,7 +80,9 @@ class PageResult:
     fields: dict[str, dict] = field(default_factory=dict)
     error: str | None = None
     deskew_deg: float = 0.0
+    band_ranges: list = field(default_factory=list)     # (y0, y1) relatifs de chaque bande
     removed_identifiers: int = 0
+    removed_keys: list = field(default_factory=list)     # clés rejetées (identifiants), jamais les valeurs
 
     def to_dict(self, image: str | None = None) -> dict:
         d = {"image": image or f"page_{self.index + 1}", "page": self.index + 1, "page_type": self.page_type,
@@ -392,11 +394,14 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             out[k] = {"value": st.interp.value, "raw_text": raw, "status": status, "confidence": conf,
                       "candidates": st.candidates, "flags": sorted(set(st.flags)), "page": res.index + 1,
                       "lectures": C.readings_count(st.evidence)}
-        res.fields, res.removed_identifiers = privacy_filter(out)
+            if st.chosen.band is not None and st.chosen.band < len(res.band_ranges):
+                out[k]["zone"] = [round(v, 4) for v in res.band_ranges[st.chosen.band]]
+        res.fields, res.removed_identifiers, res.removed_keys = privacy_filter(out)
 
 
-def privacy_filter(fields: dict[str, dict]) -> tuple[dict[str, dict], int]:
-    """Liste blanche du schéma + suppression de tout texte ressemblant à un téléphone ou une CIN."""
+def privacy_filter(fields: dict[str, dict]) -> tuple[dict[str, dict], int, list[str]]:
+    """Liste blanche du schéma + suppression de tout texte ressemblant à un téléphone ou une CIN.
+    -> (champs gardés, nb de retraits, clés rejetées par la liste blanche)."""
     kept, rejected = sanitize_extraction(fields)
     removed = len(rejected)
     for k in list(kept):
@@ -409,7 +414,7 @@ def privacy_filter(fields: dict[str, dict]) -> tuple[dict[str, dict], int]:
             d["raw_text"] = None
             d["flags"] = sorted(set(d["flags"]) | {"identifiant_retire"})
             removed += 1
-    return kept, removed
+    return kept, removed, sorted(rejected)
 
 
 def extract_pages(images: list[bytes], *, client: OllamaClient | None = None, main_model: str | None = None,
@@ -435,6 +440,7 @@ def extract_pages(images: list[bytes], *, client: OllamaClient | None = None, ma
             res.error, res.duration_s = str(e), time.monotonic() - t0
             continue
         res.quality, res.deskew_deg = prep.quality, prep.deskew_deg
+        res.band_ranges = [(b.y0, b.y1) for b in prep.bands]
         hint = page_types[i] if page_types and i < len(page_types) else None
         if hint:
             res.page_type, res.classification = hint, "impose"
