@@ -271,6 +271,11 @@ def apply_verify(st: FieldState) -> None:
     ver = [r for r in st.readings if r.source == "verify"]
     if not ver or st.interp is None or st.evidence is None:
         return
+    from ai.arabic import has_arabic
+    if has_arabic(ver[0].raw):                       # le 2e avis voit de l'arabe : la sage-femme tranche
+        st.flags.append("ecrit_arabe")
+        st.evidence.verified = False
+        return
     it = _interp(st.f, ver[0])
     agree = _same(st.f, st.interp, it)
     st.evidence.verified = agree
@@ -397,6 +402,9 @@ def _second_opinion(client, page_type: str, bands, model: str, use_cache: bool,
         apply_verify(st)
 
 
+from ai.arabic import has_arabic  # noqa: E402
+
+
 def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: float) -> None:
     values = {}
     for _, states in pages:
@@ -429,6 +437,11 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             ocr_date = "lecture_ocr" in st.flags and st.f.type == "date"
             critical = st.f.critique or vlm_box or ocr_date
             status = C.status(st.interp.status, conf, seuil, critical, st.evidence)
+            arabe = "ecrit_arabe" in st.flags or has_arabic(st.chosen.raw if st.chosen else None)
+            if arabe:                                   # lecture arabe : JAMAIS CONNU, valeur demandée
+                status, conf = "A_REVISER", min(conf, 0.3)
+                if "ecrit_arabe" not in st.flags:
+                    st.flags.append("ecrit_arabe")
             if "crayon_gris" in st.flags and status == "CONNU":
                 status = "A_REVISER"                    # date au crayon : rappel ? toujours à confirmer
             if (k in coherent and status == "A_REVISER" and not st.interp.flags and k not in vflags
@@ -440,7 +453,8 @@ def _finalize(pages: list[tuple[PageResult, dict[str, FieldState]]], seuil: floa
             if vlm_box and status == "CONNU":
                 status = "A_REVISER"                    # quel que soit le seuil
             raw = st.chosen.raw if isinstance(st.chosen.raw, str) else None
-            out[k] = {"value": st.interp.value, "raw_text": raw, "status": status, "confidence": conf,
+            out[k] = {"value": None if arabe else st.interp.value, "raw_text": raw, "status": status,
+                      "confidence": conf,
                       "candidates": st.candidates, "flags": sorted(set(st.flags)), "page": res.index + 1,
                       "lectures": C.readings_count(st.evidence)}
             if st.chosen.band is not None and st.chosen.band < len(res.band_ranges):

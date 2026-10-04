@@ -198,3 +198,19 @@ Fait avant ce plan (commit 1bc0909, tag lot-3) : voir README « Alertes clinique
   Conclusion honnête : la structure est là, la reconnaissance de l'écriture manuscrite cursive ne l'est pas
   (piste : modèle d'écriture manuscrite dédié, ou saisie guidée par entrée).
 
+
+## Branche `arabe-detection` (NON fusionnée dans main)
+
+- Langues EasyOCR du lecteur principal : `["fr", "en"]` (inchangé). 2e lecteur `["ar", "en"]`
+  (`ai/arabic.py`) chargé **à la demande** : à la première zone de champ dont la lecture française est
+  peu sûre (confiance < 0,5, champs texte / choix). Le modèle `arabic.pth` est téléchargé une seule fois
+  au premier usage (ensuite tout est local).
+- Détection, pas lecture : zone arabe OU 2e avis Ollama en caractères U+0600–U+06FF -> champ A_REVISER,
+  valeur vide, raison « écrit en arabe », question « 🟠 Ce champ semble écrit en arabe, pouvez-vous me
+  le donner ? » [Corriger] [Illisible] [Vide]. Une lecture arabe n'est jamais CONNU. Identifiants (même
+  écrits en arabe) : toujours retirés par la liste blanche. Réglage : `AI_DETECT_ARABE`.
+- Coût mesuré : chargement du lecteur 2,5 s (une fois par processus ; 18,8 s au 1er usage avec le
+  téléchargement), ~0,9 s par zone vérifiée, **plafond 5 s de détection par page** (chargement exclu).
+  Vraies photos 1-2 et 1-3 : +0,6 s / -3 s (bruit), aucun faux positif.
+- Test : case synthétique contenant « الرباط » détectée, « Casablanca » non (test sauté si le modèle
+  arabe n'est pas installé). Limite : pas de photo réelle écrite en arabe pour mesurer le rappel.

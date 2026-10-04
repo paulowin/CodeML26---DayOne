@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     ai_timeout_seconds: int = 600
     # budget GLOBAL de lecture par page : au-delà, saisie guidée expliquée (la sage-femme n'attend pas)
     ai_budget_page_seconds: int = 75
+    # détection de l'écriture arabe (lecteur EasyOCR ['ar','en'] chargé à la demande, zones peu sûres)
+    ai_detect_arabe: bool = True
     ai_num_ctx: int = 8192                     # contexte Ollama (4096 si la VRAM sature)
     ai_num_predict: int = 2048                 # plafond de tokens générés par appel (anti-boucle)
 

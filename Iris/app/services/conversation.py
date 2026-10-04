@@ -242,7 +242,7 @@ _FLAG_REASONS = (("plusieurs_cases_cochees", "why_boxes"), ("hors_plage", "why_r
                  ("ta_sys_inferieure_dia", "why_bp"), ("date_partielle", "why_partial"),
                  ("type_invalide", "why_format"), ("date_invalide", "why_format"), ("choix_inconnu", "why_format"),
                  ("libelle_retire", "why_label"),
-                 ("decimale_manquante", "why_digit"), ("crayon_gris", "why_pencil"), ("date_chiffre_manquant", "why_digit"))
+                 ("decimale_manquante", "why_digit"), ("crayon_gris", "why_pencil"), ("ecrit_arabe", "why_arabic"), ("date_chiffre_manquant", "why_digit"))
 
 
 def doubt_reason(key: str, f: FieldDef, ef: ExtractedField, disagreement: bool, lang: str) -> str:
@@ -571,6 +571,14 @@ def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> Non
     lines = [out.tr("question", i=st["idx"] + 1, n=len(queue), label=field_label(key))]
     value = proposed_value(f, ef)
     cands = [c for c in _details(ef).get("candidates") or [] if c is not None]
+    if "ecrit_arabe" in (_details(ef).get("flags") or []):
+        # 🟠 « Ce champ semble écrit en arabe, pouvez-vous me le donner ? » (pas de lecture proposée)
+        lines.append(out.tr("arabic_q"))
+        out.buttons("\n".join(lines), [(_bid(st, "CORR", key), out.tr("btn_correct")),
+                                       (_bid(st, "ILL", key), out.tr("btn_illegible")),
+                                       (_bid(st, "VIDE", key), out.tr("btn_blank"))])
+        save_state(mw, st)
+        return
     if ef.raw_text or value is not None:
         lines.append(read_line(f, ef.raw_text, value, out))
     else:

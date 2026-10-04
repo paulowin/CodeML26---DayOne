@@ -31,6 +31,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from ai import arabic
+
 from ai import confidence as C
 from ai.classify import UNKNOWN, classify_text
 from ai.extract import (FieldState, PageResult, Reading, _cell_etat, _finalize, _second_opinion,
@@ -329,6 +331,11 @@ LOW_RES_LINE_PX = 20
 ZOOM_TYPES = ("float", "int", "bp")                       # poids, HU, BCF, TA, Hb...
 
 
+def _px_box(words, px_per_pt: float) -> tuple[float, float, float, float]:
+    return (min(w.x0 for w in words) * px_per_pt, min(w.top for w in words) * px_per_pt,
+            max(w.x1 for w in words) * px_per_pt, max(w.y for w in words) * px_per_pt + 4)
+
+
 def _zoom_read(img: Image.Image, words, px_per_pt: float) -> str | None:
     """Relit une cellule agrandie x3 (interpolation cubique + netteté), lecture contrainte aux chiffres."""
     import cv2
@@ -365,6 +372,8 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
     if page_type == "vaccination_couverture":                   # identifiants directs : rien à extraire
         return page_type, states, prep, tokens
     layout, conf_of = build_layout(tokens, img.size[0], img.size[1], page_type)
+    from app.config import get_settings
+    arabic_check, rgb, ar_spent = get_settings().ai_detect_arabe, None, 0.0
     heights = sorted(t.box[3] - t.box[1] for t in tokens)
     low_res = engine == "easyocr" and bool(heights) and heights[len(heights) // 2] < LOW_RES_LINE_PX
     gt = ocr_page_gt(layout, page_type)                  # géométrie de la vérité terrain (3a)
@@ -389,6 +398,16 @@ def read_page_ocr(img_bytes: bytes, engine: str, page_type: str | None = None, d
         band = _band_of(np.mean([w.cy for w in words]) / layout.height, prep.bands)
         st = states.setdefault(key, FieldState(f))
         st.readings.append(Reading(key, raw, _cell_etat(raw), conf, band))
+        if (conf < arabic.DOUBT_CONF and arabic_check and f.type in ("str", "enum")
+                and ar_spent < arabic.PAGE_BUDGET_S):   # ≤ 5 s de détection par page (chargement exclu)
+            # lecture française peu sûre : est-ce de l'arabe ? (lecteur ['ar','en'] chargé à la demande)
+            if rgb is None:
+                rgb = np.asarray(img.convert("RGB"))
+            was_loaded, t_ar = arabic.reader_loaded(), time.monotonic()
+            is_ar = arabic.zone_is_arabic(rgb, _px_box(words, img.size[0] / PT_WIDTH))
+            ar_spent += time.monotonic() - t_ar - (0 if was_loaded else (arabic.load_seconds or 0))
+            if is_ar:
+                st.flags.append("ecrit_arabe")
         if low_res and f.type in ZOOM_TYPES and f.table:
             # photo compressée : relecture de la cellule agrandie x3, chiffres seulement. Un
             # désaccord (« 74 » / « 74,8 ») = 2 lectures différentes -> à vérifier, jamais CONNU
