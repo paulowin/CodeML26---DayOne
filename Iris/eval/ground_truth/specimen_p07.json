@@ -1,0 +1,103 @@
+{
+  "source": "specimen",
+  "pdf_page": 7,
+  "patient": 1,
+  "page_type": "pp_tardif_mere",
+  "sections": [
+    "pp_tardif_mere"
+  ],
+  "fields": {
+    "pp_tardif_mere.cesarienne": false,
+    "pp_tardif_mere.complication": false,
+    "pp_tardif_mere.complications_type": [],
+    "pp_tardif_mere.conjonctives": "normales",
+    "pp_tardif_mere.date_consultation": "18/03/2026",
+    "pp_tardif_mere.globe_uterin": false,
+    "pp_tardif_mere.lochies": [
+      "claires",
+      "fade"
+    ],
+    "pp_tardif_mere.mollets": [
+      "normal"
+    ],
+    "pp_tardif_mere.moment": "dans_les_delais",
+    "pp_tardif_mere.perinee": [
+      "reparee"
+    ],
+    "pp_tardif_mere.pf_desire": true,
+    "pp_tardif_mere.pf_methode": [
+      "pilule"
+    ],
+    "pp_tardif_mere.pf_prescription": true,
+    "pp_tardif_mere.pf_referee": false,
+    "pp_tardif_mere.poids_kg": 64.0,
+    "pp_tardif_mere.pouls": 75,
+    "pp_tardif_mere.prise_medicaments": false,
+    "pp_tardif_mere.seins": [
+      "normal"
+    ],
+    "pp_tardif_mere.sphincters": "normal",
+    "pp_tardif_mere.ta": {
+      "sys": 107,
+      "dia": 71
+    },
+    "pp_tardif_mere.temperature_c": 37.0,
+    "pp_tardif_mere.traitement": [
+      "fer"
+    ]
+  },
+  "raw": {
+    "pp_tardif_mere.date_consultation": "18/03/2026",
+    "pp_tardif_mere.poids_kg": "64 kg",
+    "pp_tardif_mere.pouls": "75",
+    "pp_tardif_mere.ta": "107/71",
+    "pp_tardif_mere.temperature_c": "37.0"
+  },
+  "checked": [
+    "pp_tardif_mere.conjonctives:normales",
+    "pp_tardif_mere.lochies:claires",
+    "pp_tardif_mere.lochies:fade",
+    "pp_tardif_mere.mollets:normal",
+    "pp_tardif_mere.moment:dans_les_delais",
+    "pp_tardif_mere.perinee:reparee",
+    "pp_tardif_mere.pf_desire",
+    "pp_tardif_mere.pf_methode:pilule",
+    "pp_tardif_mere.pf_prescription",
+    "pp_tardif_mere.seins:normal",
+    "pp_tardif_mere.sphincters:normal",
+    "pp_tardif_mere.traitement:fer"
+  ],
+  "champs_cases": [
+    "pp_tardif_mere.cesarienne",
+    "pp_tardif_mere.complication",
+    "pp_tardif_mere.complications_type",
+    "pp_tardif_mere.conjonctives",
+    "pp_tardif_mere.globe_uterin",
+    "pp_tardif_mere.lochies",
+    "pp_tardif_mere.mollets",
+    "pp_tardif_mere.moment",
+    "pp_tardif_mere.perinee",
+    "pp_tardif_mere.pf_desire",
+    "pp_tardif_mere.pf_methode",
+    "pp_tardif_mere.pf_prescription",
+    "pp_tardif_mere.pf_referee",
+    "pp_tardif_mere.prise_medicaments",
+    "pp_tardif_mere.seins",
+    "pp_tardif_mere.sphincters",
+    "pp_tardif_mere.traitement"
+  ],
+  "vides": [
+    "pp_tardif_mere.cicatrice",
+    "pp_tardif_mere.etat_general",
+    "pp_tardif_mere.medicaments",
+    "pp_tardif_mere.pf_autre",
+    "pp_tardif_mere.pf_pourquoi",
+    "pp_tardif_mere.prochain_rdv",
+    "pp_tardif_mere.traitement_autre"
+  ],
+  "_identifiants": {
+    "pp_tardif_mere.nom_patiente": "Tazi Meryem"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

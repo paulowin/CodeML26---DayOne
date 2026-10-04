@@ -180,10 +180,10 @@ def test_acces_image_selon_role(client, fake_wa):
 # ------------------------------------------------------------------ anonymisation
 def test_liste_blanche_du_schema():
     kept, rejected = sanitize_extraction({
-        "profil.age": 27, "grossesse_en_cours.ta_systolique": 120,
-        "profil.nom": "X", "identification.telephone": "06", "nom_conjoint": "Y", "champ_invente": 1,
+        "identification.age": 27, "grossesse_actuelle.visites.T1V1.ta": "120/80",
+        "identification.nom": "X", "identification.telephone": "06", "nom_conjoint": "Y", "champ_invente": 1,
     })
-    assert set(kept) == {"profil.age", "grossesse_en_cours.ta_systolique"}
+    assert set(kept) == {"identification.age", "grossesse_actuelle.visites.T1V1.ta"}
     assert len(rejected) == 4
 
 

@@ -19,6 +19,27 @@ conversationnelle → liaison des visites d'une même patiente. Le flux papier n
 - Stockage local chiffré ; images d'origine jamais modifiées, accès par rôle.
 - Identifiants internes = UUID aléatoires, jamais dérivés d'infos personnelles.
 
+## Données du défi (`data-defi/`, non versionné, ne JAMAIS modifier)
+- `data-defi/Paper Registry/` : 129 images = **80 pages spécimen uniques** (+ 44 doublons exacts :
+  même sha256, nom suffixé `__xxxx`) + **5 vraies photos** `1-1.jpg`..`1-5.jpg` (vrai carnet rose
+  du ministère de la Santé du Maroc, écriture bleue, photos inclinées : 1-1 couverture,
+  1-2 identification + antécédents familiaux/femme, 1-3 antécédents obstétricaux,
+  1-4 grossesse actuelle T1, 1-5 grossesse actuelle T2→9e mois).
+- `dossiers_specimen_10_patientes.pdf` = les 80 pages, 10 patientes fictives × 8 pages, ordre fixe :
+  1 couverture, 2 identification + antécédents (+ obstétricaux), 3 grossesse actuelle (tableau de
+  visites T1V1..T1V3, T2V1..T2V3, 7e/8e/9e mois), 4 accouchement, 5 post-partum précoce mère,
+  6 post-partum précoce nouveau-né, 7 post-partum tardif mère, 8 post-partum tardif nouveau-né.
+  PNG `dossiers_specimen_10_patientes-NN` = page NN du PDF.
+- Dans le PDF, l'écriture « manuscrite » est du VRAI TEXTE en polices manuscrites (Caveat,
+  NanumPen, Gaegu, ReenieBeanie, ShadowsIntoLight) ; l'imprimé est en Helvetica ; les coches
+  sont des tracés vectoriels colorés sur des cases 8×8 → vérité terrain extraite
+  automatiquement avec pdfplumber. Pièges : chaque page est tournée de ±0,5° (on redresse) ;
+  NanumPen n'a pas les accents (`\x00`, blanc sur l'image → `�` = joker à l'évaluation) ;
+  le nom de la patiente est aussi IMPRIMÉ dans l'en-tête des pages post-partum mère.
+- `maternal_registry_synthetic.csv` (200 lignes) n'est PAS lié aux images : c'est le format
+  tabulaire cible (variables clés). Sert à nommer les variables (`csv_column`), aux plages
+  plausibles et, plus tard, à un export au même format.
+
 ## Barème (100 pts)
 Extraction 30 · Incertitude 20 · Flux conversationnel 20 · Hors ligne 15 ·
 Liaison + confidentialité 10 · Code/doc 5.
@@ -61,14 +82,28 @@ décision de correspondance patiente.
       `services/sync.py` (ECHEC_SYNCHRO puis réessai) ; `services/processing.py` (reprise des
       ECHEC_TRAITEMENT + message WhatsApp). API `POST /api/admin/reseau`, `GET /api/tableau`.
       `scripts/reset_db.py` en cas de changement de schéma. 59 tests verts.
-- [ ] **Bloc 3 – Cerveau IA local** : script indépendant `ai/extract.py` (Ollama +
+- [x] **Bloc 3a – Vérité terrain & évaluation** : schéma réel du carnet
+      `app/templates/carnet_maroc.py` (un carnet = un fichier template ; sections, tableaux à
+      clés indexées `grossesse_actuelle.visites.T2V1.poids_kg`, `label_fr` = texte imprimé,
+      `csv_column`, `identifiant=True` jamais stocké) ; `registry_schema` en est généré (même
+      API). `app/templates/normalize.py` (dates, nombres, TA cmHg→mmHg, SA+j, choix → code).
+      `scripts/build_manifest.py` → `eval/manifest.json` ; `scripts/build_ground_truth.py` →
+      `eval/ground_truth/specimen_pNN.json` (0 % non rattaché, 1970 cases) + modèles
+      `reel_1-X.json` à remplir à la main (voir `eval/ground_truth/README.md`) ;
+      `python -m eval.evaluate --pred <dossier>` (exactitude, cases P/R, couverture,
+      calibration, NON_FOURNI, erreurs silencieuses, échec bloquant si fuite d'identifiant) ;
+      `eval/dummy_predict.py` pour tester l'évaluateur. 72 tests verts.
+      À reprendre : `state_machine.find_duplicate` lit `identification.date_visite`, qui
+      n'existe plus dans le schéma réel (→ date de visite = `visites.<COL>.venue_le` ou
+      `date_consultation`, bloc 3b/4).
+- [ ] **Bloc 3b – Cerveau IA local** : script indépendant `ai/extract.py` (Ollama +
       modèle vision, ou PaddleOCR + LLM local) prenant des images → JSON
-      `{ "section.champ": {value, status, confidence, raw_text, page} }` conforme à
-      `registry_schema.SECTIONS`. Le worker prend les dossiers EN_ATTENTE_IA, appelle le
+      `{"image": ..., "fields": {"section.champ": {value, status, confidence, raw_text, page}}}`
+      conforme au template (évaluable directement par `eval.evaluate`). Le worker prend les dossiers EN_ATTENTE_IA, appelle le
       script, passe `sanitize_extraction`, écrit les `ExtractedField`, puis TRAITE_IA →
       A_REVISER (l'IA ne valide jamais seule : seule la sage-femme fait passer en VALIDE) ;
       en cas d'erreur → ECHEC_TRAITEMENT et `ai_attempts += 1`. Contrôles de plausibilité (`FieldDef.plausible`) → A_REVISER.
-      Évaluer sur le jeu de données synthétique (CSV de référence).
+      Évaluer avec `eval.evaluate` (spécimen puis photos réelles).
 - [ ] **Bloc 4 – Conversation & liaison** : `Midwife.conversation_state` (JSON) ;
       point d'entrée : `ingest._handle_text` (branche `else`). Confirmer / Corriger /
       Reprendre la photo pour chaque champ A_REVISER/ILLISIBLE ; saisie manuelle si IA
@@ -81,4 +116,7 @@ décision de correspondance patiente.
 uvicorn app.main:app --reload --port 8000
 ngrok http 8000
 pytest -q
+python -m scripts.build_manifest        # inventaire des images -> eval/manifest.json
+python -m scripts.build_ground_truth    # vérité terrain spécimen + rapport de rattachement
+python -m eval.dummy_predict --noise 0.15 && python -m eval.evaluate --pred eval/preds/dummy
 ```

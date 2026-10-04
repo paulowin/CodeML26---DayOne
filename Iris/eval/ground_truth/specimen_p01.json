@@ -1,0 +1,43 @@
+{
+  "source": "specimen",
+  "pdf_page": 1,
+  "patient": 1,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSCA Al Wifaq",
+    "couverture.grossesse_a_risque": false,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-823-001",
+    "couverture.province": "Kénitra",
+    "couverture.region": "Rabat-Salé-Kénitra",
+    "couverture.type_etablissement": "csca",
+    "couverture.type_risque": []
+  },
+  "raw": {
+    "couverture.etablissement": "CSCA Al Wifaq",
+    "couverture.numero_fiche": "2026-823-001",
+    "couverture.province": "Kénitra",
+    "couverture.region": "Rabat-Salé-Kénitra"
+  },
+  "checked": [
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csca"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Tazi Meryem"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

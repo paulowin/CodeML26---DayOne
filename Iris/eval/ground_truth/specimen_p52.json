@@ -1,0 +1,64 @@
+{
+  "source": "specimen",
+  "pdf_page": 52,
+  "patient": 7,
+  "page_type": "accouchement",
+  "sections": [
+    "accouchement"
+  ],
+  "fields": {
+    "accouchement.age_gestationnel_sa": 39.0,
+    "accouchement.anomalie": "Aucune",
+    "accouchement.complications": false,
+    "accouchement.complications_moment": [],
+    "accouchement.complications_type": [],
+    "accouchement.date": "28/08/2026",
+    "accouchement.domicile_assiste": true,
+    "accouchement.episiotomie": false,
+    "accouchement.etat_nne": "vivant",
+    "accouchement.instrument": [],
+    "accouchement.lieu": "a_domicile",
+    "accouchement.mode": "voie_basse_non_instrumentale",
+    "accouchement.perimetre_cranien_cm": 35.0,
+    "accouchement.poids_naissance_g": 3430,
+    "accouchement.sexe": "F"
+  },
+  "raw": {
+    "accouchement.age_gestationnel_sa": "39 SA",
+    "accouchement.anomalie": "Aucune",
+    "accouchement.date": "28/08/2026",
+    "accouchement.perimetre_cranien_cm": "35 cm",
+    "accouchement.poids_naissance_g": "3430 g",
+    "accouchement.sexe": "F"
+  },
+  "checked": [
+    "accouchement.domicile_assiste",
+    "accouchement.etat_nne:vivant",
+    "accouchement.lieu:a_domicile",
+    "accouchement.mode:voie_basse_non_instrumentale"
+  ],
+  "champs_cases": [
+    "accouchement.complications",
+    "accouchement.complications_moment",
+    "accouchement.complications_type",
+    "accouchement.domicile_assiste",
+    "accouchement.episiotomie",
+    "accouchement.etat_nne",
+    "accouchement.instrument",
+    "accouchement.lieu",
+    "accouchement.lieu_structure",
+    "accouchement.mode"
+  ],
+  "vides": [
+    "accouchement.complications_autre",
+    "accouchement.indication_cesarienne",
+    "accouchement.lieu_autre_domicile",
+    "accouchement.lieu_autre_milieu",
+    "accouchement.lieu_structure"
+  ],
+  "_identifiants": {
+    "accouchement.nom_patiente": "El Idrissi Salma"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

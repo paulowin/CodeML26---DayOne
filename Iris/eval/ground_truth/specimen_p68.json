@@ -1,0 +1,72 @@
+{
+  "source": "specimen",
+  "pdf_page": 68,
+  "patient": 9,
+  "page_type": "accouchement",
+  "sections": [
+    "accouchement"
+  ],
+  "fields": {
+    "accouchement.age_gestationnel_sa": 41.0,
+    "accouchement.anomalie": "Aucune",
+    "accouchement.complications": true,
+    "accouchement.complications_moment": [
+      "au_moment_de_l_accouchement"
+    ],
+    "accouchement.complications_type": [
+      "pre_eclampsie"
+    ],
+    "accouchement.date": "30/01/2026",
+    "accouchement.domicile_assiste": false,
+    "accouchement.episiotomie": false,
+    "accouchement.etat_nne": "vivant",
+    "accouchement.indication_cesarienne": "Pr�-�clampsie s�v�re",
+    "accouchement.instrument": [],
+    "accouchement.lieu": "en_milieu_surveille",
+    "accouchement.lieu_structure": "clinique_privee",
+    "accouchement.mode": "cesarienne_urgence",
+    "accouchement.perimetre_cranien_cm": 33.0,
+    "accouchement.poids_naissance_g": 3585,
+    "accouchement.sexe": "M"
+  },
+  "raw": {
+    "accouchement.age_gestationnel_sa": "41 SA",
+    "accouchement.anomalie": "Aucune",
+    "accouchement.date": "30/01/2026",
+    "accouchement.indication_cesarienne": "Pr�-�clampsie s�v�re",
+    "accouchement.perimetre_cranien_cm": "33 cm",
+    "accouchement.poids_naissance_g": "3585 g",
+    "accouchement.sexe": "M"
+  },
+  "checked": [
+    "accouchement.complications",
+    "accouchement.complications_moment:au_moment_de_l_accouchement",
+    "accouchement.complications_type:pre_eclampsie",
+    "accouchement.etat_nne:vivant",
+    "accouchement.lieu:en_milieu_surveille",
+    "accouchement.lieu_structure:clinique_privee",
+    "accouchement.mode:cesarienne_urgence"
+  ],
+  "champs_cases": [
+    "accouchement.complications",
+    "accouchement.complications_moment",
+    "accouchement.complications_type",
+    "accouchement.domicile_assiste",
+    "accouchement.episiotomie",
+    "accouchement.etat_nne",
+    "accouchement.instrument",
+    "accouchement.lieu",
+    "accouchement.lieu_structure",
+    "accouchement.mode"
+  ],
+  "vides": [
+    "accouchement.complications_autre",
+    "accouchement.lieu_autre_domicile",
+    "accouchement.lieu_autre_milieu"
+  ],
+  "_identifiants": {
+    "accouchement.nom_patiente": "Alaoui Loubna"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

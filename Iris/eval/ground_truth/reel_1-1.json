@@ -1,0 +1,33 @@
+{
+  "source": "reel",
+  "image": "1-1.jpg",
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "a_remplir": true,
+  "fields": {
+    "couverture.numero_fiche": null,
+    "couverture.region": null,
+    "couverture.province": null,
+    "couverture.etablissement": null,
+    "couverture.type_etablissement": null,
+    "couverture.mode_couverture": null,
+    "couverture.grossesse_a_risque": null,
+    "couverture.type_risque": null,
+    "couverture.type_risque_autre": null
+  },
+  "checked": [],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [],
+  "_identifiants": {},
+  "_identifiants_cles": [
+    "couverture.nom_parturiente"
+  ],
+  "non_rattache": []
+}

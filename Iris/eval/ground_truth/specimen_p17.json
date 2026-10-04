@@ -1,0 +1,43 @@
+{
+  "source": "specimen",
+  "pdf_page": 17,
+  "patient": 3,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "DR Tahannaout Sud",
+    "couverture.grossesse_a_risque": false,
+    "couverture.mode_couverture": "mobile",
+    "couverture.numero_fiche": "2026-711-003",
+    "couverture.province": "Al Haouz",
+    "couverture.region": "Marrakech-Safi",
+    "couverture.type_etablissement": "dr",
+    "couverture.type_risque": []
+  },
+  "raw": {
+    "couverture.etablissement": "DR Tahannaout Sud",
+    "couverture.numero_fiche": "2026-711-003",
+    "couverture.province": "Al Haouz",
+    "couverture.region": "Marrakech-Safi"
+  },
+  "checked": [
+    "couverture.mode_couverture:mobile",
+    "couverture.type_etablissement:dr"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Saidi Meryem"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

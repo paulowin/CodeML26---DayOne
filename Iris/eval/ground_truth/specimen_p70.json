@@ -1,0 +1,75 @@
+{
+  "source": "specimen",
+  "pdf_page": 70,
+  "patient": 9,
+  "page_type": "pp_precoce_nne",
+  "sections": [
+    "pp_precoce_nne"
+  ],
+  "fields": {
+    "pp_precoce_nne.age": "7 jours",
+    "pp_precoce_nne.allaitement": "exclusif",
+    "pp_precoce_nne.complications": [],
+    "pp_precoce_nne.date_consultation": "06/02/2026",
+    "pp_precoce_nne.decision": "Poursuivre l'allaitement exclusif",
+    "pp_precoce_nne.evaluation_allaitement": "normal",
+    "pp_precoce_nne.hypotrophe": false,
+    "pp_precoce_nne.perimetre_cranien_cm": 33.0,
+    "pp_precoce_nne.poids_g": 3511,
+    "pp_precoce_nne.premature": false,
+    "pp_precoce_nne.prochaine_visite": "08/03/2026",
+    "pp_precoce_nne.signes_graves": [],
+    "pp_precoce_nne.signes_graves_autre": "N�ant",
+    "pp_precoce_nne.taille_cm": 48.0,
+    "pp_precoce_nne.temperature_c": 37.1,
+    "pp_precoce_nne.traitement": "N�ant",
+    "pp_precoce_nne.transfert": false,
+    "pp_precoce_nne.traumatismes": [],
+    "pp_precoce_nne.traumatismes_autre": "RAS",
+    "pp_precoce_nne.vaccins": [
+      "bcg",
+      "hb"
+    ],
+    "pp_precoce_nne.vitamine_d": true
+  },
+  "raw": {
+    "pp_precoce_nne.age": "7 jours",
+    "pp_precoce_nne.date_consultation": "06/02/2026",
+    "pp_precoce_nne.decision": "Poursuivre l'allaitement exclusif",
+    "pp_precoce_nne.perimetre_cranien_cm": "33 cm",
+    "pp_precoce_nne.poids_g": "3511 g",
+    "pp_precoce_nne.prochaine_visite": "08/03/2026",
+    "pp_precoce_nne.signes_graves_autre": "N�ant",
+    "pp_precoce_nne.taille_cm": "48 cm",
+    "pp_precoce_nne.temperature_c": "37.1 �C",
+    "pp_precoce_nne.traitement": "N�ant",
+    "pp_precoce_nne.traumatismes_autre": "RAS"
+  },
+  "checked": [
+    "pp_precoce_nne.allaitement:exclusif",
+    "pp_precoce_nne.evaluation_allaitement:normal",
+    "pp_precoce_nne.vaccins:bcg",
+    "pp_precoce_nne.vaccins:hb",
+    "pp_precoce_nne.vitamine_d"
+  ],
+  "champs_cases": [
+    "pp_precoce_nne.allaitement",
+    "pp_precoce_nne.complications",
+    "pp_precoce_nne.evaluation_allaitement",
+    "pp_precoce_nne.hypotrophe",
+    "pp_precoce_nne.premature",
+    "pp_precoce_nne.signes_graves",
+    "pp_precoce_nne.transfert",
+    "pp_precoce_nne.traumatismes",
+    "pp_precoce_nne.vaccins",
+    "pp_precoce_nne.vitamine_d"
+  ],
+  "vides": [
+    "pp_precoce_nne.etablissement_reference"
+  ],
+  "_identifiants": {
+    "pp_precoce_nne.vu_par": "Inf. Zahra"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

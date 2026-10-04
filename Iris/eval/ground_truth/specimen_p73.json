@@ -1,0 +1,43 @@
+{
+  "source": "specimen",
+  "pdf_page": 73,
+  "patient": 10,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSUA Hay Riad",
+    "couverture.grossesse_a_risque": false,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-590-010",
+    "couverture.province": "Khémisset",
+    "couverture.region": "Rabat-Salé-Kénitra",
+    "couverture.type_etablissement": "csua",
+    "couverture.type_risque": []
+  },
+  "raw": {
+    "couverture.etablissement": "CSUA Hay Riad",
+    "couverture.numero_fiche": "2026-590-010",
+    "couverture.province": "Khémisset",
+    "couverture.region": "Rabat-Salé-Kénitra"
+  },
+  "checked": [
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csua"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Bennani Zineb"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

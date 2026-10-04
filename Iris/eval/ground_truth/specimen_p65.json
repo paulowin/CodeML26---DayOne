@@ -1,0 +1,47 @@
+{
+  "source": "specimen",
+  "pdf_page": 65,
+  "patient": 9,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSC Ksar Jdid",
+    "couverture.grossesse_a_risque": true,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-842-009",
+    "couverture.province": "Errachidia",
+    "couverture.region": "Dr�a-Tafilalet",
+    "couverture.type_etablissement": "csc",
+    "couverture.type_risque": [
+      "pre_eclampsie"
+    ]
+  },
+  "raw": {
+    "couverture.etablissement": "CSC Ksar Jdid",
+    "couverture.numero_fiche": "2026-842-009",
+    "couverture.province": "Errachidia",
+    "couverture.region": "Dr�a-Tafilalet"
+  },
+  "checked": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csc",
+    "couverture.type_risque:pre_eclampsie"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Alaoui Loubna"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

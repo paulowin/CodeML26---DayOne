@@ -1,0 +1,69 @@
+{
+  "source": "specimen",
+  "pdf_page": 40,
+  "patient": 5,
+  "page_type": "pp_tardif_nne",
+  "sections": [
+    "pp_tardif_nne"
+  ],
+  "fields": {
+    "pp_tardif_nne.age": "48 jours",
+    "pp_tardif_nne.allaitement": "exclusif",
+    "pp_tardif_nne.complications": [],
+    "pp_tardif_nne.date_consultation": "25/06/2026",
+    "pp_tardif_nne.decision": "Poursuivre l'allaitement exclusif",
+    "pp_tardif_nne.evaluation_allaitement": "normal",
+    "pp_tardif_nne.hypotrophe": false,
+    "pp_tardif_nne.perimetre_cranien_cm": 39.0,
+    "pp_tardif_nne.poids_g": 5150,
+    "pp_tardif_nne.premature": false,
+    "pp_tardif_nne.prochaine_visite": "24/08/2026",
+    "pp_tardif_nne.signes_graves": [],
+    "pp_tardif_nne.signes_graves_autre": "Néant",
+    "pp_tardif_nne.taille_cm": 58.0,
+    "pp_tardif_nne.temperature_c": 36.7,
+    "pp_tardif_nne.traitement": "Néant",
+    "pp_tardif_nne.transfert": false,
+    "pp_tardif_nne.traumatismes": [],
+    "pp_tardif_nne.traumatismes_autre": "RAS",
+    "pp_tardif_nne.vaccins": [],
+    "pp_tardif_nne.vitamine_d": false
+  },
+  "raw": {
+    "pp_tardif_nne.age": "48 jours",
+    "pp_tardif_nne.date_consultation": "25/06/2026",
+    "pp_tardif_nne.decision": "Poursuivre l'allaitement exclusif",
+    "pp_tardif_nne.perimetre_cranien_cm": "39 cm",
+    "pp_tardif_nne.poids_g": "5150 g",
+    "pp_tardif_nne.prochaine_visite": "24/08/2026",
+    "pp_tardif_nne.signes_graves_autre": "Néant",
+    "pp_tardif_nne.taille_cm": "58 cm",
+    "pp_tardif_nne.temperature_c": "36.7 °C",
+    "pp_tardif_nne.traitement": "Néant",
+    "pp_tardif_nne.traumatismes_autre": "RAS"
+  },
+  "checked": [
+    "pp_tardif_nne.allaitement:exclusif",
+    "pp_tardif_nne.evaluation_allaitement:normal"
+  ],
+  "champs_cases": [
+    "pp_tardif_nne.allaitement",
+    "pp_tardif_nne.complications",
+    "pp_tardif_nne.evaluation_allaitement",
+    "pp_tardif_nne.hypotrophe",
+    "pp_tardif_nne.premature",
+    "pp_tardif_nne.signes_graves",
+    "pp_tardif_nne.transfert",
+    "pp_tardif_nne.traumatismes",
+    "pp_tardif_nne.vaccins",
+    "pp_tardif_nne.vitamine_d"
+  ],
+  "vides": [
+    "pp_tardif_nne.etablissement_reference"
+  ],
+  "_identifiants": {
+    "pp_tardif_nne.vu_par": "Inf. Zahra"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

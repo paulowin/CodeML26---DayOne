@@ -1,0 +1,43 @@
+{
+  "source": "specimen",
+  "pdf_page": 49,
+  "patient": 7,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSU Ennahda",
+    "couverture.grossesse_a_risque": false,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-163-007",
+    "couverture.province": "Berkane",
+    "couverture.region": "Oriental",
+    "couverture.type_etablissement": "csu",
+    "couverture.type_risque": []
+  },
+  "raw": {
+    "couverture.etablissement": "CSU Ennahda",
+    "couverture.numero_fiche": "2026-163-007",
+    "couverture.province": "Berkane",
+    "couverture.region": "Oriental"
+  },
+  "checked": [
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csu"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "El Idrissi Salma"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

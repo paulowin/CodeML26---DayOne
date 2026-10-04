@@ -1,0 +1,47 @@
+{
+  "source": "specimen",
+  "pdf_page": 33,
+  "patient": 5,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSC Al Amal",
+    "couverture.grossesse_a_risque": true,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-978-005",
+    "couverture.province": "Taroudant",
+    "couverture.region": "Souss-Massa",
+    "couverture.type_etablissement": "csc",
+    "couverture.type_risque": [
+      "anemie"
+    ]
+  },
+  "raw": {
+    "couverture.etablissement": "CSC Al Amal",
+    "couverture.numero_fiche": "2026-978-005",
+    "couverture.province": "Taroudant",
+    "couverture.region": "Souss-Massa"
+  },
+  "checked": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csc",
+    "couverture.type_risque:anemie"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Tazi Meryem"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

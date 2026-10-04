@@ -14,3 +14,11 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Données du défi (fichiers d'origine, jamais modifiés ni versionnés)
+data-defi/
+data_defi/
+
+# Évaluation : prédictions générées et identifiants lus sur les vraies photos
+eval/preds/
+eval/ground_truth/*.local.json

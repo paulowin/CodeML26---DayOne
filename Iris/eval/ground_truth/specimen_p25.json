@@ -1,0 +1,43 @@
+{
+  "source": "specimen",
+  "pdf_page": 25,
+  "patient": 4,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSCA Ait Mhamed",
+    "couverture.grossesse_a_risque": false,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-995-004",
+    "couverture.province": "Azilal",
+    "couverture.region": "B�ni Mellal-Kh�nifra",
+    "couverture.type_etablissement": "csca",
+    "couverture.type_risque": []
+  },
+  "raw": {
+    "couverture.etablissement": "CSCA Ait Mhamed",
+    "couverture.numero_fiche": "2026-995-004",
+    "couverture.province": "Azilal",
+    "couverture.region": "B�ni Mellal-Kh�nifra"
+  },
+  "checked": [
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csca"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Benali Nadia"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

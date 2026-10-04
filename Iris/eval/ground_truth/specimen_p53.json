@@ -1,0 +1,103 @@
+{
+  "source": "specimen",
+  "pdf_page": 53,
+  "patient": 7,
+  "page_type": "pp_precoce_mere",
+  "sections": [
+    "pp_precoce_mere"
+  ],
+  "fields": {
+    "pp_precoce_mere.cesarienne": false,
+    "pp_precoce_mere.complication": false,
+    "pp_precoce_mere.complications_type": [],
+    "pp_precoce_mere.conjonctives": "normales",
+    "pp_precoce_mere.date_consultation": "04/09/2026",
+    "pp_precoce_mere.globe_uterin": true,
+    "pp_precoce_mere.lochies": [
+      "fade",
+      "sanglantes"
+    ],
+    "pp_precoce_mere.mollets": [
+      "normal"
+    ],
+    "pp_precoce_mere.moment": "dans_les_delais",
+    "pp_precoce_mere.perinee": [
+      "normal"
+    ],
+    "pp_precoce_mere.pf_desire": false,
+    "pp_precoce_mere.pf_methode": [],
+    "pp_precoce_mere.pf_pourquoi": "Souhaite en discuter avec son mari",
+    "pp_precoce_mere.pf_prescription": false,
+    "pp_precoce_mere.pf_referee": false,
+    "pp_precoce_mere.poids_kg": 68.0,
+    "pp_precoce_mere.pouls": 87,
+    "pp_precoce_mere.prise_medicaments": false,
+    "pp_precoce_mere.prochain_rdv": "09/10/2026",
+    "pp_precoce_mere.seins": [
+      "normal"
+    ],
+    "pp_precoce_mere.sphincters": "normal",
+    "pp_precoce_mere.ta": {
+      "sys": 108,
+      "dia": 79
+    },
+    "pp_precoce_mere.temperature_c": 37.3,
+    "pp_precoce_mere.traitement": [
+      "fer",
+      "vitamine_a"
+    ]
+  },
+  "raw": {
+    "pp_precoce_mere.date_consultation": "04/09/2026",
+    "pp_precoce_mere.pf_pourquoi": "Souhaite en discuter avec son mari",
+    "pp_precoce_mere.poids_kg": "68 kg",
+    "pp_precoce_mere.pouls": "87",
+    "pp_precoce_mere.prochain_rdv": "09/10/2026",
+    "pp_precoce_mere.ta": "108/79",
+    "pp_precoce_mere.temperature_c": "37.3"
+  },
+  "checked": [
+    "pp_precoce_mere.conjonctives:normales",
+    "pp_precoce_mere.globe_uterin",
+    "pp_precoce_mere.lochies:fade",
+    "pp_precoce_mere.lochies:sanglantes",
+    "pp_precoce_mere.mollets:normal",
+    "pp_precoce_mere.moment:dans_les_delais",
+    "pp_precoce_mere.perinee:normal",
+    "pp_precoce_mere.seins:normal",
+    "pp_precoce_mere.sphincters:normal",
+    "pp_precoce_mere.traitement:fer",
+    "pp_precoce_mere.traitement:vitamine_a"
+  ],
+  "champs_cases": [
+    "pp_precoce_mere.cesarienne",
+    "pp_precoce_mere.complication",
+    "pp_precoce_mere.complications_type",
+    "pp_precoce_mere.conjonctives",
+    "pp_precoce_mere.globe_uterin",
+    "pp_precoce_mere.lochies",
+    "pp_precoce_mere.mollets",
+    "pp_precoce_mere.moment",
+    "pp_precoce_mere.perinee",
+    "pp_precoce_mere.pf_desire",
+    "pp_precoce_mere.pf_methode",
+    "pp_precoce_mere.pf_prescription",
+    "pp_precoce_mere.pf_referee",
+    "pp_precoce_mere.prise_medicaments",
+    "pp_precoce_mere.seins",
+    "pp_precoce_mere.sphincters",
+    "pp_precoce_mere.traitement"
+  ],
+  "vides": [
+    "pp_precoce_mere.cicatrice",
+    "pp_precoce_mere.etat_general",
+    "pp_precoce_mere.medicaments",
+    "pp_precoce_mere.pf_autre",
+    "pp_precoce_mere.traitement_autre"
+  ],
+  "_identifiants": {
+    "pp_precoce_mere.nom_patiente": "El Idrissi Salma"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

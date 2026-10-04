@@ -1,0 +1,48 @@
+{
+  "source": "reel",
+  "image": "1-2.jpg",
+  "page_type": "identification_antecedents",
+  "sections": [
+    "identification",
+    "antecedents_familiaux",
+    "antecedents_femme"
+  ],
+  "a_remplir": true,
+  "fields": {
+    "identification.age": null,
+    "identification.niveau_instruction": null,
+    "identification.profession": null,
+    "identification.profession_partenaire": null,
+    "identification.consanguinite": null,
+    "identification.grossesse_desiree": null,
+    "antecedents_familiaux.femme.hta": null,
+    "antecedents_familiaux.femme.diabete": null,
+    "antecedents_familiaux.femme.maladies_hereditaires": null,
+    "antecedents_familiaux.femme.malformations": null,
+    "antecedents_familiaux.femme.allergies": null,
+    "antecedents_familiaux.femme.autres": null,
+    "antecedents_familiaux.partenaire.hta": null,
+    "antecedents_familiaux.partenaire.diabete": null,
+    "antecedents_familiaux.partenaire.maladies_hereditaires": null,
+    "antecedents_familiaux.partenaire.malformations": null,
+    "antecedents_familiaux.partenaire.allergies": null,
+    "antecedents_familiaux.partenaire.autres": null,
+    "antecedents_femme.medicaux": null,
+    "antecedents_femme.chirurgicaux": null,
+    "antecedents_femme.gynecologiques": null
+  },
+  "checked": [],
+  "champs_cases": [
+    "identification.consanguinite",
+    "identification.grossesse_desiree"
+  ],
+  "vides": [],
+  "_identifiants": {},
+  "_identifiants_cles": [
+    "identification.adresse",
+    "identification.cin",
+    "identification.nom_mari",
+    "identification.telephone"
+  ],
+  "non_rattache": []
+}

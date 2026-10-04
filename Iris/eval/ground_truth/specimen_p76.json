@@ -1,0 +1,72 @@
+{
+  "source": "specimen",
+  "pdf_page": 76,
+  "patient": 10,
+  "page_type": "accouchement",
+  "sections": [
+    "accouchement"
+  ],
+  "fields": {
+    "accouchement.age_gestationnel_sa": 39.0,
+    "accouchement.anomalie": "Aucune",
+    "accouchement.complications": true,
+    "accouchement.complications_moment": [
+      "au_moment_de_l_accouchement"
+    ],
+    "accouchement.complications_type": [
+      "infection"
+    ],
+    "accouchement.date": "07/07/2026",
+    "accouchement.domicile_assiste": false,
+    "accouchement.episiotomie": false,
+    "accouchement.etat_nne": "vivant",
+    "accouchement.indication_cesarienne": "Souffrance fœtale",
+    "accouchement.instrument": [],
+    "accouchement.lieu": "en_milieu_surveille",
+    "accouchement.lieu_structure": "maternite",
+    "accouchement.mode": "cesarienne_urgence",
+    "accouchement.perimetre_cranien_cm": 35.0,
+    "accouchement.poids_naissance_g": 3119,
+    "accouchement.sexe": "F"
+  },
+  "raw": {
+    "accouchement.age_gestationnel_sa": "39 SA",
+    "accouchement.anomalie": "Aucune",
+    "accouchement.date": "07/07/2026",
+    "accouchement.indication_cesarienne": "Souffrance fœtale",
+    "accouchement.perimetre_cranien_cm": "35 cm",
+    "accouchement.poids_naissance_g": "3119 g",
+    "accouchement.sexe": "F"
+  },
+  "checked": [
+    "accouchement.complications",
+    "accouchement.complications_moment:au_moment_de_l_accouchement",
+    "accouchement.complications_type:infection",
+    "accouchement.etat_nne:vivant",
+    "accouchement.lieu:en_milieu_surveille",
+    "accouchement.lieu_structure:maternite",
+    "accouchement.mode:cesarienne_urgence"
+  ],
+  "champs_cases": [
+    "accouchement.complications",
+    "accouchement.complications_moment",
+    "accouchement.complications_type",
+    "accouchement.domicile_assiste",
+    "accouchement.episiotomie",
+    "accouchement.etat_nne",
+    "accouchement.instrument",
+    "accouchement.lieu",
+    "accouchement.lieu_structure",
+    "accouchement.mode"
+  ],
+  "vides": [
+    "accouchement.complications_autre",
+    "accouchement.lieu_autre_domicile",
+    "accouchement.lieu_autre_milieu"
+  ],
+  "_identifiants": {
+    "accouchement.nom_patiente": "Bennani Zineb"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

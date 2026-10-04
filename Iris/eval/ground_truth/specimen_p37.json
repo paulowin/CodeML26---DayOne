@@ -1,0 +1,111 @@
+{
+  "source": "specimen",
+  "pdf_page": 37,
+  "patient": 5,
+  "page_type": "pp_precoce_mere",
+  "sections": [
+    "pp_precoce_mere"
+  ],
+  "fields": {
+    "pp_precoce_mere.cesarienne": true,
+    "pp_precoce_mere.cicatrice": "Propre",
+    "pp_precoce_mere.complication": true,
+    "pp_precoce_mere.complications_type": [
+      "anemie"
+    ],
+    "pp_precoce_mere.conjonctives": "decolorees",
+    "pp_precoce_mere.date_consultation": "16/05/2026",
+    "pp_precoce_mere.globe_uterin": true,
+    "pp_precoce_mere.lochies": [
+      "fade",
+      "sanglantes"
+    ],
+    "pp_precoce_mere.medicaments": "Fer 2 cp/j",
+    "pp_precoce_mere.mollets": [
+      "normal"
+    ],
+    "pp_precoce_mere.moment": "dans_les_delais",
+    "pp_precoce_mere.perinee": [
+      "normal"
+    ],
+    "pp_precoce_mere.pf_desire": false,
+    "pp_precoce_mere.pf_methode": [],
+    "pp_precoce_mere.pf_pourquoi": "Souhaite en discuter avec son mari",
+    "pp_precoce_mere.pf_prescription": false,
+    "pp_precoce_mere.pf_referee": false,
+    "pp_precoce_mere.poids_kg": 59.0,
+    "pp_precoce_mere.pouls": 81,
+    "pp_precoce_mere.prise_medicaments": true,
+    "pp_precoce_mere.prochain_rdv": "20/06/2026",
+    "pp_precoce_mere.seins": [
+      "normal"
+    ],
+    "pp_precoce_mere.sphincters": "normal",
+    "pp_precoce_mere.ta": {
+      "sys": 114,
+      "dia": 77
+    },
+    "pp_precoce_mere.temperature_c": 37.0,
+    "pp_precoce_mere.traitement": [
+      "fer",
+      "vitamine_a"
+    ]
+  },
+  "raw": {
+    "pp_precoce_mere.cicatrice": "Propre",
+    "pp_precoce_mere.date_consultation": "16/05/2026",
+    "pp_precoce_mere.medicaments": "Fer 2 cp/j",
+    "pp_precoce_mere.pf_pourquoi": "Souhaite en discuter avec son mari",
+    "pp_precoce_mere.poids_kg": "59 kg",
+    "pp_precoce_mere.pouls": "81",
+    "pp_precoce_mere.prochain_rdv": "20/06/2026",
+    "pp_precoce_mere.ta": "114/77",
+    "pp_precoce_mere.temperature_c": "37.0"
+  },
+  "checked": [
+    "pp_precoce_mere.cesarienne",
+    "pp_precoce_mere.complication",
+    "pp_precoce_mere.complications_type:anemie",
+    "pp_precoce_mere.conjonctives:decolorees",
+    "pp_precoce_mere.globe_uterin",
+    "pp_precoce_mere.lochies:fade",
+    "pp_precoce_mere.lochies:sanglantes",
+    "pp_precoce_mere.mollets:normal",
+    "pp_precoce_mere.moment:dans_les_delais",
+    "pp_precoce_mere.perinee:normal",
+    "pp_precoce_mere.prise_medicaments",
+    "pp_precoce_mere.seins:normal",
+    "pp_precoce_mere.sphincters:normal",
+    "pp_precoce_mere.traitement:fer",
+    "pp_precoce_mere.traitement:vitamine_a"
+  ],
+  "champs_cases": [
+    "pp_precoce_mere.cesarienne",
+    "pp_precoce_mere.complication",
+    "pp_precoce_mere.complications_type",
+    "pp_precoce_mere.conjonctives",
+    "pp_precoce_mere.globe_uterin",
+    "pp_precoce_mere.lochies",
+    "pp_precoce_mere.mollets",
+    "pp_precoce_mere.moment",
+    "pp_precoce_mere.perinee",
+    "pp_precoce_mere.pf_desire",
+    "pp_precoce_mere.pf_methode",
+    "pp_precoce_mere.pf_prescription",
+    "pp_precoce_mere.pf_referee",
+    "pp_precoce_mere.prise_medicaments",
+    "pp_precoce_mere.seins",
+    "pp_precoce_mere.sphincters",
+    "pp_precoce_mere.traitement"
+  ],
+  "vides": [
+    "pp_precoce_mere.etat_general",
+    "pp_precoce_mere.pf_autre",
+    "pp_precoce_mere.traitement_autre"
+  ],
+  "_identifiants": {
+    "pp_precoce_mere.nom_patiente": "Tazi Meryem"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}

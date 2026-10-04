@@ -1,0 +1,47 @@
+{
+  "source": "specimen",
+  "pdf_page": 57,
+  "patient": 8,
+  "page_type": "couverture",
+  "sections": [
+    "couverture"
+  ],
+  "fields": {
+    "couverture.etablissement": "CSCA Lahraouiyine",
+    "couverture.grossesse_a_risque": true,
+    "couverture.mode_couverture": "fixe",
+    "couverture.numero_fiche": "2026-803-008",
+    "couverture.province": "Settat",
+    "couverture.region": "Casablanca-Settat",
+    "couverture.type_etablissement": "csca",
+    "couverture.type_risque": [
+      "anemie"
+    ]
+  },
+  "raw": {
+    "couverture.etablissement": "CSCA Lahraouiyine",
+    "couverture.numero_fiche": "2026-803-008",
+    "couverture.province": "Settat",
+    "couverture.region": "Casablanca-Settat"
+  },
+  "checked": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture:fixe",
+    "couverture.type_etablissement:csca",
+    "couverture.type_risque:anemie"
+  ],
+  "champs_cases": [
+    "couverture.grossesse_a_risque",
+    "couverture.mode_couverture",
+    "couverture.type_etablissement",
+    "couverture.type_risque"
+  ],
+  "vides": [
+    "couverture.type_risque_autre"
+  ],
+  "_identifiants": {
+    "couverture.nom_parturiente": "Lahlou Khadija"
+  },
+  "non_rattache": [],
+  "cases_non_rattachees": []
+}
