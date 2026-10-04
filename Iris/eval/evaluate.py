@@ -196,6 +196,9 @@ def evaluate(preds: list[dict], gts: dict[str, dict], source: str | None = None)
             conf = float(entry.get("confidence") or 0.0)
             status = entry.get("status")
             bump("corrects", int(ok))
+            if status == "CONNU":                         # champs affichés comme sûrs
+                bump("surs")
+                bump("surs_justes", int(ok))
             per_field[short]["ok"] += int(ok)
             calib[_bin(conf)].append((conf, ok))
             if not ok:
@@ -261,6 +264,7 @@ def metrics(c: dict) -> dict:
         "vides_non_fourni": _ratio(c.get("vides_statut_ok", 0), c.get("vides_predits", 0)),
         "valeurs_inventees": c.get("valeurs_inventees", 0),
         "erreurs_silencieuses": c.get("erreurs_silencieuses", 0),
+        "precision_surs": _ratio(c.get("surs_justes", 0), c.get("surs", 0)),
         "erreurs_signalees": _ratio(c.get("statut_a_reviser_sur_erreur", 0),
                                     c.get("couverts", 0) - c.get("corrects", 0)),
     }
@@ -296,7 +300,8 @@ def render_markdown(res: dict, pred_dir: str = "") -> str:
     else:
         lines += ["OK : aucun identifiant retrouvé dans les prédictions.", ""]
 
-    cols = ["images", "exactitude", "couverture", "exactitude_sur_couverts", "cases_precision", "cases_rappel",
+    cols = ["images", "exactitude", "couverture", "precision_surs", "exactitude_sur_couverts", "cases_precision",
+            "cases_rappel",
             "vides_non_fourni", "valeurs_inventees", "erreurs_silencieuses", "erreurs_signalees"]
     lines += ["## Métriques", "", "| groupe | " + " | ".join(cols) + " |", "|" + "---|" * (len(cols) + 1)]
     order = sorted(g, key=lambda k: ({"global": 0, "source": 1, "page": 2}[k.split(":")[0]], k))
@@ -327,6 +332,7 @@ def console_summary(res: dict) -> str:
     d = res.get("duree_moyenne_s")
     out = [f"EXACTITUDE GLOBALE : {_pct(m['exactitude'])}",
            f"ERREURS SILENCIEUSES (faux + CONNU) : {m['erreurs_silencieuses']}",
+           f"PRÉCISION DES CHAMPS SÛRS (CONNU justes) : {_pct(m['precision_surs'])}",
            f"TEMPS MOYEN PAR PAGE : {'—' if d is None else f'{d:.1f} s'}",
            "TOP 15 DES CHAMPS LES PLUS RATÉS :"]
     out += [f"  {e:3d}/{n:<3d} {k}" for k, e, n in top_missed(res)] or ["  (aucun)"]

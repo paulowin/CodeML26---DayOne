@@ -88,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--calibrate", action="store_true")
     ap.add_argument("--run-id", default=None)
+    ap.add_argument("--resume", action="store_true", help="sauter les images déjà prédites (reprise après coupure)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -113,6 +114,9 @@ def main(argv: list[str] | None = None) -> int:
           f"2e avis {args.verify or 'aucun'})")
     t_all = time.monotonic()
     for i, e in enumerate(images, 1):
+        if args.resume and (out_dir / f"{Path(e['file']).stem}.json").exists():
+            print(f"[{i}/{len(images)}] {e['file']} : déjà prédit (reprise)")
+            continue
         data = (DATA_DIR / e["file"]).read_bytes()
         if args.mode == "ocr":
             from ai.ocr_classique import extract_pages_ocr
