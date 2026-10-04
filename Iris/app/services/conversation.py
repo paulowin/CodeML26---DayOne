@@ -22,7 +22,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.i18n import t
+from app.i18n import plural, t
 from app.models import (ExtractedField, FieldSource, FieldStatus, Midwife, Page, Patient, Record, RecordStatus)
 from app.services import outbox
 from app.state_machine import date_reference, find_duplicate, transition
@@ -35,6 +35,8 @@ log = logging.getLogger(__name__)
 T = get_template()
 ORDER = {k: i for i, k in enumerate(T.fields)}
 MAX_QUESTIONS = 10
+HARD_PAGE_DOUBTS = 15          # au-delà : « page difficile à lire »
+RETAKE_FIRST_RATIO = 0.8       # au-delà : [Reprendre photo] proposé en premier
 VIEW_PAGE = 12
 
 IDLE, RESUME, REVISION, CORRECTION, FIN = "IDLE", "RESUME", "REVISION", "CORRECTION_ATTENDUE", "FIN_REVISION"
@@ -130,6 +132,19 @@ def _details(ef: ExtractedField) -> dict:
         return {}
 
 
+_ACCENTS = ((r"\bAge\b", "Âge"), (r"\bEtat\b", "État"), (r"\bEclampsie\b", "Éclampsie"),
+            (r"\bEvaluation\b", "Évaluation"), (r"\bEpisiotomie\b", "Épisiotomie"),
+            (r"^A (?=[a-zà-ÿ])", "À "))
+
+
+def accentue(text: str) -> str:
+    """Le carnet imprimé omet les accents sur les majuscules (« Age probable ») : on les remet
+    à l'AFFICHAGE seulement (le template garde le texte imprimé, qui sert à l'alignement)."""
+    for pat, rep in _ACCENTS:
+        text = re.sub(pat, rep, text)
+    return text
+
+
 def field_label(key: str) -> str:
     """« Grossesse actuelle · 2ème trimestre, Visite 1 · TA » (libellés du formulaire)."""
     f = T.fields[key]
@@ -151,7 +166,7 @@ def field_label(key: str) -> str:
             parts.append(f.label_fr)
     else:
         parts.append(f.label_fr)
-    return " · ".join(p.rstrip(" :") for p in parts)
+    return " · ".join(accentue(p.rstrip(" :")) for p in parts)
 
 
 def fmt_value(f: FieldDef, value, lang: str = "fr") -> str:
@@ -164,7 +179,7 @@ def fmt_value(f: FieldDef, value, lang: str = "fr") -> str:
         return f"{d}/{m}/{y}"
     if f.type == "bool":
         return t(lang, "yes") if value else t(lang, "no")
-    labels = {c.code: c.label_fr for c in f.choices}
+    labels = {c.code: accentue(c.label_fr) for c in f.choices}
     if f.type == "enum":
         return labels.get(value, str(value))
     if f.type == "checkbox_group":
@@ -173,6 +188,68 @@ def fmt_value(f: FieldDef, value, lang: str = "fr") -> str:
         num = f"{value:g}" if isinstance(value, float) else str(value)
         return f"{num} {f.unit}" if f.unit else num
     return str(value)
+
+
+SECONDS_PER_QUESTION = 12          # mesuré au téléphone : ~5 questions par minute
+
+
+def estimated_minutes(n_questions: int) -> int:
+    return max(1, -(-n_questions * SECONDS_PER_QUESTION // 60))
+
+
+def proposed_value(f: FieldDef, ef: ExtractedField):
+    """Valeur à proposer : la valeur retenue, sinon le texte lu re-normalisé (champ « illisible »
+    dont une lecture existe quand même, ex. « 11.8 g/dL »)."""
+    value = _value(ef)
+    if value is None and ef.raw_text and not f.is_checkbox:
+        value = interpret(f, ef.raw_text).value
+    return value
+
+
+def _digits(s: str) -> str:
+    return re.sub(r"\D", "", s or "")
+
+
+def read_line(f: FieldDef, raw: str | None, value, out: "Out") -> str:
+    """« J'ai lu : 106/77 mmHg » (une seule fois si brut = normalisé au format près), sinon
+    « J'ai lu : « 11/7 » → 110/70 mmHg ». Jamais « → — »."""
+    norm = fmt_value(f, value, out.lang) if value is not None else None
+    raw = clean_text(raw) if raw else None
+    if norm is None:
+        return out.tr("read_as", raw=raw, norm="")
+    if raw is None:
+        return out.tr("read_once", value=norm)
+    same = (_digits(raw) == _digits(norm)) if _digits(raw) and _digits(norm) else fold(raw) == fold(norm)
+    if same:
+        return out.tr("read_once", value=norm)
+    return out.tr("read_as", raw=raw, norm=out.tr("read_norm", value=norm))
+
+
+_FLAG_REASONS = (("plusieurs_cases_cochees", "why_boxes"), ("hors_plage", "why_range"),
+                 ("age_gestationnel_incoherent_ddr", "why_ga"), ("poids_incoherent_avec_age", "why_bw"),
+                 ("gestite_parite_incoherentes", "why_parity"), ("enfants_vivants_superieurs_parite", "why_children"),
+                 ("ta_sys_inferieure_dia", "why_bp"), ("date_partielle", "why_partial"),
+                 ("type_invalide", "why_format"), ("date_invalide", "why_format"), ("choix_inconnu", "why_format"),
+                 ("libelle_retire", "why_label"))
+
+
+def doubt_reason(key: str, f: FieldDef, ef: ExtractedField, disagreement: bool, lang: str) -> str:
+    """POURQUOI le champ est douteux, en une courte raison issue des drapeaux de l'IA."""
+    flags = set(_details(ef).get("flags") or [])
+    if disagreement:
+        return t(lang, "why_disagree")
+    if "dpa_incoherente_avec_ddr" in flags:
+        return t(lang, "why_dpa" if key.endswith(".ddr") else "why_ddr")
+    for flag, reason in _FLAG_REASONS:
+        if flag in flags:
+            return t(lang, reason)
+    if ef.status == FieldStatus.ILLISIBLE:
+        return t(lang, "why_illegible")
+    if f.is_checkbox:
+        return t(lang, "why_checkbox")
+    if f.critique:
+        return t(lang, "why_critical")
+    return t(lang, "why_low")
 
 
 def format_hint(f: FieldDef, lang: str) -> str:
@@ -186,9 +263,9 @@ def format_hint(f: FieldDef, lang: str) -> str:
     if f.type == "bool":
         return t(lang, "hint_bool")
     if f.type == "enum":
-        return t(lang, "hint_choice", choices=", ".join(c.label_fr for c in f.choices))
+        return t(lang, "hint_choice", choices=", ".join(accentue(c.label_fr) for c in f.choices))
     if f.type == "checkbox_group":
-        return t(lang, "hint_group", choices=", ".join(c.label_fr for c in f.choices))
+        return t(lang, "hint_group", choices=", ".join(accentue(c.label_fr) for c in f.choices))
     return t(lang, "hint_text")
 
 
@@ -272,14 +349,28 @@ def _summary(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> None:
     read = sum(1 for f in fields.values() if f.value_json not in (None, "null"))
     st.update(mode=RESUME, record_id=rec.id, queue=queue, overflow=overflow, idx=0, paused=False)
     _bump(st)
-    body = out.tr("summary", rid=rec.id[:8], read=read, check=len(queue) + len(overflow))
+    n_check = len(queue) + len(overflow)
+    certain = sum(1 for f in fields.values() if f.status == FieldStatus.CONNU)
+    hard = n_check > HARD_PAGE_DOUBTS
+    retake_first = bool(fields) and n_check / len(fields) > RETAKE_FIRST_RATIO
+    if hard:                                   # ne pas afficher « 67 à vérifier »
+        body = out.tr("summary_hard", rid=rec.id[:8], certain=plural(out.lang, certain, "pl_field_read"),
+                      q=plural(out.lang, len(queue), "pl_question"))
+    else:
+        body = out.tr("summary", rid=rec.id[:8], read=plural(out.lang, read, "pl_field_read"), check=n_check,
+                      duration=plural(out.lang, estimated_minutes(len(queue)), "pl_minute"))
+    if retake_first:
+        body += "\n" + out.tr("photo_tip")
     if not queue and not overflow:
         body += "\n" + out.tr("summary_none")
     others = len(_pending_records(db, mw, exclude=rec.id))
     if others:
-        body += "\n" + out.tr("others_waiting", n=others)
-    out.buttons(body, [(_bid(st, "REV"), out.tr("btn_verify")), (_bid(st, "PHOTO"), out.tr("btn_retake")),
-                       (_bid(st, "LATER"), out.tr("btn_later"))])
+        body += "\n" + out.tr("others_waiting", n=plural(out.lang, others, "pl_record_other"))
+    buttons = [(_bid(st, "REV"), out.tr("btn_verify")), (_bid(st, "PHOTO"), out.tr("btn_retake")),
+               (_bid(st, "LATER"), out.tr("btn_later"))]
+    if retake_first:                           # > 80 % incertain : reprendre la photo d'abord
+        buttons[0], buttons[1] = buttons[1], buttons[0]
+    out.buttons(body, buttons)
     save_state(mw, st)
 
 
@@ -298,15 +389,13 @@ def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> Non
     st["mode"] = REVISION
     _bump(st)
     lines = [out.tr("question", i=st["idx"] + 1, n=len(queue), label=field_label(key))]
-    value = _value(ef)
+    value = proposed_value(f, ef)
+    cands = [c for c in _details(ef).get("candidates") or [] if c is not None]
     if ef.raw_text or value is not None:
-        norm = fmt_value(f, value, out.lang)
-        raw = ef.raw_text or norm
-        lines.append(out.tr("read_as", raw=raw, norm=out.tr("read_norm", value=norm) if norm != raw else ""))
-        lines.append(out.tr("not_sure"))
+        lines.append(read_line(f, ef.raw_text, value, out))
     else:
         lines.append(out.tr("unreadable"))
-    cands = [c for c in _details(ef).get("candidates") or [] if c is not None]
+    lines.append(out.tr("not_sure", reason=doubt_reason(key, f, ef, len(cands) >= 2, out.lang)))
     if len(cands) >= 2:
         lines.append(out.tr("candidates"))
         rows = [(_bid(st, "CAND", f"{key}#{i}"), fmt_value(f, c, out.lang)[:24], out.tr("row_candidate", n=i + 1))
@@ -395,7 +484,7 @@ def _confirm_all(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> N
     transition(db, rec, RecordStatus.VALIDE, f"midwife:{mw.id}", "vérifié sur WhatsApp")
     msg = out.tr("validated", rid=rec.id[:8])
     if overflow:
-        msg += "\n" + out.tr("overflow", n=len(overflow))
+        msg += "\n" + out.tr("overflow", n=plural(out.lang, len(overflow), "pl_field"))
     out.text(msg)
     start_linking(db, mw, rec, st, out)
 
@@ -470,7 +559,7 @@ def _manual_intro(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> 
     queue = manual_fields(rec)
     st.update(mode=MANUEL, record_id=rec.id, queue=queue, idx=-1, paused=False)
     _bump(st)
-    out.buttons(out.tr("manual_intro", rid=rec.id[:8], n=len(queue)),
+    out.buttons(out.tr("manual_intro", rid=rec.id[:8], n=plural(out.lang, len(queue), "pl_key_field")),
                 [(_bid(st, "MAN"), out.tr("btn_start")), (_bid(st, "LATER"), out.tr("btn_later"))])
     save_state(mw, st)
 
@@ -582,7 +671,7 @@ def start_linking(db: Session, mw: Midwife, rec: Record, st: dict, out: Out, cod
         for i, (p, _) in enumerate(cands, 1):
             n, last = patient_summary(db, p)
             rows.append((_bid(st, "LINKP", str(i - 1)), out.tr("row_patient", n=i),
-                         out.tr("row_patient_d", code=p.code, visits=n,
+                         out.tr("row_patient_d", code=p.code, visits=plural(out.lang, n, "pl_visit"),
                                 last=out.tr("row_last", date=last) if last else "")))
         rows += [(_bid(st, "LINKNEW"), out.tr("row_create"), out.tr("row_create_d", code=shown)),
                  (_bid(st, "LINKUNK"), out.tr("row_dont_know"), out.tr("row_dont_know_d"))]
@@ -685,7 +774,29 @@ def handle_text(db: Session, mw: Midwife, text: str) -> bool:
     if mode == IDLE and _pending_records(db, mw) and cmd in CMD_OK:
         _start_next(db, mw, st, out)
         return True
-    return False
+    return _greet_if_waiting(db, mw, st, out)
+
+
+def _greet_if_waiting(db: Session, mw: Midwife, st: dict, out: Out) -> bool:
+    """Message libre (« bonjour »...) alors qu'un dossier attend : on le rappelle, avec boutons."""
+    rec = db.get(Record, st.get("record_id") or "")
+    if st["mode"] == IDLE or rec is None:
+        nxt = [r for r in _pending_records(db, mw) if r.status == RecordStatus.A_REVISER]
+        if not nxt:
+            return False
+        rec = nxt[0]
+        queue, overflow = review_queue(rec)
+        st = _reset(st)
+        st.update(mode=RESUME, record_id=rec.id, queue=queue, overflow=overflow, idx=0)
+    remaining = max(0, len(st.get("queue") or []) - max(0, st.get("idx") or 0))
+    _bump(st)
+    if st["mode"] in (RESUME, REVISION, FIN):
+        body = out.tr("greet_pending", n=plural(out.lang, remaining, "pl_question"))
+    else:
+        body = out.tr("greet_pending_other")
+    out.buttons(body, [(_bid(st, "GO"), out.tr("btn_verify")), (_bid(st, "LATER"), out.tr("btn_later"))])
+    save_state(mw, st)
+    return True
 
 
 def _reask(db: Session, mw: Midwife, st: dict, out: Out) -> None:
@@ -757,6 +868,12 @@ def _handle_button(db: Session, mw: Midwife, st: dict, out: Out, action: str, ri
     elif action == "REV":
         st["idx"] = 0
         _ask_field(db, mw, rec, st, out)
+    elif action == "GO":                                   # reprise depuis le message d'accueil
+        if st["mode"] == RESUME:
+            st["idx"] = 0
+            _ask_field(db, mw, rec, st, out)
+        else:
+            _reask(db, mw, st, out)
     elif action == "PHOTO":
         _ask_photo(db, mw, rec, st, out, key)
     elif action == "PHOTOPAGE":
@@ -771,7 +888,10 @@ def _handle_button(db: Session, mw: Midwife, st: dict, out: Out, action: str, ri
             out.text(out.tr("stale"))
             return True
         if action == "CONF":
-            set_field(db, rec, k, _value(ef), FieldStatus.CONNU, FieldSource.SAGE_FEMME, 1.0, ef.raw_text)
+            proposed = proposed_value(T.fields[k], ef)
+            if proposed is None and ef.raw_text:              # non normalisable : on garde le texte lu
+                proposed = clean_text(ef.raw_text)
+            set_field(db, rec, k, proposed, FieldStatus.CONNU, FieldSource.SAGE_FEMME, 1.0, ef.raw_text)
         elif action == "ILL":
             set_field(db, rec, k, None, FieldStatus.ILLISIBLE, FieldSource.SAGE_FEMME, 1.0, ef.raw_text)
         elif action == "VIDE":

@@ -91,7 +91,8 @@ V = "grossesse_actuelle.visites."
 def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
     rid = seeded(fake_wa)
     summary = fake_wa.sent[-1]
-    assert "5 à vérifier" in body_of(summary)
+    assert "5 à vérifier (environ 1 minute)" in body_of(summary) and "(s)" not in body_of(summary)
+    assert "champs lus" in body_of(summary)
     assert [b.split("|")[0] for b in ids(summary)] == ["REV", "PHOTO", "LATER"]
     for b in summary["interactive"]["action"]["buttons"]:
         assert len(b["reply"]["title"]) <= 20
@@ -108,13 +109,19 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
             assert q["interactive"]["type"] == "list"
             titles = [r["title"] for r in q["interactive"]["action"]["sections"][0]["rows"]]
             assert titles[:2] == ["106/77 mmHg", "166/77 mmHg"] and "Autre valeur" in titles
+            descs = [r["description"] for r in q["interactive"]["action"]["sections"][0]["rows"]]
+            assert descs[:2] == ["Lecture 1", "Lecture 2"]
+            assert "les deux lectures diffèrent" in body_of(q)
             assert all(len(t) <= 24 for t in titles)
             press(client, next(i for i in ids(q) if i.startswith("CAND|") and i.split("|")[2].endswith("#0")))
-        elif key == V + "T1V2.hemoglobine":                                   # illisible
-            assert [i.split("|")[0] for i in ids(q)] == ["CORR", "ILL", "VIDE"]
+        elif key == V + "T1V2.hemoglobine":                # « illisible » mais une lecture existe
+            assert "J'ai lu : 11.8 g/dL" in body_of(q) and "→ —" not in body_of(q)
+            assert "écriture peu lisible" in body_of(q)
+            assert [i.split("|")[0] for i in ids(q)] == ["CONF", "CORR", "ILL"]   # la valeur reste proposée
             press(client, find_id(q, "ILL"))
         elif key == "grossesse_actuelle.ddr":                                 # corriger : invalide puis valide
-            assert "26/04/2025" in body_of(q)
+            assert "J'ai lu : 26/04/2025" in body_of(q) and "»" not in body_of(q)   # affiché une seule fois
+            assert "incohérent avec la DPA" in body_of(q)
             press(client, find_id(q, "CORR"))
             assert "jj/mm/aaaa" in body_of(fake_wa.sent[-1])
             say(client, "31/02/2025")
@@ -135,7 +142,8 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
     link = fake_wa.sent[-1]
     assert link["interactive"]["type"] == "list"
     rows = link["interactive"]["action"]["sections"][0]["rows"]
-    assert rows[0]["description"].startswith("code A64125 – 3 visite(s), dernière 01/12")
+    assert rows[0]["description"].startswith("code A64125 – 3 visites, dernière 01/12")
+    assert rows[1]["description"].startswith("code A64128 – 1 visite,")
     assert "A64128" in rows[1]["description"]                                 # code proche proposé aussi
     assert [r["title"] for r in rows[2:]] == ["Aucune, créer", "Je ne sais pas"]
     press(client, rows[0]["id"])
@@ -376,3 +384,84 @@ def test_limites_whatsapp_et_textes_bilingues():
                 assert len(v) <= 20, (lang, k, v)
             if k.startswith("row_") and not k.endswith("_d") and "{" not in v:
                 assert len(v) <= 24, (lang, k, v)
+
+
+
+def test_affichage_valeur_lue_et_raisons():
+    from app.services.conversation import Out, accentue, doubt_reason, field_label, read_line
+    f_ta = conv.T.fields[V + "T1V1.ta"]
+
+    class O(Out):
+        def __init__(self):
+            self.lang = "fr"
+    o = O()
+    assert read_line(f_ta, "106/77", {"sys": 106, "dia": 77}, o) == "J'ai lu : 106/77 mmHg"
+    assert read_line(f_ta, "11/7", {"sys": 110, "dia": 70}, o) == "J'ai lu : « 11/7 » → 110/70 mmHg"
+    hb = conv.T.fields[V + "T1V1.hemoglobine"]
+    assert read_line(hb, "11.8 g/dL", 11.8, o) == "J'ai lu : 11.8 g/dL"
+    assert read_line(hb, "13,2 g/dl", 13.2, o) == "J'ai lu : 13.2 g/dL"
+    assert read_line(hb, "illisible ??", None, o) == "J'ai lu : « illisible ?? »"      # jamais « → — »
+    assert field_label(V + "T1V1.age_probable_sa").endswith("· Âge probable")
+    assert accentue("Etat des lochies") == "État des lochies" and accentue("A domicile") == "À domicile"
+    assert accentue("A") == "A"                                                   # groupe sanguin intact
+    ef = ExtractedField(section="grossesse_actuelle", field_key="visites.T1V1.poids_kg", status=FieldStatus.A_REVISER,
+                        details_json=json.dumps({"flags": ["hors_plage"]}))
+    assert doubt_reason(V + "T1V1.poids_kg", conv.T.fields[V + "T1V1.poids_kg"], ef, False, "fr") == \
+        "valeur hors plage habituelle"
+
+
+@pytest.mark.parametrize("raw,key,value", [
+    ("11.8 g/dL", "hemoglobine", 11.8), ("13,2 g/dl", "hemoglobine", 13.2), ("0.8 g/L", "glycemie", 80.0),
+    ("247k", "plaquettes", 247000.0), ("12,5", "hemoglobine", 12.5), ("120/80 mmHg", "ta", {"sys": 120, "dia": 80}),
+    ("12/8 mm Hg", "ta", {"sys": 120, "dia": 80}), ("93 mg/dL", "glycemie", 93.0),
+])
+def test_normalisation_unites_avec_barre(raw, key, value):
+    from app.templates.normalize import interpret
+    assert interpret(conv.T.fields[V + "T1V1." + key], raw).value == value
+
+
+def test_bonjour_alors_qu_un_dossier_attend(client, fake_wa):
+    seeded(fake_wa)
+    say(client, "bonjour")
+    g = fake_wa.sent[-1]
+    assert body_of(g) == "Bonjour ! Un dossier attend votre vérification (5 questions)."
+    assert [i.split("|")[0] for i in ids(g)] == ["GO", "LATER"]
+    press(client, find_id(g, "GO"))
+    assert "Question 1/5" in body_of(fake_wa.sent[-1])
+    say(client, "salut")                                                    # en pleine révision
+    assert "(5 questions)" in body_of(fake_wa.sent[-1])
+    press(client, find_id(fake_wa.sent[-1], "GO"))
+    assert "Question 1/5" in body_of(fake_wa.sent[-1])
+
+
+def test_page_difficile_a_lire(client, fake_wa):
+    with SessionLocal() as db:
+        mw = Midwife(wa_id=MIDWIFE)
+        db.add(mw)
+        db.flush()
+        rec = Record(midwife_id=mw.id, status=S.A_REVISER)
+        db.add(rec)
+        db.flush()
+        keys = [k for k in conv.T.stored_fields if k.startswith(V)][:30]
+        for k in keys[:24]:                                                 # 24 incertains sur 30 = 80 %
+            conv.set_field(db, rec, k, None, FieldStatus.A_REVISER, FieldSource.IA, 0.4, raw_text="?")
+        for k in keys[24:]:
+            conv.set_field(db, rec, k, "RAS", FieldStatus.CONNU, FieldSource.IA, 0.9)
+        conv.on_record_ready(db, rec)
+        db.commit()
+    flush(fake_wa)
+    m = fake_wa.sent[-1]
+    assert "difficile à lire automatiquement (6 champs lus avec certitude)" in body_of(m)
+    assert "les 10 questions les plus importantes" in body_of(m) and "24" not in body_of(m)
+    assert [i.split("|")[0] for i in ids(m)] == ["REV", "PHOTO", "LATER"]   # 80 % pile : pas encore
+    with SessionLocal() as db:
+        rec = db.scalar(select(Record).where(Record.status == S.A_REVISER))
+        conv.set_field(db, rec, keys[-1], None, FieldStatus.A_REVISER, FieldSource.IA, 0.4, raw_text="?")
+        mw = db.scalar(select(Midwife).where(Midwife.wa_id == MIDWIFE))
+        mw.conversation_state = None
+        conv.on_record_ready(db, rec)
+        db.commit()
+    flush(fake_wa)
+    m = fake_wa.sent[-1]
+    assert [i.split("|")[0] for i in ids(m)] == ["PHOTO", "REV", "LATER"]   # > 80 % : photo d'abord
+    assert "photo bien droite, page entière, bonne lumière." in body_of(m).lower()

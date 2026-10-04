@@ -256,33 +256,45 @@ coupure) reçoit « Cette question n'est plus d'actualité. » et ne change rien
 Exemple d'échange (démo) :
 
 ```
-Iris : Lecture terminée (dossier 3f2a9c1b) : 150 champ(s) lu(s), 5 à vérifier.
+Iris : Lecture terminée (dossier 3f2a9c1b) : 109 champs lus, 5 à vérifier (environ 1 minute).
        [Vérifier] [Reprendre photo] [Plus tard]
 SF   : Vérifier
 Iris : Question 1/5 – Grossesse actuelle · DDR
-       J'ai lu : « 26/04/2025 ». Je ne suis pas sûre de cette lecture.
+       J'ai lu : 26/04/2025
+       Pourquoi je demande : incohérent avec la DPA.
        [Confirmer] [Corriger] [Illisible]
 SF   : Corriger
 Iris : Tapez la bonne valeur pour : Grossesse actuelle · DDR
        Format : une date jj/mm/aaaa, ex. 03/02/2026
 SF   : 27/04/2025
 Iris : Question 2/5 – Grossesse actuelle · 2ème trimestre, Visite 2 · TA
+       J'ai lu : 106/77 mmHg
+       Pourquoi je demande : les deux lectures diffèrent.
        Les deux lectures ne sont pas d'accord. Laquelle est écrite sur le registre ?
-       (liste) 106/77 mmHg · 166/77 mmHg · Autre valeur · Illisible sur le papier · Reprendre la photo
+       (liste) 106/77 mmHg (Lecture 1) · 166/77 mmHg (Lecture 2) · Autre valeur ·
+               Illisible sur le papier · Reprendre la photo
 ...
 Iris : Les 145 autres champs lus vous conviennent ?   [Tout confirmer] [Voir]
 SF   : Tout confirmer
 Iris : Dossier 3f2a9c1b validé ✅
 Iris : Code A64125. À quelle patiente rattacher ce dossier ?
-       (liste) Patiente 1 – code A64125 – 3 visite(s), dernière 01/12
-               Patiente 2 – code A64128 – 1 visite(s), dernière 15/12
+       (liste) Patiente 1 – code A64125 – 3 visites, dernière 01/12
+               Patiente 2 – code A64128 – 1 visite, dernière 15/12
                Aucune, créer · Je ne sais pas
 SF   : Patiente 1
 Iris : Dossier 3f2a9c1b enregistré pour la patiente code A64125 ✅
 ```
 
 - Questions : champs A_REVISER/ILLISIBLE de l'IA, critiques d'abord, 10 au maximum (le reste
-  est confié au superviseur : `champs_a_verifier_superviseur` dans `/api/tableau`).
+  est confié au superviseur : `champs_a_verifier_superviseur` dans `/api/tableau`). Chaque
+  question dit POURQUOI il y a doute (écriture peu lisible, lectures divergentes, hors plage,
+  incohérent avec la DPA...) ; une valeur lue est toujours proposée à [Confirmer], même si le
+  champ a été jugé illisible. Plus de 15 doutes : « Cette page est difficile à lire
+  automatiquement (N champs lus avec certitude). Je vais vous poser les 10 questions les plus
+  importantes. » ; plus de 80 % de doutes : [Reprendre photo] proposé en premier, avec un conseil.
+- Message libre (« bonjour ») alors qu'un dossier attend : « Bonjour ! Un dossier attend votre
+  vérification (5 questions). » [Vérifier] [Plus tard]. Libellés accentués à l'affichage
+  (« Âge probable », « État des lochies ») ; accords singulier/pluriel sans « (s) ».
 - Chaque réponse crée une **nouvelle version** du champ (source SAGE_FEMME), l'ancienne est
   gardée (`is_current=False`). Une correction passe par la normalisation + les validations ;
   si elle est invalide, le format attendu est réexpliqué (« TA au format 12/7 ou 120/70 »).

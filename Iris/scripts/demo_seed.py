@@ -28,12 +28,12 @@ T = get_template()
 DEMO_PAGE = 3                       # spécimen : grossesse actuelle, patiente fictive 1
 CODE = "A64125"
 V = "grossesse_actuelle.visites."
-DOUBTS = {                          # clé -> (statut, confiance, candidats)
-    V + "T2V2.ta": (FieldStatus.A_REVISER, 0.5, [{"sys": 106, "dia": 77}, {"sys": 166, "dia": 77}]),
-    V + "T2V3.poids_kg": (FieldStatus.A_REVISER, 0.55, []),
-    V + "T1V2.hemoglobine": (FieldStatus.ILLISIBLE, 0.3, []),
-    "grossesse_actuelle.ddr": (FieldStatus.A_REVISER, 0.6, []),
-    V + "M8.age_probable_sa": (FieldStatus.A_REVISER, 0.45, []),
+DOUBTS = {                          # clé -> (statut, confiance, candidats, drapeaux = raison du doute)
+    V + "T2V2.ta": (FieldStatus.A_REVISER, 0.5, [{"sys": 106, "dia": 77}, {"sys": 166, "dia": 77}], []),
+    V + "T2V3.poids_kg": (FieldStatus.A_REVISER, 0.55, [], []),
+    V + "T1V2.hemoglobine": (FieldStatus.ILLISIBLE, 0.3, [], []),
+    "grossesse_actuelle.ddr": (FieldStatus.A_REVISER, 0.6, [], ["dpa_incoherente_avec_ddr"]),
+    V + "M8.age_probable_sa": (FieldStatus.A_REVISER, 0.45, [], ["age_gestationnel_incoherent_ddr"]),
 }
 
 
@@ -93,10 +93,10 @@ def seed(wa_id: str, send: bool = True) -> str:
             raw = gt["raw"].get(key)
             value = interpret(f, raw).value if raw is not None and not f.is_checkbox else v
             if key in DOUBTS:
-                status, conf, cands = DOUBTS[key]
+                status, conf, cands, flags = DOUBTS[key]
                 if status == FieldStatus.ILLISIBLE:
                     value = None
-                details = {"candidates": cands, "flags": ["demo"]} if cands else None
+                details = {"candidates": cands, "flags": flags}
                 _field(rec, key, cands[0] if cands else value, status, conf, raw=raw, details=details)
             else:
                 _field(rec, key, value, conf=0.9, raw=raw)
