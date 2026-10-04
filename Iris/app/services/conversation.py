@@ -54,6 +54,7 @@ LIGNE = "CHOIX_LIGNE"
 LINES_PER_PAGE = 15
 WA_TEXT_MAX = 4096
 CMD_HELP = {"AIDE", "HELP", "?"}
+CMD_RDV = {"RDV", "RENDEZ-VOUS", "APPOINTMENTS"}
 WORDS_BLANK = {"vide", "blank", "passer", "skip", "rien", "-", "—"}
 WORDS_ILLEGIBLE = {"illisible", "illegible"}
 
@@ -983,6 +984,15 @@ def handle_text(db: Session, mw: Midwife, text: str) -> bool:
         return True
     if cmd in CMD_HELP:
         out.text(out.tr("help"))
+        return True
+    if cmd in CMD_RDV:                                    # 📅 patientes attendues non revues
+        from app.services.rdv import overdue
+        late = overdue(db, mw)
+        if late:
+            out.text(out.tr("rdv_late", n=plural(out.lang, len(late), "pl_patient_late"),
+                            items=" ; ".join(f"{c} (RDV {d:%d/%m})" for c, d in late)))
+        else:
+            out.text(out.tr("rdv_none"))
         return True
     if cmd in CMD_PAUSE:
         st["paused"] = True

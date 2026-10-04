@@ -515,8 +515,9 @@ def test_dates_de_terme_coherentes_entre_elles_deviennent_sures():
 
     ok = run("27/11/2025")                                         # DPA + 10 j
     assert all(v["status"] == "CONNU" and v["confidence"] >= 0.9 for v in ok.values())
-    ko = run("27/01/2026")                                         # incohérente : rien de promu
-    assert all(v["status"] == "A_REVISER" for v in ko.values())
+    ko = run("27/01/2026")                       # DDT incohérente : seule DDR + DPA sont promues
+    assert ko[g + "ddr"]["status"] == ko[g + "dpa"]["status"] == "CONNU"
+    assert ko[g + "date_depassement_terme"]["status"] == "A_REVISER"
 
 
 def test_chiffre_perdu_apres_separateur_a_verifier():
@@ -537,3 +538,38 @@ def test_entete_de_tableau_sans_chiffre_photo_compressee():
 def test_aide_conseille_l_envoi_en_document():
     from app.i18n import t
     assert "📎" in t("fr", "help") and "document" in t("fr", "help")
+
+
+def test_lecture_trop_longue_saisie_guidee_expliquee(client, monkeypatch):
+    import time as _time
+
+    from app.config import get_settings
+    from app.db import SessionLocal
+    from app.models import OutboundMessage, Record, RecordStatus
+    from app.services import ai_worker
+    monkeypatch.setattr(get_settings(), "ai_budget_page_seconds", 1)
+
+    def slow(images, page_types=None):
+        _time.sleep(3)
+        return []
+    with SessionLocal() as db:
+        rid = _record_en_attente(db).id
+        t0 = _time.monotonic()
+        assert ai_worker.process_next(db, extractor=slow) == rid
+        assert _time.monotonic() - t0 < 2.5                       # on n'attend pas la lecture
+        assert db.get(Record, rid).status == RecordStatus.REVISION_MANUELLE_REQUISE
+        bodies = " ".join(m.payload_json for m in db.query(OutboundMessage).all())
+        assert "prend trop de temps" in bodies and "saisie guid" in bodies
+
+
+def test_dpa_incoherente_avec_ddr_rien_de_promu():
+    from ai.extract import _finalize, PageResult
+    g = "grossesse_actuelle."
+    states = {}
+    for k, raw in (("ddr", "10/02/2025"), ("dpa", "27/11/2025")):            # DDR + 290 j
+        st = FieldState(F[g + k], [Reading(g + k, raw, "LISIBLE", 0.85, 0)], flags=["lecture_ocr"])
+        merge(st)
+        states[g + k] = st
+    res = PageResult(0, "grossesse_actuelle")
+    _finalize([(res, states)], 0.8)
+    assert all(v["status"] == "A_REVISER" for v in res.fields.values())

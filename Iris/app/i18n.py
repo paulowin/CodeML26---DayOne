@@ -139,6 +139,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "bad_format": "Je ne peux pas lire ce format ({mime}). Envoyez une photo (JPEG ou PNG), s'il vous plaît.",
         "photo_lost": "Je n'ai pas pu récupérer une de vos photos. Pouvez-vous la renvoyer, s'il vous plaît ?",
         "only_photos": "Je ne lis que les photos du registre et les messages écrits.",
+        "too_slow": ("La lecture du dossier {rid} prend trop de temps sur ce poste. "
+                     "Pour ne pas vous faire attendre, nous allons le saisir ensemble."),
         "manual_needed": ("Je n'arrive pas à lire le dossier {rid} automatiquement. "
                           "Nous allons le saisir ensemble, question par question."),
         "bad_photo": "La photo {n} est {reasons} : pouvez-vous la reprendre ? Photo bien droite, page entière, bonne lumière.",
@@ -156,7 +158,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "pt_autre": "Autre",
         "pt_autre_d": "Je saisirai les informations avec vous",
         "help": ("Commandes : OK (confirmer), CORRIGER <n>, RESUME (ce que j'ai lu), PHOTO (reprendre la photo), "
-                 "PLUS TARD (pause), REPRENDRE, FIN (fin de capture), ANNULER, EN / FR (langue), AIDE.\n"
+                 "PLUS TARD (pause), REPRENDRE, FIN (fin de capture), ANNULER, EN / FR (langue), RDV (rendez-vous manqués), AIDE.\n"
                  "📎 Pour une meilleure lecture, envoyez la photo comme document."),
         "lang_set": "Langue : français.",
         "retake_ask": "Envoyez la nouvelle photo de la page {n} ({ptype}).",
@@ -181,6 +183,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "pl_question": "question|questions",
         "pl_record_other": "autre dossier|autres dossiers",
         "pl_field": "champ|champs",
+        "pl_patient_late": "patiente attendue non revue|patientes attendues non revues",
+        "rdv_late": "📅 {n} : {items}.",
+        "rdv_none": "📅 Aucune patiente en retard de rendez-vous.",
         "pl_key_field": "champ clé|champs clés",
         "pl_visit": "visite|visites",
         "pl_minute": "environ {n} minute|environ {n} minutes",
@@ -318,6 +323,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "bad_format": "I cannot read this format ({mime}). Please send a photo (JPEG or PNG).",
         "photo_lost": "I could not retrieve one of your photos. Could you send it again, please?",
         "only_photos": "I only read photos of the register and written messages.",
+        "too_slow": "Reading record {rid} is taking too long on this computer. So you do not wait, we will fill it in together.",
         "manual_needed": "I cannot read record {rid} automatically. We will fill it in together, question by question.",
         "page_unknown": "I do not recognise this page (page {n}). Which page is it?",
         "page_forced": "Thank you: I am reading page {n} again as “{ptype}”…",
@@ -334,7 +340,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "bad_photo": "Photo {n} is {reasons}: could you retake it? Straight photo, whole page, good light.",
         "pl_page": "page|pages",
         "help": ("Commands: OK (confirm), CORRECT <n>, SUMMARY (what I read), PHOTO (retake), LATER (pause), "
-                 "CONTINUE, END (end of capture), CANCEL, EN / FR (language), HELP.\n"
+                 "CONTINUE, END (end of capture), CANCEL, EN / FR (language), RDV (missed appointments), HELP.\n"
                  "📎 For a better reading, send the photo as a document."),
         "lang_set": "Language: English.",
         "retake_ask": "Send the new photo of page {n} ({ptype}).",
@@ -357,6 +363,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "pl_question": "question|questions",
         "pl_record_other": "other record|other records",
         "pl_field": "field|fields",
+        "pl_patient_late": "expected patient not seen|expected patients not seen",
+        "rdv_late": "📅 {n}: {items}.",
+        "rdv_none": "📅 No patient has missed an appointment.",
         "pl_key_field": "key field|key fields",
         "pl_visit": "visit|visits",
         "pl_minute": "about {n} minute|about {n} minutes",
@@ -393,7 +402,7 @@ EMOJI_PREFIX = {
     "link_pending": LINK, "duplicate": LINK, "queued": OUTBOX, "welcome": HELLO, "greet_pending": HELLO,
     "greet_pending_other": HELLO, "page_received": PHOTO, "photo_dup": PHOTO, "retake_ask": PHOTO,
     "retake_ok": PHOTO, "retake_which": PHOTO, "photo_tip": PHOTO, "preview_caption": PHOTO, "bad_photo": PHOTO,
-    "reading": WAIT, "auto_closed": WAIT, "bad_format": KO, "photo_lost": KO, "manual_needed": CHECK,
+    "reading": WAIT, "auto_closed": WAIT, "bad_format": KO, "photo_lost": KO, "manual_needed": CHECK, "too_slow": WAIT,
     "page_unknown": CHECK, "page_forced": WAIT,
 }
 # fin de dossier : merci

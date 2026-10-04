@@ -168,6 +168,10 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
     assert f[V + "T2V3.bcf"].status == FieldStatus.ILLISIBLE
     assert all(x.source != FieldSource.IA for x in f.values())                # tout a été confirmé
 
+    say(client, "RDV")                                   # 📅 rendez-vous dépassés sans visite
+    assert body_of(fake_wa.sent[-1]) == ("📅 2 patientes attendues non revues : A64128 (RDV 05/01) ; "
+                                         "A64125 (RDV 13/01).")
+
     # confidentialité : aucun identifiant de la patiente fictive 9 (toutes pages) dans les messages
     idents = set()
     for n in range(65, 73):
@@ -749,3 +753,35 @@ def test_page_non_reconnue_autre_saisie_guidee_directe(client, fake_wa):
     with SessionLocal() as db:
         assert db.get(Record, rid).status == S.REVISION_MANUELLE_REQUISE
     assert "Question 1/" in body_of(fake_wa.sent[-1])
+
+
+def test_rdv_revue_apres_le_rendez_vous_pas_listee(client, fake_wa):
+    from datetime import date
+
+    from app.models import Midwife
+    from app.services.rdv import overdue
+    with SessionLocal() as db:
+        mw = Midwife(wa_id="212600000777")
+        db.add(mw)
+        db.flush()
+        assert overdue(db, mw) == []
+        p = Patient(midwife_id=mw.id, code="B11111")
+        db.add(p)
+        db.flush()
+        for venue, rdv in (("2026-01-02", "2026-02-01"), ("2026-02-03", None)):     # revue le 03/02
+            rec = Record(midwife_id=mw.id, patient_id=p.id, status=S.SYNCHRONISE)
+            db.add(rec)
+            db.flush()
+            for k, v in (("venue_le", venue), ("rendez_vous", rdv)):
+                if v:
+                    rec.fields.append(ExtractedField(section="grossesse_actuelle", field_key=f"visites.T1V1.{k}",
+                                                     value_json=json.dumps(v), status=FieldStatus.CONNU,
+                                                     source=FieldSource.SAGE_FEMME, confidence=1.0, is_current=True))
+        db.flush()
+        assert overdue(db, mw, date(2026, 3, 1)) == []
+        assert overdue(db, mw, date(2026, 1, 15)) == []                               # RDV pas encore passé
+
+
+def test_rdv_aucune_patiente_en_retard(client, fake_wa):
+    say(client, "RDV")
+    assert body_of(fake_wa.sent[-1]) == "📅 Aucune patiente en retard de rendez-vous."

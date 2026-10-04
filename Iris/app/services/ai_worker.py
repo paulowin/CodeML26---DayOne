@@ -15,6 +15,8 @@ from __future__ import annotations
 import json
 import logging
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from collections.abc import Callable
 
 from sqlalchemy import select
@@ -81,6 +83,21 @@ def _fail(db: Session, rec: Record, reason: str) -> None:
     db.commit()
 
 
+def _too_slow(db: Session, rec: Record, budget: int) -> None:
+    """Lecture trop longue : on ne fait pas attendre la sage-femme -> saisie guidée, expliquée."""
+    log.warning("Lecture du dossier %s : budget de %d s dépassé -> saisie guidée", rec.id[:8], budget)
+    from app.state_machine import MAX_AI_ATTEMPTS
+    rec.ai_attempts = max(rec.ai_attempts or 0, MAX_AI_ATTEMPTS)     # relancer serait aussi lent
+    transition(db, rec, RecordStatus.ECHEC_TRAITEMENT, ACTOR, reason=f"lecture > {budget} s, pas de relance")
+    transition(db, rec, RecordStatus.REVISION_MANUELLE_REQUISE, ACTOR, reason="budget de lecture dépassé")
+    from app.i18n import t
+    mw = db.get(Midwife, rec.midwife_id)
+    _notify(db, rec, t(mw.language if mw else "fr", "too_slow", rid=rec.id[:8]))
+    from app.services import conversation
+    conversation.on_manual_required(db, rec)
+    db.commit()
+
+
 def _write_fields(db: Session, rec: Record, results, pages) -> tuple[int, int]:
     """Écrit les champs ; renvoie (champs lus, champs à vérifier)."""
     current = {f"{f.section}.{f.field_key}": f for f in rec.fields if f.is_current}
@@ -128,7 +145,15 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
         images = [get_store().load(p.storage_key) for p in active]       # en mémoire uniquement
         hints = [p.page_type if p.page_type_force else None for p in active]
         run = extractor or _default_extractor()
-        results = run(images, page_types=hints) if any(hints) else run(images)
+        budget = s.ai_budget_page_seconds * max(1, len(images))
+        pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="iris-lecture")
+        fut = pool.submit(lambda: run(images, page_types=hints) if any(hints) else run(images))
+        pool.shutdown(wait=False)
+        try:
+            results = fut.result(timeout=budget)
+        except FutureTimeout:
+            _too_slow(db, rec, budget)
+            return rec.id
     except OllamaUnavailable as e:
         _fail(db, rec, f"IA locale indisponible : {e}")
         return rec.id

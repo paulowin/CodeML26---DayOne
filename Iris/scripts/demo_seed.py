@@ -52,12 +52,14 @@ def _field(rec: Record, key: str, value, status=FieldStatus.CONNU, conf=0.9, sou
                                      is_current=True, details_json=json.dumps(details) if details else None))
 
 
-def _visit(db, mw: Midwife, patient: Patient, when: datetime, venue: str) -> Record:
+def _visit(db, mw: Midwife, patient: Patient, when: datetime, venue: str, rdv: str | None = None) -> Record:
     rec = Record(midwife_id=mw.id, patient_id=patient.id, status=RecordStatus.SYNCHRONISE, session_open=False,
                  first_captured_at=when, last_page_at=when, synced_at=when)
     db.add(rec)
     db.flush()
     _field(rec, V + "T1V1.venue_le", venue, source=FieldSource.SAGE_FEMME, conf=1.0)
+    if rdv:                                               # commande RDV : rendez-vous manqué
+        _field(rec, V + "T1V1.rendez_vous", rdv, source=FieldSource.SAGE_FEMME, conf=1.0)
     db.add(RecordEvent(record=rec, from_status=None, to_status=RecordStatus.SYNCHRONISE.value,
                        actor="system:demo", note="visite de démonstration"))
     return rec
@@ -78,7 +80,7 @@ def seed(wa_id: str, send: bool = True) -> str:
         db.flush()
         for i, d in enumerate(("2025-09-28", "2025-11-01", "2025-12-01")):
             _visit(db, mw, p1, now - timedelta(days=90 - 30 * i), d)
-        _visit(db, mw, p2, now - timedelta(days=20), "2025-12-15")
+        _visit(db, mw, p2, now - timedelta(days=20), "2025-12-15", rdv="2026-01-05")
 
         rec = Record(midwife_id=mw.id, status=RecordStatus.A_REVISER, session_open=False,
                      first_captured_at=now, last_page_at=now, extraction_model="demo (vérité terrain)")
