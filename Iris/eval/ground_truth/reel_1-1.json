@@ -7,15 +7,15 @@
   ],
   "a_remplir": true,
   "fields": {
-    "couverture.numero_fiche": null,
-    "couverture.region": null,
-    "couverture.province": null,
-    "couverture.etablissement": null,
-    "couverture.type_etablissement": null,
-    "couverture.mode_couverture": null,
-    "couverture.grossesse_a_risque": null,
-    "couverture.type_risque": null,
-    "couverture.type_risque_autre": null
+    "couverture.numero_fiche": "statut ILLISIBLE",
+    "couverture.region": "statut ILLISIBLE",
+    "couverture.province": "El Jadida",
+    "couverture.etablissement": "CIS Sidi Smail",
+    "couverture.type_etablissement": "statut NON_FOURNI",
+    "couverture.mode_couverture": "fixe",
+    "couverture.grossesse_a_risque": false,
+    "couverture.type_risque": [],
+    "couverture.type_risque_autre": "statut NON_FOURNI"
   },
   "checked": [],
   "champs_cases": [

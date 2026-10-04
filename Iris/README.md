@@ -69,8 +69,8 @@ ngrok http 8000                               # terminal 2 (ou --url=<domaine-fi
 pytest -q                                     # tests (sans GPU, sans réseau)
 ```
 
-Lecture : `AI_MODE=ocr` + `AI_OCR_ENGINE=easyocr` par défaut (gagnant de la comparaison 3d :
-88 % d'exactitude, ~40 s/page sur CPU) ; `AI_MODE=vlm` pour tout lire par Ollama. PaddleOCR
+Lecture : `AI_MODE=ocr` + `AI_OCR_ENGINE=easyocr` par défaut (gagnant de la comparaison 3d ;
+chiffres mesurés : section « Évaluation ») ; `AI_MODE=vlm` pour tout lire par Ollama. PaddleOCR
 (option) demande Python 3.13 : `py -3.13 -m venv .venv-ocr` puis `pip install paddlepaddle paddleocr`.
 Sur un PC fragile : `OMP_NUM_THREADS=4` (le PC s'est déjà éteint sous la charge).
 
