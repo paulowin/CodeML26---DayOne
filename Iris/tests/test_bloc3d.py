@@ -160,4 +160,7 @@ def test_case_incertaine_donne_a_reviser():
 def test_faute_de_frappe_ocr_corrigee_mais_a_verifier():
     from ai.ocr_classique import snap_vocabulary
     assert snap_vocabulary("Nbrmaux") == "Normaux" and snap_vocabulary("Ou;") == "Oui"
+    for typo in ("Qui", "ouj", "Oul", "Ouj"):
+        assert snap_vocabulary(typo) == "Oui", typo
+    assert snap_vocabulary("Nprlaux") == "Normaux"
     assert snap_vocabulary("Asthme léger") == "Asthme léger" and snap_vocabulary("11.8 g/dL") == "11.8 g/dL"

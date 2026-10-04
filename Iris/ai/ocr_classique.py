@@ -296,7 +296,9 @@ def snap_vocabulary(raw: str) -> str:
         r = _ratio(n, norm_label(v))
         if r > score:
             best, score = v, r
-    return best if score >= 0.75 else raw
+    # seuil bas assumé : un mot corrigé a sa confiance plafonnée (A_REVISER), une mauvaise
+    # correction coûte une question, jamais une erreur silencieuse (« Qui », « ouj », « Nprlaux »)
+    return best if score >= 0.55 else raw
 
 
 def _band_of(y_rel: float, bands) -> int:
