@@ -8,11 +8,27 @@ from __future__ import annotations
 
 LANGS = ("fr", "en")
 
+# Code couleur UNIQUE des messages (1 à 2 emojis par message, toujours avec un texte clair ;
+# aucun emoji dans les boutons, sauf ✅ sur [Tout est juste])
+OK = "✅"          # lu avec certitude / confirmé / dossier validé
+CHECK = "🟠"       # à vérifier (doute, deux lectures possibles)
+KO = "❌"          # illisible, erreur, refus
+EMPTY = "⚪"       # non rempli sur le papier / non lu
+LOCK = "🔒"        # non enregistré pour la confidentialité
+PHOTO = "📷"       # photo reçue / page N
+WAIT = "⏳"        # lecture en cours
+LINK = "🔗"        # liaison à une patiente
+OFFLINE = "📡"     # hors ligne / retour du réseau
+OUTBOX = "✉️"      # message en attente d'envoi
+HELLO = "👋"       # accueil
+THANKS = "🙏"      # merci à la fin d'un dossier
+
 MESSAGES: dict[str, dict[str, str]] = {
     "fr": {
         # boutons (≤ 20 caractères)
         "btn_verify": "Vérifier",
-        "btn_all_right": "Tout est juste",
+        "btn_all_right": OK + " Tout est juste",
+        "btn_done": "Terminé",
         "btn_more": "Voir plus",
         "btn_retake": "Reprendre photo",
         "btn_later": "Plus tard",
@@ -56,7 +72,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "not_ticked": "non cochée",
         "none_ticked": "aucune case cochée",
         "to_check": "À vérifier : {n} – {labels}",
-        "not_stored": "Non enregistré (confidentialité) : {types}",
+        "not_stored": "Non enregistré : {types}",
         "summary_ask": "Les valeurs ci-dessus sont-elles justes ?",
         "which_line": "Écrivez le numéro de la ligne à corriger (ex. 3).",
         "no_summary": "Aucun dossier lu pour le moment.",
@@ -79,20 +95,22 @@ MESSAGES: dict[str, dict[str, str]] = {
         "read_once": "J'ai lu : {value}",
         "read_norm": " → {value}",
         "not_sure": "Pourquoi je demande : {reason}.",
-        "unreadable": "Je n'ai pas réussi à lire ce champ.",
+        "unreadable": "Je n'arrive pas à lire cette case.",
         "candidates": "Les deux lectures ne sont pas d'accord. Laquelle est écrite sur le registre ?",
+        "candidates_q": "{label} : {choices} ?",
+        "or": "ou",
         "type_value": "Tapez la bonne valeur pour : {label}\nFormat : {hint}\n(« vide » si rien n'est écrit, « illisible » si on ne peut pas lire)",
         "invalid": "Je n'ai pas compris « {text} ». Format attendu : {hint}",
         "final": "Les {n} autres champs lus vous conviennent ?",
         "final_none": "Tous les champs ont été vérifiés. On valide le dossier ?",
         "view_head": "Champs lus ({start}-{end} sur {total}) :",
         "view_tail": "Pour corriger un champ, écrivez par exemple « CORRIGER 3 ».",
-        "validated": "Dossier {rid} validé ✅",
+        "validated": "Dossier {rid} vérifié.",
         "overflow": "{n} à vérifier par un superviseur.",
         "ask_code": "Quel est le code de la patiente écrit sur le registre ?",
         "link_choose": "Code {code}. À quelle patiente rattacher ce dossier ?",
         "link_none": "Aucune patiente avec le code {code} (ou proche) dans vos dossiers.",
-        "linked": "Dossier {rid} enregistré pour la patiente code {code} ✅",
+        "linked": "Dossier validé et relié à la patiente {code}.",
         "link_pending": "Le dossier est gardé ; un superviseur pourra le rattacher.",
         "duplicate": "Ce registre ressemble à la visite du {date} déjà enregistrée (patiente code {code}).",
         "dup_updated": "Visite du {date} mise à jour avec les valeurs confirmées.",
@@ -100,7 +118,20 @@ MESSAGES: dict[str, dict[str, str]] = {
         "stale": "Cette question n'est plus d'actualité.",
         "paused": "D'accord, on reprendra plus tard. Écrivez « REPRENDRE » quand vous voulez.",
         "nothing": "Rien en attente pour le moment. Envoyez une photo du registre pour commencer.",
-        "welcome": "Bonjour ! Envoyez une photo de chaque page du registre, puis écrivez FIN.",
+        "welcome": "Bonjour ! Envoyez une photo de chaque page du registre, puis appuyez sur Terminé.",
+        "page_received": "Page {n} reçue (dossier {rid}). Envoyez la suivante ou appuyez sur Terminé.",
+        "photo_dup": "Cette photo a déjà été reçue (dossier {rid}, page {n}), je ne l'ajoute pas.",
+        "reading": "Je lis votre registre… ({duration})\nDossier {rid}, {pages}. Je reviens vers vous si j'ai un doute.",
+        "auto_closed": "Je n'ai plus reçu de page : je lis le dossier {rid} ({pages})… ({duration})",
+        "no_capture": "Aucune photo en cours. Envoyez une photo du registre pour commencer.",
+        "capture_cancelled": "C'est annulé : les photos sont gardées mais ne seront pas lues.",
+        "bad_format": "Je ne peux pas lire ce format ({mime}). Envoyez une photo (JPEG ou PNG), s'il vous plaît.",
+        "photo_lost": "Je n'ai pas pu récupérer une de vos photos. Pouvez-vous la renvoyer, s'il vous plaît ?",
+        "only_photos": "Je ne lis que les photos du registre et les messages écrits.",
+        "manual_needed": ("Je n'arrive pas à lire le dossier {rid} automatiquement. "
+                          "Nous allons le saisir ensemble, question par question."),
+        "bad_photo": "La photo {n} est {reasons} : pouvez-vous la reprendre ? Photo bien droite, page entière, bonne lumière.",
+        "pl_page": "page|pages",
         "help": ("Commandes : OK (confirmer), CORRIGER <n>, RESUME (ce que j'ai lu), PHOTO (reprendre la photo), "
                  "PLUS TARD (pause), REPRENDRE, FIN (fin de capture), ANNULER, EN / FR (langue), AIDE."),
         "lang_set": "Langue : français.",
@@ -153,7 +184,8 @@ MESSAGES: dict[str, dict[str, str]] = {
     },
     "en": {
         "btn_verify": "Review",
-        "btn_all_right": "All correct",
+        "btn_all_right": OK + " All correct",
+        "btn_done": "Done",
         "btn_more": "See more",
         "btn_retake": "Retake photo",
         "btn_later": "Later",
@@ -195,7 +227,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "not_ticked": "not ticked",
         "none_ticked": "no box ticked",
         "to_check": "To check: {n} – {labels}",
-        "not_stored": "Not stored (privacy): {types}",
+        "not_stored": "Not stored: {types}",
         "summary_ask": "Are the values above correct?",
         "which_line": "Write the number of the line to correct (e.g. 3).",
         "no_summary": "No record read yet.",
@@ -218,20 +250,22 @@ MESSAGES: dict[str, dict[str, str]] = {
         "read_once": "I read: {value}",
         "read_norm": " → {value}",
         "not_sure": "Why I ask: {reason}.",
-        "unreadable": "I could not read this field.",
+        "unreadable": "I cannot read this box.",
         "candidates": "The two readings disagree. Which one is written in the register?",
+        "candidates_q": "{label}: {choices}?",
+        "or": "or",
         "type_value": "Type the right value for: {label}\nFormat: {hint}\n(“blank” if nothing is written, “illegible” if it cannot be read)",
         "invalid": "I did not understand “{text}”. Expected format: {hint}",
         "final": "Are the {n} other fields I read correct?",
         "final_none": "All fields have been checked. Shall we validate the record?",
         "view_head": "Fields read ({start}-{end} of {total}):",
         "view_tail": "To correct a field, write for example “CORRECT 3”.",
-        "validated": "Record {rid} validated ✅",
+        "validated": "Record {rid} checked.",
         "overflow": "{n} to be checked by a supervisor.",
         "ask_code": "What is the patient code written in the register?",
         "link_choose": "Code {code}. Which patient should this record be linked to?",
         "link_none": "No patient with code {code} (or close) in your records.",
-        "linked": "Record {rid} saved for patient code {code} ✅",
+        "linked": "Record validated and linked to patient {code}.",
         "link_pending": "The record is kept; a supervisor will be able to link it.",
         "duplicate": "This register looks like the visit of {date} already saved (patient code {code}).",
         "dup_updated": "Visit of {date} updated with the confirmed values.",
@@ -239,7 +273,19 @@ MESSAGES: dict[str, dict[str, str]] = {
         "stale": "This question is no longer current.",
         "paused": "OK, we will continue later. Write “CONTINUE” whenever you want.",
         "nothing": "Nothing pending for now. Send a photo of the register to start.",
-        "welcome": "Hello! Send a photo of each page of the register, then write END.",
+        "welcome": "Hello! Send a photo of each page of the register, then press Done.",
+        "page_received": "Page {n} received (record {rid}). Send the next one or press Done.",
+        "photo_dup": "This photo was already received (record {rid}, page {n}); I am not adding it again.",
+        "reading": "I am reading your register… ({duration})\nRecord {rid}, {pages}. I will get back to you if I have a doubt.",
+        "auto_closed": "No new page received: I am reading record {rid} ({pages})… ({duration})",
+        "no_capture": "No photo in progress. Send a photo of the register to start.",
+        "capture_cancelled": "Cancelled: the photos are kept but will not be read.",
+        "bad_format": "I cannot read this format ({mime}). Please send a photo (JPEG or PNG).",
+        "photo_lost": "I could not retrieve one of your photos. Could you send it again, please?",
+        "only_photos": "I only read photos of the register and written messages.",
+        "manual_needed": "I cannot read record {rid} automatically. We will fill it in together, question by question.",
+        "bad_photo": "Photo {n} is {reasons}: could you retake it? Straight photo, whole page, good light.",
+        "pl_page": "page|pages",
         "help": ("Commands: OK (confirm), CORRECT <n>, SUMMARY (what I read), PHOTO (retake), LATER (pause), "
                  "CONTINUE, END (end of capture), CANCEL, EN / FR (language), HELP."),
         "lang_set": "Language: English.",
@@ -288,6 +334,34 @@ MESSAGES: dict[str, dict[str, str]] = {
         "none": "none",
     },
 }
+
+
+# emoji en tête de message (une seule source de vérité pour le code couleur)
+EMOJI_PREFIX = {
+    "summary": OK, "summary_hard": CHECK, "summary_none": OK, "to_check": CHECK, "not_stored": LOCK,
+    "overflow": CHECK, "read_as": CHECK, "read_once": CHECK, "candidates_q": CHECK, "unreadable": KO,
+    "validated": OK, "linked": OK, "dup_updated": OK, "link_choose": LINK, "link_none": LINK,
+    "link_pending": LINK, "duplicate": LINK, "queued": OUTBOX, "welcome": HELLO, "greet_pending": HELLO,
+    "greet_pending_other": HELLO, "page_received": PHOTO, "photo_dup": PHOTO, "retake_ask": PHOTO,
+    "retake_ok": PHOTO, "retake_which": PHOTO, "photo_tip": PHOTO, "preview_caption": PHOTO, "bad_photo": PHOTO,
+    "reading": WAIT, "auto_closed": WAIT, "bad_format": KO, "photo_lost": KO, "manual_needed": CHECK,
+}
+# fin de dossier : merci
+THANKS_SUFFIX = {"linked", "link_pending", "dup_updated"}
+_MERCI = {"fr": "Merci", "en": "Thank you"}
+
+
+def _decorate() -> None:
+    for lang, msgs in MESSAGES.items():
+        for key, emoji in EMOJI_PREFIX.items():
+            if key in msgs and not msgs[key].startswith(emoji):
+                msgs[key] = f"{emoji} {msgs[key]}"
+        for key in THANKS_SUFFIX:
+            if key in msgs:
+                msgs[key] = f"{msgs[key]} {_MERCI[lang]} {THANKS}"
+
+
+_decorate()
 
 
 def t(lang: str | None, key: str, **kw) -> str:

@@ -381,7 +381,7 @@ def test_worker_en_attente_ia_vers_a_reviser(client):
         assert [e.to_status for e in rec.events][-2:] == ["TRAITE_IA", "A_REVISER"]
         assert rec.pages[0].page_type == "accouchement"
         msgs = [body_of(json.loads(m.payload_json)) for m in db.scalars(select(OutboundMessage)).all()]
-        assert any(m.startswith("Lecture terminée") for m in msgs)
+        assert any("Lecture terminée" in m for m in msgs)
         assert all(not f.field_key.startswith("nom") for f in db.scalars(select(ExtractedField)).all())
         assert ai_worker.process_next(db) is None                       # plus rien à lire
 

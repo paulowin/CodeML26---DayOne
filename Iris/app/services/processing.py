@@ -35,8 +35,8 @@ def retry_failed_processing(db: Session) -> int:
             transition(db, rec, RecordStatus.REVISION_MANUELLE_REQUISE, "system",
                        reason=f"lecture automatique impossible après {rec.ai_attempts} tentatives")
             mw = db.get(Midwife, rec.midwife_id)
-            outbox.enqueue(db, text_message(mw.wa_id, f"Je n'arrive pas à lire le dossier {rec.id[:8]} "
-                                                      "automatiquement. Nous allons le saisir ensemble."))
+            from app.i18n import t
+            outbox.enqueue(db, text_message(mw.wa_id, t(mw.language, "manual_needed", rid=rec.id[:8])))
             from app.services import conversation
             conversation.on_manual_required(db, rec)          # saisie guidée (bloc 4)
     db.commit()

@@ -22,7 +22,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.i18n import plural, t
+from app.i18n import EMPTY, OK, plural, t
 from app.models import (ExtractedField, FieldSource, FieldStatus, Midwife, Page, Patient, Record, RecordStatus)
 from app.services import outbox
 from app.state_machine import date_reference, find_duplicate, transition
@@ -150,6 +150,8 @@ def accentue(text: str) -> str:
     à l'AFFICHAGE seulement (le template garde le texte imprimé, qui sert à l'alignement)."""
     for pat, rep in _ACCENTS:
         text = re.sub(pat, rep, text)
+    if len(text) > 4 and text.isupper():                 # « DATE PRÉVUE D'ACCOUCHEMENT » -> casse de phrase
+        text = text[0] + text[1:].lower()
     return text
 
 
@@ -469,7 +471,8 @@ def _send_readable(rec: Record, st: dict, out: Out, first: bool = False) -> int:
             for j, k in enumerate(chunk, base + off + 1):
                 ef = fields.get(k)
                 val = _line_value(T.fields[k], _value(ef), out.lang) if ef is not None else "—"
-                lines.append(f"{j}. {short_label(k, page.page_type if page else None)} : {val}")
+                mark = EMPTY if (ef is not None and _value(ef) in (False, [])) else OK
+                lines.append(f"{j}. {mark} {short_label(k, page.page_type if page else None)} : {val}")
             rest = len(keys) - off - len(chunk)
             if rest > 0:
                 lines.append(out.tr("read_more", n=rest))
@@ -572,6 +575,9 @@ def _ask_field(db: Session, mw: Midwife, rec: Record, st: dict, out: Out) -> Non
         lines.append(out.tr("unreadable"))
     lines.append(out.tr("not_sure", reason=doubt_reason(key, f, ef, len(cands) >= 2, out.lang)))
     if len(cands) >= 2:
+        sep = f" {out.tr('or')} "
+        lines.append(out.tr("candidates_q", label=short_label(key),
+                            choices=sep.join(fmt_value(f, c, out.lang) for c in cands[:3])))
         lines.append(out.tr("candidates"))
         rows = [(_bid(st, "CAND", f"{key}#{i}"), fmt_value(f, c, out.lang)[:24], out.tr("row_candidate", n=i + 1))
                 for i, c in enumerate(cands[:7])]

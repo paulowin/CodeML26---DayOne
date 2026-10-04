@@ -154,8 +154,10 @@ def process_next(db: Session, extractor: Callable | None = None) -> str | None:
     transition(db, rec, RecordStatus.TRAITE_IA, ACTOR, f"{lus} champ(s) lu(s)")
     transition(db, rec, RecordStatus.A_REVISER, ACTOR, f"{a_verifier} champ(s) à vérifier")
     for n, reasons in bad:
-        _notify(db, rec, f"La photo {n} est {' et '.join(reasons) or 'de mauvaise qualité'} : "
-                         "pouvez-vous la reprendre ?")
+        from app.i18n import t
+        mw = db.get(Midwife, rec.midwife_id)
+        _notify(db, rec, t(mw.language if mw else "fr", "bad_photo", n=n,
+                           reasons=" et ".join(reasons) or "de mauvaise qualité"))
     from app.services import conversation
     conversation.on_record_ready(db, rec)                    # résumé + [Vérifier] (bloc 4)
     db.commit()

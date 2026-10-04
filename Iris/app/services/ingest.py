@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import InboundMessage, InboundStatus, Midwife, Page, Record, RecordStatus
+from app.i18n import plural, t
 from app.services import conversation, outbox
 from app.state_machine import transition
 from app.storage import get_store
@@ -89,6 +90,22 @@ def get_or_create_midwife(db: Session, wa_id: str) -> Midwife:
     return mw
 
 
+def _lang(db: Session, wa_id: str) -> str:
+    mw = db.scalar(select(Midwife).where(Midwife.wa_id == wa_id))
+    return mw.language if mw else "fr"
+
+
+SECONDS_PER_PAGE = 40          # lecture OCR + 2e avis, mesuré (eval/reports/3d_comparaison.md)
+
+
+def reading_message(lang: str, key: str, record: Record) -> str:
+    """« ⏳ Je lis votre registre… (environ 1 minute) »."""
+    n = len(record.pages)
+    minutes = max(1, -(-n * SECONDS_PER_PAGE // 60))
+    return t(lang, key, rid=record.id[:8], pages=plural(lang, n, "pl_page"),
+             duration=plural(lang, minutes, "pl_minute"))
+
+
 def _reply(db: Session, payload: dict):
     outbox.enqueue(db, payload)
 
@@ -136,7 +153,7 @@ def process_inbound(db: Session, inbound_id: int, client: WhatsAppClient | None 
         elif msg.msg_type in ("text", "interactive", "button"):
             _handle_text(db, msg, midwife)
         else:
-            _reply(db, text_message(msg.wa_from, "Je ne traite que les photos du registre et les messages texte."))
+            _reply(db, text_message(msg.wa_from, t(midwife.language, "only_photos")))
             msg.status = InboundStatus.IGNORE
         msg.attempts += 1
         if msg.status != InboundStatus.IGNORE:
@@ -152,8 +169,7 @@ def process_inbound(db: Session, inbound_id: int, client: WhatsAppClient | None 
         msg.last_error = f"{type(e).__name__}: {e}"[:500]
         if msg.attempts >= MAX_INBOUND_ATTEMPTS and msg.msg_type == "image":
             msg.status = InboundStatus.IGNORE
-            _reply(db, text_message(msg.wa_from, "Je n'ai pas pu récupérer une de vos photos. "
-                                                 "Pouvez-vous la renvoyer, s'il vous plaît ?"))
+            _reply(db, text_message(msg.wa_from, t(_lang(db, msg.wa_from), "photo_lost")))
         db.commit()
         log.exception("Traitement du message %s échoué", inbound_id)
 
@@ -162,7 +178,7 @@ def _handle_image(db: Session, msg: InboundMessage, midwife: Midwife, client: Wh
     data, mime = client.download_media(msg.media_id)
     mime = (msg.mime_type or mime or "").split(";")[0].strip()
     if mime not in ACCEPTED_MIME:
-        _reply(db, text_message(msg.wa_from, f"Format non pris en charge ({mime}). Envoyez une photo JPEG/PNG."))
+        _reply(db, text_message(msg.wa_from, t(midwife.language, "bad_format", mime=mime or "?")))
         msg.status = InboundStatus.IGNORE
         return
 
@@ -173,8 +189,8 @@ def _handle_image(db: Session, msg: InboundMessage, midwife: Midwife, client: Wh
     dup = db.scalar(select(Page).join(Record).where(Page.sha256 == digest, Record.midwife_id == midwife.id))
     if dup:
         (store.root / storage_key).unlink(missing_ok=True)
-        _reply(db, text_message(msg.wa_from, f"Cette photo a déjà été reçue (dossier {dup.record_id[:8]}, "
-                                             f"page {dup.page_number}). Je ne l'ajoute pas une deuxième fois."))
+        _reply(db, text_message(msg.wa_from, t(midwife.language, "photo_dup", rid=dup.record_id[:8],
+                                               n=dup.page_number)))
         msg.status = InboundStatus.IGNORE
         return
 
@@ -199,11 +215,9 @@ def _handle_image(db: Session, msg: InboundMessage, midwife: Midwife, client: Wh
     record.last_page_at = max(_utc(record.last_page_at), at)
     db.flush()
 
-    _reply(db, buttons_message(
-        msg.wa_from,
-        f"Page {page_no} reçue (dossier {record.id[:8]}).\n"
-        "Envoyez la page suivante, ou appuyez sur Terminer quand le registre est complet.",
-        [("CMD_FIN", "Terminer"), ("CMD_ANNULER", "Annuler")]))
+    lang = midwife.language
+    _reply(db, buttons_message(msg.wa_from, t(lang, "page_received", n=page_no, rid=record.id[:8]),
+                               [("CMD_FIN", t(lang, "btn_done")), ("CMD_ANNULER", t(lang, "btn_cancel"))]))
 
 
 def _handle_text(db: Session, msg: InboundMessage, midwife: Midwife):
@@ -213,18 +227,16 @@ def _handle_text(db: Session, msg: InboundMessage, midwife: Midwife):
                        .order_by(Record.last_page_at.desc()))
     if cmd in CMD_FIN:
         if not record:
-            _reply(db, text_message(msg.wa_from, "Aucune capture en cours. Envoyez une photo du registre pour commencer."))
+            _reply(db, text_message(msg.wa_from, t(midwife.language, "no_capture")))
             return
         close_session(db, record, f"midwife:{midwife.id}")
-        _reply(db, text_message(msg.wa_from, f"Merci. Dossier {record.id[:8]} ({len(record.pages)} page(s)) "
-                                             "mis en file d'attente pour lecture. Je reviens vers vous si j'ai un doute."))
+        _reply(db, text_message(msg.wa_from, reading_message(midwife.language, "reading", record)))
     elif cmd in CMD_ANNULER:
         if record:
             record.session_open = False
             transition(db, record, RecordStatus.ANNULE, f"midwife:{midwife.id}", "annulé par la sage-femme")
-        _reply(db, text_message(msg.wa_from, "Capture annulée. Les photos sont conservées mais ne seront pas traitées."))
+        _reply(db, text_message(msg.wa_from, t(midwife.language, "capture_cancelled")))
     elif not conversation.handle_text(db, midwife, msg.text or ""):
-        from app.i18n import t
         _reply(db, text_message(msg.wa_from, t(midwife.language, "welcome")))
 
 
@@ -236,8 +248,7 @@ def auto_close_stale_sessions(db: Session) -> int:
     for rec in stale:
         close_session(db, rec, "system")
         mw = db.get(Midwife, rec.midwife_id)
-        _reply(db, text_message(mw.wa_id, f"Dossier {rec.id[:8]} ({len(rec.pages)} page(s)) fermé automatiquement "
-                                          "et mis en file d'attente pour lecture."))
+        _reply(db, text_message(mw.wa_id, reading_message(mw.language, "auto_closed", rec)))
     db.commit()
     return len(stale)
 

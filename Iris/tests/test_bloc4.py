@@ -98,8 +98,8 @@ def test_revision_complete_puis_liaison_code_exact(client, fake_wa):
         assert len(b["reply"]["title"]) <= 20
     lu = body_of(fake_wa.sent[-2])                                     # « Voici ce que j'ai lu »
     assert lu.startswith("Voici ce que j'ai lu (page 1 – Grossesse actuelle) :")
-    assert "1. Couverture · N° de la fiche : A64125" in lu and "… et " in lu and "À vérifier : 5 –" in lu
-    assert "Non enregistré (confidentialité) : nom du soignant" in lu
+    assert "1. ✅ Couverture · N° de la fiche : A64125" in lu and "… et " in lu and "À vérifier : 5 –" in lu
+    assert "🔒 Non enregistré : nom du soignant" in lu
 
     press(client, find_id(summary, "OKLU"))
     queue = state()["queue"]
@@ -207,7 +207,7 @@ def test_anglais_puis_francais(client, fake_wa):
     assert body_of(fake_wa.sent[-1]) == "Language: English."
     say(client, "CONTINUE")
     s = fake_wa.sent[-1]
-    assert body_of(s).startswith("Reading done") and s["interactive"]["action"]["buttons"][0]["reply"]["title"] == "All correct"
+    assert body_of(s).startswith("✅ Reading done") and s["interactive"]["action"]["buttons"][0]["reply"]["title"] == "✅ All correct"
     assert body_of(fake_wa.sent[-2]).startswith("Here is what I read (page 1")
     say(client, "AIDE")
     assert body_of(fake_wa.sent[-1]).startswith("Commands")
@@ -399,12 +399,12 @@ def test_affichage_valeur_lue_et_raisons():
         def __init__(self):
             self.lang = "fr"
     o = O()
-    assert read_line(f_ta, "106/77", {"sys": 106, "dia": 77}, o) == "J'ai lu : 106/77 mmHg"
-    assert read_line(f_ta, "11/7", {"sys": 110, "dia": 70}, o) == "J'ai lu : « 11/7 » → 110/70 mmHg"
+    assert read_line(f_ta, "106/77", {"sys": 106, "dia": 77}, o) == "🟠 J'ai lu : 106/77 mmHg"
+    assert read_line(f_ta, "11/7", {"sys": 110, "dia": 70}, o) == "🟠 J'ai lu : « 11/7 » → 110/70 mmHg"
     hb = conv.T.fields[V + "T1V1.hemoglobine"]
-    assert read_line(hb, "11.8 g/dL", 11.8, o) == "J'ai lu : 11.8 g/dL"
-    assert read_line(hb, "13,2 g/dl", 13.2, o) == "J'ai lu : 13.2 g/dL"
-    assert read_line(hb, "illisible ??", None, o) == "J'ai lu : « illisible ?? »"      # jamais « → — »
+    assert read_line(hb, "11.8 g/dL", 11.8, o) == "🟠 J'ai lu : 11.8 g/dL"
+    assert read_line(hb, "13,2 g/dl", 13.2, o) == "🟠 J'ai lu : 13.2 g/dL"
+    assert read_line(hb, "illisible ??", None, o) == "🟠 J'ai lu : « illisible ?? »"      # jamais « → — »
     assert field_label(V + "T1V1.age_probable_sa").endswith("· Âge probable")
     assert accentue("Etat des lochies") == "État des lochies" and accentue("A domicile") == "À domicile"
     assert accentue("A") == "A"                                                   # groupe sanguin intact
@@ -428,7 +428,7 @@ def test_bonjour_alors_qu_un_dossier_attend(client, fake_wa):
     seeded(fake_wa)
     say(client, "bonjour")
     g = fake_wa.sent[-1]
-    assert body_of(g) == "Bonjour ! Un dossier attend votre vérification (5 questions)."
+    assert body_of(g) == "👋 Bonjour ! Un dossier attend votre vérification (5 questions)."
     assert [i.split("|")[0] for i in ids(g)] == ["GO", "LATER"]
     press(client, find_id(g, "GO"))
     assert "Question 1/5" in body_of(fake_wa.sent[-1])
@@ -508,7 +508,7 @@ def test_apercu_joint_a_la_question_avec_identites_masquees(client, fake_wa):
     press(client, find_id(fake_wa.sent[-1], "REV"))
     preview, question = fake_wa.sent[-2], fake_wa.sent[-1]
     assert preview["type"] == "image" and preview["image"]["id"] == "media.1"
-    assert preview["image"]["caption"].startswith("Zone où j'ai un doute : Grossesse actuelle")
+    assert preview["image"]["caption"].startswith("📷 Zone où j'ai un doute : Grossesse actuelle")
     assert "_preview" not in preview                                      # référence interne jamais envoyée
     assert "Question 1/2" in body_of(question)
     img = Image.open(io.BytesIO(fake_wa.uploads[0])).convert("RGB")
@@ -593,14 +593,14 @@ def test_resume_lisible_patiente4_sans_nom(client, fake_wa):
                      "Nom de l'établissement sanitaire : CSCA Ait Mhamed",
                      "Type de l'établissement sanitaire : CSCA", "Mode de la couverture : Fixe",
                      "Grossesse classée à risque : non cochée",
-                     "Non enregistré (confidentialité) : nom de la patiente"):
+                     "🔒 Non enregistré : nom de la patiente"):
         assert expected in p1, expected
     assert p1.index("N° de la fiche") < p1.index("Province")                 # priorité clinique
     p2 = next(t for t in texts if t.startswith("Voici ce que j'ai lu (page 2 – Identification et antécédents)"))
     assert "Âge : 26 ans" in p2 and "Antécédents obstétricaux · Gestation : 5" in p2
     assert "Antécédents de la femme · Médicaux : RAS" in p2
     assert len(p2.splitlines()) <= 1 + 15 + 3 and "… et " in p2              # 15 lignes max + « … et N autres »
-    assert "Non enregistré (confidentialité) : CIN, adresse, téléphone, nom du mari" in p2
+    assert "🔒 Non enregistré : CIN, adresse, téléphone, nom du mari" in p2
     assert "À vérifier : 1 –" in p2
     assert all(len(t) <= 4096 for t in texts)
     buttons = fake_wa.sent[-1]
@@ -661,3 +661,19 @@ def test_demo_reset_cible_la_sage_femme_de_demo(client, fake_wa):
     counts = reset_all()
     with SessionLocal() as db:
         assert db.scalars(select(Record)).all() == [] and db.scalars(select(ExtractedField)).all() == []
+
+
+
+def test_emojis_coherents_et_boutons_sobres():
+    from app.i18n import EMOJI_PREFIX, KO, MESSAGES, OK, t
+    for lang in ("fr", "en"):
+        for k, v in MESSAGES[lang].items():
+            if k.startswith("btn_"):
+                assert k == "btn_all_right" or not any(ord(ch) > 0x2000 for ch in v), (lang, k, v)
+                assert len(v) <= 20
+        for k, emoji in EMOJI_PREFIX.items():
+            assert MESSAGES[lang][k].startswith(emoji)
+    assert t("fr", "linked", code="A64125") == "✅ Dossier validé et relié à la patiente A64125. Merci 🙏"
+    assert t("fr", "btn_all_right") == f"{OK} Tout est juste"
+    assert t("fr", "unreadable") == f"{KO} Je n'arrive pas à lire cette case."
+    assert t("fr", "page_received", n=2, rid="e2447f76").startswith("📷 Page 2 reçue")

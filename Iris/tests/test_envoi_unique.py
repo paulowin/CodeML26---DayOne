@@ -92,7 +92,7 @@ def test_photo_traitee_une_seule_fois_meme_en_parallele(client, fake_wa, monkeyp
             outbox.flush_pending(db)
     _parallel(process)
     bodies = [body_of(p) for p in fake_wa.sent]
-    assert len(bodies) == 1 and bodies[0].startswith("Page 1 reçue")
+    assert len(bodies) == 1 and bodies[0].startswith("📷 Page 1 reçue")
     with SessionLocal() as db:
         msg = db.get(InboundMessage, iid)
         assert msg.status == InboundStatus.TRAITE and msg.attempts == 1
