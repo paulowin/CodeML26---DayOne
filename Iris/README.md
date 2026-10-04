@@ -6,6 +6,37 @@ Agent WhatsApp qui transforme la photo d'un registre maternel papier en dossier
 numérique structuré, vérifié par la sage-femme et relié de visite en visite.
 **Tout tourne en local** : aucune donnée n'est envoyée à un service d'IA/OCR tiers.
 
+## Vue d'ensemble
+
+```
+ WhatsApp (sage-femme)                                   poste local
+ ─────────────────────                                   ──────────────────────────────────────────────
+ 📷 photos du registre ──webhook──> ingest (sessions multipages, doublons, images chiffrées)
+                                       │  FIN
+                                       ▼
+                                  EN_ATTENTE_IA ──ai_worker (thread)──> lecture locale :
+                                       │                                 • OCR EasyOCR (texte, défaut)
+                                       │                                   ou VLM Ollama (--mode vlm)
+                                       │                                 • cases à cocher : OpenCV
+                                       │                                 • normalisation + validations
+                                       │                                 • 2e avis Ollama : champs critiques
+                                       ▼
+ « Voici ce que j'ai lu » <── conversation ── A_REVISER (champs + statut + confiance)
+ [Tout est juste] / questions ──> VALIDE ──> liaison patiente (code) ──> ENREGISTRE
+                                                                            │ synchro (hors ligne OK)
+                                                                            ▼
+                                                              serveur central simulé (anonymisé)
+ /verif (navigateur du poste local) : image d'origine | champs lus | vérité terrain
+```
+
+| Dossier | Rôle |
+|---|---|
+| `app/` | backend FastAPI : webhook, machine à états, outbox, conversation, `/verif`, stockage chiffré |
+| `app/templates/` | schéma du carnet (`carnet_maroc.py`), positions des cases, normalisation partagée |
+| `ai/` | cerveau local : OCR, VLM, cases OpenCV, validations, confiance, évaluation (`run_eval`) |
+| `eval/` | vérité terrain (80 pages spécimen), évaluateur, rapports |
+| `scripts/` | démo (`demo_seed`, `demo_reset`), vérité terrain, comptes |
+
 ## Installation
 
 ```bash
@@ -21,10 +52,24 @@ Remplir ensuite les valeurs `WHATSAPP_*` du `.env` (voir ci-dessous).
 ## Lancer
 
 ```bash
+ollama serve                                  # 2e avis sur les champs critiques (ollama pull qwen2.5vl:3b)
 uvicorn app.main:app --reload --port 8000     # terminal 1
 ngrok http 8000                               # terminal 2 (ou --url=<domaine-fixe>)
-pytest -q                                     # tests
+pytest -q                                     # tests (sans GPU, sans réseau)
 ```
+
+Lecture : `AI_MODE=ocr` + `AI_OCR_ENGINE=easyocr` par défaut (gagnant de la comparaison 3d :
+88 % d'exactitude, ~40 s/page sur CPU) ; `AI_MODE=vlm` pour tout lire par Ollama. PaddleOCR
+(option) demande Python 3.13 : `py -3.13 -m venv .venv-ocr` puis `pip install paddlepaddle paddleocr`.
+Sur un PC fragile : `OMP_NUM_THREADS=4` (le PC s'est déjà éteint sous la charge).
+
+## Vérifier ce qui a été lu
+
+Ouvrir **http://127.0.0.1:8000/verif** sur le poste (refusé via ngrok) : liste des dossiers, puis
+pour chaque page l'image d'origine à gauche et les champs enregistrés à droite (valeur brute /
+normalisée, statut, confiance, source ia/ocr/case/sage-femme). Pour une page du défi, colonne
+« attendu » (vert juste / rouge faux) et scores en haut. Le lien est aussi écrit dans le terminal
+à chaque fin de lecture. Évaluation hors ligne : `python -m ai.run_eval --source specimen --limit 24`.
 
 ## Configuration WhatsApp (une fois)
 
@@ -372,6 +417,13 @@ réservation de plus de 2 min (processus tué) est libérée. Constaté au test 
   historique des corrections pour chaque champ.
 
 ## Limites connues
+
+- **Vraies photos** (écriture cursive, photo inclinée, pliure) : l'OCR et le VLM les lisent mal
+  (voir NUIT.md) ; Iris le dit (statuts A_REVISER / ILLISIBLE, « page difficile à lire ») et la
+  vérification sur WhatsApp ou la saisie guidée prennent le relais. Les cases à cocher (OpenCV)
+  restent fiables tant que les libellés imprimés sont lisibles pour le recalage.
+- La saisie guidée ne couvre pas le tableau des visites ; « Mettre à jour » un dossier déjà
+  synchronisé ne modifie que la copie locale.
 
 - Les photos transitent par l'infrastructure WhatsApp (canal imposé par le défi) ;
   le traitement IA est 100 % local.
