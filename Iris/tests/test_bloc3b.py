@@ -14,7 +14,7 @@ from ai.ollama_client import GenResult, OllamaClient, OllamaUnavailable, first_j
 from ai.prompts import build_prompt, build_schema, page_spec
 from ai.validate import validate
 from app.templates import get_template
-from app.templates.normalize import interpret, text_equal, values_equal
+from app.templates.normalize import interpret, normalize_value, text_equal, values_equal
 from tests.conftest import body_of
 
 T = get_template()
@@ -422,3 +422,13 @@ def test_worker_photo_floue_previent_la_sage_femme(client):
         assert json.loads(rec.pages[0].quality_json)["raisons"] == ["floue"]
         msgs = [body_of(json.loads(m.payload_json)) for m in db.scalars(select(OutboundMessage)).all()]
         assert any("floue" in m and "reprendre" in m for m in msgs)
+
+
+
+@pytest.mark.parametrize("raw,official", [
+    ("B ni Mellal-Kh nifra", "Béni Mellal-Khénifra"), ("B\ufffdni Mellal-Kh\ufffdnifra", "Béni Mellal-Khénifra"),
+    ("casa-settat", "Casablanca-Settat"), ("Oriental", "L'Oriental"), ("Rabat-Sale-Kenitra", "Rabat-Salé-Kénitra"),
+    ("Tanger-Tétouan-Al Hoceïma", "Tanger-Tétouan-Al Hoceïma"), ("Zone inconnue", "Zone inconnue"),
+])
+def test_regions_officielles(raw, official):
+    assert normalize_value(F["couverture.region"], raw) == official

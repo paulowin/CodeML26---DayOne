@@ -63,6 +63,9 @@ class FieldDef:
     identifiant: bool = False                  # identifiant direct : jamais extrait, jamais stocké
     critique: bool = False                     # jamais CONNU sur une seule lecture (bloc 3b)
     ecrit: bool = False                        # choix fermé mais ÉCRIT à la main (pas de cases), ex. « Sexe : F »
+    # liste officielle de valeurs (texte libre) : une valeur proche est ramenée à la forme officielle
+    # ({forme officielle: (variantes...)}), ex. les 12 régions du Maroc
+    vocabulaire: tuple = ()
     longitudinal: bool = False                 # varie d'une visite à l'autre
     context: str | None = None                 # libellé voisin qui lève l'ambiguïté (« Le » rubéole / hépatite)
     aliases: tuple[str, ...] = ()

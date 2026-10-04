@@ -177,9 +177,29 @@ def parse_bool(raw: Any) -> bool | None:
     return None
 
 
+def snap_vocabulary(vocabulaire: tuple, t: str) -> str:
+    """Ramène une valeur proche à la forme OFFICIELLE (accents perdus, glyphes manquants,
+    abréviations) : « B ni Mellal-Kh nifra » -> « Béni Mellal-Khénifra ». Sinon : inchangée."""
+    import difflib
+    if not t:
+        return t
+    n = fold(t).replace("-", " ")
+    best, score = None, 0.0
+    for official, variants in vocabulaire:
+        for cand in (official, *variants):
+            if text_equal(cand, t):
+                return official
+            r = difflib.SequenceMatcher(None, n, fold(cand).replace("-", " ")).ratio()
+            if r > score:
+                best, score = official, r
+    return best if score >= 0.8 else t
+
+
 def canonical_text(f: FieldDef, raw: Any) -> str:
-    """Texte libre : RAS / NEGATIF / POSITIF unifiés, le reste nettoyé."""
+    """Texte libre : RAS / NEGATIF / POSITIF unifiés, vocabulaire officiel, le reste nettoyé."""
     t = clean_text(raw)
+    if f.vocabulaire:
+        return snap_vocabulary(f.vocabulaire, t)
     n = fold(t)
     if f.key.split(".")[-1] not in NO_RAS_KEYS and _RAS_RE.match(n):
         return RAS

@@ -13,10 +13,26 @@ def _id(key: str, label: str, **kw) -> F:
     return F(key, label, "str", identifiant=True, **kw)
 
 
+# Les 12 régions du Maroc (découpage 2015) et variantes fréquentes
+REGIONS_MAROC = (
+    ("Tanger-Tétouan-Al Hoceïma", ("Tanger-Tétouan", "Tanger")),
+    ("L'Oriental", ("Oriental", "Oujda")),
+    ("Fès-Meknès", ("Fes-Meknes",)),
+    ("Rabat-Salé-Kénitra", ("Rabat-Salé", "Rabat")),
+    ("Béni Mellal-Khénifra", ("Beni Mellal",)),
+    ("Casablanca-Settat", ("Casa-Settat", "Casa Settat", "Casablanca")),
+    ("Marrakech-Safi", ("Marrakech",)),
+    ("Drâa-Tafilalet", ("Draa-Tafilalet",)),
+    ("Souss-Massa", ("Agadir",)),
+    ("Guelmim-Oued Noun", ("Guelmim",)),
+    ("Laâyoune-Sakia El Hamra", ("Laayoune",)),
+    ("Dakhla-Oued Ed-Dahab", ("Dakhla",)),
+)
+
 # ------------------------------------------------------------------ couverture
 COUVERTURE = SectionDef("couverture", "Couverture", (
     F("numero_fiche", "N° de la fiche :"),
-    F("region", "Région :"),
+    F("region", "Région :", vocabulaire=REGIONS_MAROC),
     F("province", "Province :", aliases=("Province",)),
     F("etablissement", "Nom de l'établissement sanitaire :"),
     F("type_etablissement", "Type de l'établissement sanitaire :", "enum",
